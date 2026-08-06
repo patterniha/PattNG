@@ -30,12 +30,27 @@ jobs:
           java-version: 21
 
       - name: Install NDK
-        run: |
-          echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "ndk;29.0.14206865"
+  run: |
+    echo "y" | sdkmanager "ndk;29.0.14206865"
 
-      - name: Build libhevtun
-        run: |
-          bash compile-hevtun.sh
+- name: Set NDK_HOME
+  run: |
+    echo "NDK_HOME=$ANDROID_HOME/ndk/29.0.14206865" >> $GITHUB_ENV
+    echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/29.0.14206865" >> $GITHUB_ENV
+    echo "ANDROID_NDK_ROOT=$ANDROID_HOME/ndk/29.0.14206865" >> $GITHUB_ENV
+
+- name: Verify NDK
+  run: |
+    echo "ANDROID_HOME=$ANDROID_HOME"
+    echo "NDK_HOME=$NDK_HOME"
+    ls -la $ANDROID_HOME/ndk
+    ls -la $ANDROID_HOME/ndk/29.0.14206865
+
+- name: Build libhevtun
+  env:
+    NDK_HOME: ${{ env.NDK_HOME }}
+  run: |
+    bash compile-hevtun.sh
 
       - name: Copy libhevtun
         run: |
