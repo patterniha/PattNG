@@ -27,30 +27,34 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 21
+          java-version: "21"
 
       - name: Install NDK
-  run: |
-    echo "y" | sdkmanager "ndk;29.0.14206865"
+        run: |
+          yes | sdkmanager "ndk;29.0.14206865"
 
-- name: Set NDK_HOME
-  run: |
-    echo "NDK_HOME=$ANDROID_HOME/ndk/29.0.14206865" >> $GITHUB_ENV
-    echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/29.0.14206865" >> $GITHUB_ENV
-    echo "ANDROID_NDK_ROOT=$ANDROID_HOME/ndk/29.0.14206865" >> $GITHUB_ENV
+      - name: Set NDK_HOME
+        run: |
+          echo "NDK_HOME=$ANDROID_HOME/ndk/29.0.14206865" >> $GITHUB_ENV
+          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/29.0.14206865" >> $GITHUB_ENV
+          echo "ANDROID_NDK_ROOT=$ANDROID_HOME/ndk/29.0.14206865" >> $GITHUB_ENV
 
-- name: Verify NDK
-  run: |
-    echo "ANDROID_HOME=$ANDROID_HOME"
-    echo "NDK_HOME=$NDK_HOME"
-    ls -la $ANDROID_HOME/ndk
-    ls -la $ANDROID_HOME/ndk/29.0.14206865
+      - name: Verify NDK
+        shell: bash
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          echo "NDK_HOME=$NDK_HOME"
+          ls -la "$ANDROID_HOME"
+          ls -la "$ANDROID_HOME/ndk" || true
+          ls -la "$NDK_HOME" || true
 
-- name: Build libhevtun
-  env:
-    NDK_HOME: ${{ env.NDK_HOME }}
-  run: |
-    bash compile-hevtun.sh
+      - name: Build libhevtun
+        shell: bash
+        env:
+          NDK_HOME: ${{ env.NDK_HOME }}
+        run: |
+          chmod +x compile-hevtun.sh
+          ./compile-hevtun.sh
 
       - name: Copy libhevtun
         run: |
@@ -65,9 +69,9 @@ jobs:
           out-file-path: V2rayNG/app/libs/
 
       - name: Build APK
+        working-directory: V2rayNG
         run: |
-          cd V2rayNG
-          echo "sdk.dir=${ANDROID_HOME}" > local.properties
+          echo "sdk.dir=$ANDROID_HOME" > local.properties
           chmod +x gradlew
           ./gradlew assembleRelease
 
