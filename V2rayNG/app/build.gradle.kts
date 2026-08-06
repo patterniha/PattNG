@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.Mah2ray.app"
+    namespace = "com.v2ray.ang"
     compileSdk = 37
 
     defaultConfig {
