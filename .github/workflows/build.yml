@@ -28,7 +28,18 @@ jobs:
         with:
           distribution: temurin
           java-version: "21"
+          
+      - name: Decode Keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > keystore.jks
 
+      - name: Setup signing environment
+        run: |
+          echo "KEYSTORE_FILE=$GITHUB_WORKSPACE/keystore.jks" >> $GITHUB_ENV
+          echo "KEYSTORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> $GITHUB_ENV
+          echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> $GITHUB_ENV
+          echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> $GITHUB_ENV
+          
       - name: Install NDK
         run: |
           yes | sdkmanager "ndk;29.0.14206865"
