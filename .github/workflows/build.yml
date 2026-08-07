@@ -73,10 +73,34 @@ jobs:
         run: |
           echo "sdk.dir=$ANDROID_HOME" > local.properties
           chmod +x gradlew
-          ./gradlew assembleRelease
+          ./gradlew assembleRelease --stacktrace
+
+      - name: List generated APKs
+        run: |
+          echo "Generated APKs:"
+          find V2rayNG/app/build/outputs/apk -name "*.apk"
+
+      - name: Verify APKs
+        shell: bash
+        run: |
+          BUILD_TOOLS=$(find "$ANDROID_HOME/build-tools" -maxdepth 1 -type d | sort -V | tail -n1)
+          echo "Using Build Tools: $BUILD_TOOLS"
+
+          for apk in $(find V2rayNG/app/build/outputs/apk -name "*.apk"); do
+            echo "======================================="
+            echo "APK: $apk"
+
+            echo "ZIP TEST"
+            unzip -t "$apk" || true
+
+            echo "APK SIGNATURE"
+            "$BUILD_TOOLS/apksigner" verify --verbose --print-certs "$apk" || true
+          done
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: Mah2ray-APK
-          path: V2rayNG/app/build/outputs/apk/**/*.apk
+          path: |
+            V2rayNG/app/build/outputs/apk/playstore/**/*.apk
+            V2rayNG/app/build/outputs/apk/fdroid/**/*.apk
