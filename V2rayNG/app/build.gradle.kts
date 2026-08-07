@@ -56,7 +56,6 @@ android {
         )
     }
 }
-    }
 
     flavorDimensions.add("distribution")
     productFlavors {
