@@ -13,8 +13,8 @@ android {
         applicationId = "com.patterniha.pattng"
         minSdk = 24
         targetSdk = 37
-        versionCode = 744
-        versionName = (project.findProperty("pattngVersion") as? String)?.takeIf { it.isNotBlank() } ?: "2.3.4"
+        versionCode = 745
+        versionName = (project.findProperty("pattngVersion") as? String)?.takeIf { it.isNotBlank() } ?: "2.3.5"
 
         val abiFilterList = (properties["ABI_FILTERS"] as? String)?.split(';')
         splits {
