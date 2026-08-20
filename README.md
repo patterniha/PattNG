@@ -2,7 +2,7 @@
 
 v2rayNG fork for Iranians
 
-**تغیییرات v2rayNG:**
+**تغییرات v2rayNG:**
 
 * اضافه شدن cipherSuites و فینگرپرینت unsafe در تنظیمات و شیرلینک.
 
