@@ -332,9 +332,9 @@ object AppConfig {
     )
 
     val GEO_FILES_SOURCES = arrayListOf(
+        "Chocolate4U/Iran-v2ray-rules",
         "Loyalsoldier/v2ray-rules-dat",
-        "runetfreedom/russia-v2ray-rules-dat",
-        "Chocolate4U/Iran-v2ray-rules"
+        "runetfreedom/russia-v2ray-rules-dat"
     )
 
     val BUILTIN_OUTBOUND_TAGS = setOf(

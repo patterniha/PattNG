@@ -52,7 +52,7 @@ object SettingsManager {
     private fun initRoutingRulesets(context: Context) {
         val exist = MmkvManager.decodeRoutingRulesets()
         if (exist.isNullOrEmpty()) {
-            val rulesetList = getPresetRoutingRulesets(context)
+            val rulesetList = getPresetRoutingRulesets(context, RoutingType.WHITE_IRAN)
             MmkvManager.encodeRoutingRulesets(rulesetList)
         }
     }
