@@ -91,11 +91,6 @@
   },
   {
     "protocol": "freedom",
-    "streamSettings": {
-      "sockopt": {
-        "domainStrategy": "UseIP"
-      }
-    },
     "tag": "direct"
   },
   {
