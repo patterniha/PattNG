@@ -5,9 +5,12 @@
   },
   "policy":{
       "levels": {
-        "8": {
-          "handshake": 4,
-          "connIdle": 300,
+        "0": {
+          "uplinkOnly": 0,
+          "downlinkOnly": 0
+        },
+        "12": {
+          "connIdle": 12,
           "uplinkOnly": 0,
           "downlinkOnly": 0
         }
@@ -23,8 +26,7 @@
     "protocol": "socks",
     "settings": {
       "auth": "noauth",
-      "udp": true,
-      "userLevel": 8
+      "udp": true
     },
     "sniffing": {
       "enabled": true,
@@ -40,8 +42,7 @@
     "protocol": "tun",
     "settings": {
       "name": "xray0",
-      "MTU": 1500,
-      "userLevel": 8
+      "MTU": 1500
     },
     "sniffing": {
       "enabled": true,
@@ -65,8 +66,7 @@
             {
               "id": "a3482e88-686a-4a58-8126-99c9df64b7bf",
               "alterId": 0,
-              "security": "auto",
-              "level": 8
+              "security": "auto"
             }
           ]
         }
@@ -77,8 +77,7 @@
         "method": "chacha20",
         "ota": false,
         "password": "123456",
-        "port": 10086,
-        "level": 8
+        "port": 10086
       }
       ]
     },

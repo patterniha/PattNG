@@ -263,7 +263,6 @@ object AppConfig {
 
     const val DEFAULT_PORT = 443
     const val DEFAULT_SECURITY = "auto"
-    const val DEFAULT_LEVEL = 8
     const val DEFAULT_NETWORK = "tcp"
     const val TLS = "tls"
     const val REALITY = "reality"

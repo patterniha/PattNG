@@ -77,6 +77,8 @@ data class V2rayConfig(
             var port: Int? = null,
             var level: Int? = null,
             var email: String? = null,
+            /*DNS*/
+            var userLevel: Int? = null,
             /*HTTP/SOCKS*/
             var user: String? = null,
             var pass: String? = null,

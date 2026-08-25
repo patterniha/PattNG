@@ -122,7 +122,6 @@ object CoreOutboundBuilder {
             settings.port = profileItem.serverPort.orEmpty().toInt()
             settings.id = profileItem.password.orEmpty()
             settings.security = profileItem.method
-            settings.level = AppConfig.DEFAULT_LEVEL
         }
 
         val sni = outboundBean?.streamSettings?.let {
@@ -145,7 +144,6 @@ object CoreOutboundBuilder {
             settings.id = profileItem.password.orEmpty()
             settings.encryption = profileItem.method
             settings.flow = profileItem.flow
-            settings.level = AppConfig.DEFAULT_LEVEL
         }
 
         val sni = outboundBean?.streamSettings?.let {
@@ -167,7 +165,6 @@ object CoreOutboundBuilder {
             settings.port = profileItem.serverPort.orEmpty().toInt()
             settings.password = profileItem.password
             settings.method = profileItem.method
-            settings.level = AppConfig.DEFAULT_LEVEL
         }
 
         val sni = outboundBean?.streamSettings?.let {
@@ -189,7 +186,6 @@ object CoreOutboundBuilder {
             settings.port = profileItem.serverPort.orEmpty().toInt()
             settings.password = profileItem.password
             settings.flow = profileItem.flow
-            settings.level = AppConfig.DEFAULT_LEVEL
         }
 
         val sni = outboundBean?.streamSettings?.let {
@@ -209,7 +205,6 @@ object CoreOutboundBuilder {
         outboundBean?.settings?.let { settings ->
             settings.address = getServerAddress(profileItem)
             settings.port = profileItem.serverPort.orEmpty().toInt()
-            settings.level = AppConfig.DEFAULT_LEVEL
             if (profileItem.username.isNotNullEmpty()) {
                 settings.user = profileItem.username.orEmpty()
                 settings.pass = profileItem.password.orEmpty()
@@ -225,7 +220,6 @@ object CoreOutboundBuilder {
         outboundBean?.settings?.let { settings ->
             settings.address = getServerAddress(profileItem)
             settings.port = profileItem.serverPort.orEmpty().toInt()
-            settings.level = AppConfig.DEFAULT_LEVEL
             if (profileItem.username.isNotNullEmpty()) {
                 settings.user = profileItem.username.orEmpty()
                 settings.pass = profileItem.password.orEmpty()

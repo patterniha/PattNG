@@ -668,7 +668,7 @@ object CoreConfigManager {
                 V2rayConfig.OutboundBean(
                     protocol = "dns",
                     tag = "dns-out",
-                    settings = null,
+                    settings = V2rayConfig.OutboundBean.OutSettingsBean(userLevel = 12),
                     streamSettings = null,
                     mux = null
                 )
@@ -701,7 +701,7 @@ object CoreConfigManager {
                 V2rayConfig.OutboundBean(
                     protocol = "dns",
                     tag = "dns-out",
-                    settings = null,
+                    settings = V2rayConfig.OutboundBean.OutSettingsBean(userLevel = 12),
                     streamSettings = null,
                     mux = null
                 )
