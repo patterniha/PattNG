@@ -119,7 +119,7 @@ fun SettingsScreen(
     var dynamicSocksPort by rememberMmkvBool(AppConfig.PREF_DYNAMIC_SOCKS_PORT, false)
     var socksUsername by rememberMmkvString(AppConfig.PREF_SOCKS_USERNAME, "")
     var socksPassword by rememberMmkvString(AppConfig.PREF_SOCKS_PASSWORD, "")
-    var socksEnableUdp by rememberMmkvBool(AppConfig.PREF_SOCKS_ENABLE_UDP, false)
+    var socksEnableUdp by rememberMmkvBool(AppConfig.PREF_SOCKS_ENABLE_UDP, true)
     var proxySharing by rememberMmkvBool(AppConfig.PREF_PROXY_SHARING, false)
 
     var speedEnabled by rememberMmkvBool(AppConfig.PREF_SPEED_ENABLED, false)
