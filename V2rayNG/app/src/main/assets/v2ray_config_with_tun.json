@@ -8,8 +8,8 @@
         "8": {
           "handshake": 4,
           "connIdle": 300,
-          "uplinkOnly": 1,
-          "downlinkOnly": 1
+          "uplinkOnly": 0,
+          "downlinkOnly": 0
         }
       },
       "system": {
