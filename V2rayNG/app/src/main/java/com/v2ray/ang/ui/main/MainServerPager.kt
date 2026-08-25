@@ -30,12 +30,16 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.LineBreak
 import androidx.compose.ui.text.style.TextOverflow
@@ -43,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.v2ray.ang.R
+import com.v2ray.ang.dto.LocateTarget
 import com.v2ray.ang.dto.entities.ProfileItem
 import com.v2ray.ang.dto.entities.ServersCache
 import com.v2ray.ang.extension.isComplexType
@@ -66,6 +71,7 @@ fun GroupPagerPage(
     groupId: String,
     mainViewModel: MainViewModel,
     selectedGuid: String?,
+    locateTarget: LocateTarget?,
     doubleColumnDisplay: Boolean,
     confirmRemove: Boolean,
     searchQuery: String,
@@ -86,6 +92,7 @@ fun GroupPagerPage(
     ServerListPage(
         servers = servers,
         selectedGuid = selectedGuid,
+        locateTarget = locateTarget?.takeIf { it.groupId == groupId },
         canReorder = canReorder,
         doubleColumnDisplay = doubleColumnDisplay,
         subscriptionId = groupId,
@@ -98,6 +105,7 @@ fun GroupPagerPage(
         onShareServer = onShareServer,
         onMoreServer = onMoreServer,
         onRemoveServer = onRemoveServer,
+        onLocateHandled = { mainViewModel.onAction(MainAction.LocateHandled) },
         onMoveServer = { fromIndex, toIndex -> mainViewModel.moveServer(groupId, fromIndex, toIndex) },
         contentPadding = contentPadding
     )
@@ -107,6 +115,7 @@ fun GroupPagerPage(
 private fun ServerListPage(
     servers: List<ServersCache>,
     selectedGuid: String?,
+    locateTarget: LocateTarget?,
     canReorder: Boolean,
     doubleColumnDisplay: Boolean,
     subscriptionId: String,
@@ -119,6 +128,7 @@ private fun ServerListPage(
     onShareServer: (String, ProfileItem) -> Unit,
     onMoreServer: (String, ProfileItem) -> Unit,
     onRemoveServer: (String) -> Unit,
+    onLocateHandled: () -> Unit,
     onMoveServer: (Int, Int) -> Unit,
     contentPadding: PaddingValues
 ) {
@@ -131,6 +141,8 @@ private fun ServerListPage(
                 onMoveServer(from.index, to.index)
             }
         } else null
+
+        LocateTargetEffect(locateTarget, servers, gridState, onLocateHandled)
 
         LazyVerticalGrid(
             columns = GridCells.Fixed(2),
@@ -178,6 +190,8 @@ private fun ServerListPage(
                 onMoveServer(from.index, to.index)
             }
         } else null
+
+        LocateTargetEffect(locateTarget, servers, listState, onLocateHandled)
 
         LazyColumn(
             state = listState,
@@ -228,6 +242,38 @@ private fun ServerListPage(
 }
 
 @Composable
+private fun LocateTargetEffect(
+    target: LocateTarget?,
+    servers: List<ServersCache>,
+    state: LazyListState,
+    onHandled: () -> Unit,
+) {
+    if (target == null) return
+    LaunchedEffect(target, servers) {
+        val index = servers.indexOfFirst { it.guid == target.serverGuid }
+        if (index < 0) return@LaunchedEffect
+        state.scrollToItem(index, -state.layoutInfo.viewportSize.height / 3)
+        onHandled()
+    }
+}
+
+@Composable
+private fun LocateTargetEffect(
+    target: LocateTarget?,
+    servers: List<ServersCache>,
+    state: LazyGridState,
+    onHandled: () -> Unit,
+) {
+    if (target == null) return
+    LaunchedEffect(target, servers) {
+        val index = servers.indexOfFirst { it.guid == target.serverGuid }
+        if (index < 0) return@LaunchedEffect
+        state.scrollToItem(index, -state.layoutInfo.viewportSize.height / 3)
+        onHandled()
+    }
+}
+
+@Composable
 private fun ServerItemRow(
     serverCache: ServersCache,
     selectedGuid: String?,
@@ -249,7 +295,6 @@ private fun ServerItemRow(
         statistics = profile.description.nullIfBlank()
             ?: AngConfigManager.generateDescription(profile),
         typeDescription = getProtocolDescription(profile),
-        testResult = serverCache.testDelayString,
         testDelayMillis = serverCache.testDelayMillis,
         isSelected = serverCache.guid == selectedGuid,
         subscriptionRemarks = subRemarks,
@@ -283,7 +328,6 @@ private fun ServerItemColumn(
             remarks = profile.remarks,
             statistics = profile.description.nullIfBlank() ?: AngConfigManager.generateDescription(profile),
             typeDescription = getProtocolDescription(profile),
-            testResult = serverCache.testDelayString,
             testDelayMillis = serverCache.testDelayMillis,
             isSelected = serverCache.guid == selectedGuid,
             subscriptionRemarks = subRemarks,
@@ -303,7 +347,6 @@ fun ServerListItem(
     remarks: String,
     statistics: String,
     typeDescription: String,
-    testResult: String,
     testDelayMillis: Long,
     isSelected: Boolean,
     subscriptionRemarks: String,
@@ -316,10 +359,25 @@ fun ServerListItem(
     modifier: Modifier = Modifier,
     dragModifier: Modifier = Modifier
 ) {
+    val testResult = if (testDelayMillis == 0L) {
+        ""
+    } else {
+        stringResource(R.string.server_test_delay_value, testDelayMillis)
+    }
+    val selectedStateDescription = if (isSelected) {
+        stringResource(R.string.acc_selected_server)
+    } else {
+        null
+    }
     Row(
         modifier = modifier
             .fillMaxWidth()
             .height(IntrinsicSize.Min)
+            .semantics {
+                if (selectedStateDescription != null) {
+                    stateDescription = selectedStateDescription
+                }
+            }
             .clickable(onClick = onClick)
             .then(dragModifier)
     ) {
@@ -351,12 +409,34 @@ fun ServerListItem(
                 Text(remarks, Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge.copy(lineBreak = LineBreak.Paragraph), maxLines = 2, overflow = TextOverflow.Ellipsis)
                 if (doubleColumnDisplay) {
                     IconButton(onClick = onMore, Modifier.size(36.dp)) {
-                        Icon(painterResource(R.drawable.ic_more_vert_24dp), null, Modifier.size(24.dp))
+                        Icon(
+                            painterResource(R.drawable.ic_more_vert_24dp),
+                            stringResource(R.string.acc_more),
+                            Modifier.size(24.dp)
+                        )
                     }
                 } else {
-                    IconButton(onClick = onShare, Modifier.size(36.dp)) { Icon(painterResource(R.drawable.ic_share_24dp), null, Modifier.size(24.dp)) }
-                    IconButton(onClick = onEdit, Modifier.size(36.dp)) { Icon(painterResource(R.drawable.ic_edit_24dp), null, Modifier.size(24.dp)) }
-                    IconButton(onClick = onRemove, Modifier.size(36.dp)) { Icon(painterResource(R.drawable.ic_delete_24dp), null, Modifier.size(24.dp)) }
+                    IconButton(onClick = onShare, Modifier.size(36.dp)) {
+                        Icon(
+                            painterResource(R.drawable.ic_share_24dp),
+                            stringResource(R.string.title_configuration_share),
+                            Modifier.size(24.dp)
+                        )
+                    }
+                    IconButton(onClick = onEdit, Modifier.size(36.dp)) {
+                        Icon(
+                            painterResource(R.drawable.ic_edit_24dp),
+                            stringResource(R.string.acc_edit),
+                            Modifier.size(24.dp)
+                        )
+                    }
+                    IconButton(onClick = onRemove, Modifier.size(36.dp)) {
+                        Icon(
+                            painterResource(R.drawable.ic_delete_24dp),
+                            stringResource(R.string.acc_delete),
+                            Modifier.size(24.dp)
+                        )
+                    }
                 }
             }
             Spacer(modifier = Modifier.height(6.dp))

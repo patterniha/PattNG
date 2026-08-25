@@ -6,6 +6,8 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -25,7 +27,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -66,6 +67,7 @@ import com.v2ray.ang.ui.base.BaseComponentActivity
 import com.v2ray.ang.ui.compose.AppTopBar
 import com.v2ray.ang.ui.compose.DeleteConfirmDialog
 import com.v2ray.ang.ui.compose.FormTextField
+import com.v2ray.ang.ui.compose.NavigationBarsSpacer
 import com.v2ray.ang.ui.compose.horizontalScrollbar
 import com.v2ray.ang.ui.compose.verticalScrollbar
 import com.v2ray.ang.util.LogUtil
@@ -120,9 +122,14 @@ class ServerCustomConfigActivity : BaseComponentActivity() {
                 "Failed to parse custom configuration",
                 e
             )
+            val detail = e.cause?.message?.takeIf { it.isNotBlank() }
+                ?: e.message?.takeIf { it.isNotBlank() }
             toast(
-                "${getString(R.string.toast_malformed_json)} " +
-                        "${e.cause?.message.orEmpty()}"
+                if (detail.isNullOrBlank()) {
+                    getString(R.string.toast_malformed_json)
+                } else {
+                    getString(R.string.toast_malformed_json_detail, detail)
+                }
             )
             return false
         }
@@ -305,7 +312,7 @@ fun ServerCustomConfigScreen(
     }
 
     Scaffold(
-        contentWindowInsets = ScaffoldDefaults.contentWindowInsets,
+        contentWindowInsets = WindowInsets(0),
         topBar = {
             AppTopBar(
                 title = EConfigType.CUSTOM.toString(),
@@ -315,14 +322,14 @@ fun ServerCustomConfigScreen(
                         IconButton(onClick = { showDeleteConfirm = true }) {
                             Icon(
                                 painterResource(R.drawable.ic_delete_24dp),
-                                contentDescription = stringResource(R.string.menu_item_del_config)
+                                contentDescription = stringResource(R.string.acc_delete)
                             )
                         }
                     }
                     IconButton(onClick = { onSave(remarks, textFieldState.text.toString()) }) {
                         Icon(
                             painterResource(R.drawable.ic_fab_check),
-                            contentDescription = stringResource(R.string.menu_item_save_config)
+                            contentDescription = stringResource(R.string.acc_save)
                         )
                     }
                 }
@@ -473,6 +480,7 @@ fun ServerCustomConfigScreen(
                         .horizontalScrollbar(scrollState = horizontalScroll)
                 )
             }
+            NavigationBarsSpacer()
         }
     }
 

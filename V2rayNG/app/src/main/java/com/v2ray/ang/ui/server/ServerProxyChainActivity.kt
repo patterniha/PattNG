@@ -4,10 +4,13 @@ import android.os.Bundle
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -20,7 +23,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -220,7 +222,7 @@ fun ProxyChainScreen(
     }
 
     Scaffold(
-        contentWindowInsets = ScaffoldDefaults.contentWindowInsets,
+        contentWindowInsets = WindowInsets(0),
         topBar = {
             AppTopBar(
                 title = EConfigType.PROXYCHAIN.toString(),
@@ -228,11 +230,11 @@ fun ProxyChainScreen(
                 actions = {
                     if (showDelete) {
                         IconButton(onClick = { showProfileDeleteConfirm = true }) {
-                            Icon(painterResource(R.drawable.ic_delete_24dp), contentDescription = stringResource(R.string.menu_item_del_config))
+                            Icon(painterResource(R.drawable.ic_delete_24dp), contentDescription = stringResource(R.string.acc_delete))
                         }
                     }
                     IconButton(onClick = { onSave(remarks, members) }) {
-                        Icon(painterResource(R.drawable.ic_fab_check), contentDescription = stringResource(R.string.menu_item_save_config))
+                        Icon(painterResource(R.drawable.ic_fab_check), contentDescription = stringResource(R.string.acc_save))
                     }
                 }
             )
@@ -247,7 +249,7 @@ fun ProxyChainScreen(
                     .offset(y = -20.dp)
                     .navigationBarsPadding()
             ) {
-                Icon(painterResource(R.drawable.ic_add_24dp), contentDescription = "Add member")
+                Icon(painterResource(R.drawable.ic_add_24dp), contentDescription = stringResource(R.string.acc_add_member))
             }
         }
     ) { innerPadding ->
@@ -263,7 +265,7 @@ fun ProxyChainScreen(
                 top = 8.dp,
                 start = 16.dp,
                 end = 16.dp,
-                bottom = 36.dp
+                bottom = 36.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
             )
         ) {
             item(key = "remarks_field") {
@@ -320,7 +322,7 @@ fun ProxyChainScreen(
                             }) {
                                 Icon(
                                     painterResource(R.drawable.ic_delete_24dp),
-                                    contentDescription = "Remove"
+                                    contentDescription = stringResource(R.string.acc_remove)
                                 )
                             }
                         }

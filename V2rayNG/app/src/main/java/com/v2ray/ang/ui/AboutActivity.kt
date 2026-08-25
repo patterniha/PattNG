@@ -1,8 +1,11 @@
 package com.v2ray.ang.ui
 
+import android.content.Intent
 import android.os.Bundle
 import android.webkit.WebView
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -12,7 +15,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -32,6 +34,7 @@ import com.v2ray.ang.R
 import com.v2ray.ang.core.CoreNativeManager
 import com.v2ray.ang.ui.base.BaseComponentActivity
 import com.v2ray.ang.ui.compose.AppTopBar
+import com.v2ray.ang.ui.compose.NavigationBarsSpacer
 import com.v2ray.ang.ui.compose.SettingsMenuItem
 import com.v2ray.ang.ui.compose.VersionInfoBlock
 import com.v2ray.ang.util.Utils
@@ -44,20 +47,29 @@ class AboutActivity : BaseComponentActivity() {
 
     @Composable
     override fun ScreenContent() {
-        AboutScreen(onBackClick = { finish() })
+        AboutScreen(
+            onBackClick = { finish() },
+            onTranslatorsClick = {
+                startActivity(Intent(this, TranslatorsActivity::class.java))
+            }
+        )
     }
 }
 
 @Composable
-fun AboutScreen(onBackClick: () -> Unit) {
+fun AboutScreen(
+    onBackClick: () -> Unit,
+    onTranslatorsClick: () -> Unit
+) {
     val context = LocalContext.current
     var showOssDialog by remember { mutableStateOf(false) }
 
-    val versionText = "v${BuildConfig.VERSION_NAME} (${CoreNativeManager.getLibVersion()})"
+    val libVersion = CoreNativeManager.getLibVersion()
+    val versionText = "v${BuildConfig.VERSION_NAME} ($libVersion)"
     val appIdText = BuildConfig.APPLICATION_ID
 
     Scaffold(
-        contentWindowInsets = ScaffoldDefaults.contentWindowInsets,
+        contentWindowInsets = WindowInsets(0),
         topBar = {
             AppTopBar(
                 title = stringResource(R.string.title_about),
@@ -82,6 +94,11 @@ fun AboutScreen(onBackClick: () -> Unit) {
                 onClick = { showOssDialog = true }
             )
             SettingsMenuItem(
+                icon = painterResource(R.drawable.ic_translate_24dp),
+                title = stringResource(R.string.title_translators),
+                onClick = onTranslatorsClick
+            )
+            SettingsMenuItem(
                 icon = painterResource(R.drawable.ic_feedback_24dp),
                 title = stringResource(R.string.title_pref_feedback),
                 onClick = { Utils.openUri(context, AppConfig.APP_ISSUES_URL) }
@@ -100,6 +117,7 @@ fun AboutScreen(onBackClick: () -> Unit) {
                 versionText = versionText,
                 appIdText = appIdText
             )
+            NavigationBarsSpacer()
         }
     }
 
@@ -121,7 +139,7 @@ fun AboutScreen(onBackClick: () -> Unit) {
             },
             confirmButton = {
                 TextButton(onClick = { showOssDialog = false }) {
-                    Text(stringResource(android.R.string.ok))
+                    Text(stringResource(R.string.action_ok))
                 }
             },
             containerColor = MaterialTheme.colorScheme.surface,

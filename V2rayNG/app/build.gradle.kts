@@ -21,8 +21,8 @@ android {
         applicationId = "com.Mah2ray.app"
         minSdk = 24
         targetSdk = 37
-        versionCode = 742
-        versionName = "2.3.2"
+        versionCode = 745
+        versionName = "2.3.5"
 
         val abiFilterList = (properties["ABI_FILTERS"] as? String)?.split(';')
         splits {
@@ -137,6 +137,21 @@ android {
         compose = true
     }
 
+    androidResources {
+        generateLocaleConfig = true
+        localeFilters += listOf(
+            "en",
+            "zh-rCN",
+            "zh-rTW",
+            "vi",
+            "ru",
+            "fa",
+            "ar",
+            "bn",
+            "bqi-rIR"
+        )
+    }
+
     packaging {
         jniLibs {
             useLegacyPackaging = true
@@ -151,6 +166,7 @@ dependencies {
 
     // AndroidX Core Libraries
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.appcompat)
 
     // Compose Libraries
     implementation(platform(libs.androidx.compose.bom))

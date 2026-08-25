@@ -2,6 +2,8 @@ package com.v2ray.ang.ui.server
 
 import android.os.Bundle
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
@@ -11,7 +13,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -39,6 +40,7 @@ import com.v2ray.ang.ui.compose.AppTopBar
 import com.v2ray.ang.ui.compose.DeleteConfirmDialog
 import com.v2ray.ang.ui.compose.FormDropdownField
 import com.v2ray.ang.ui.compose.FormTextField
+import com.v2ray.ang.ui.compose.NavigationBarsSpacer
 import com.v2ray.ang.ui.compose.SettingsSwitchItem
 
 class ServerGroupActivity : BaseComponentActivity() {
@@ -237,7 +239,7 @@ fun ServerGroupScreen(
     val supportsObservatory = BalancerStrategyType.from(selectedType).supportsObservatory
 
     Scaffold(
-        contentWindowInsets = ScaffoldDefaults.contentWindowInsets,
+        contentWindowInsets = WindowInsets(0),
         topBar = {
             AppTopBar(
                 title = EConfigType.POLICYGROUP.toString(),
@@ -245,7 +247,7 @@ fun ServerGroupScreen(
                 actions = {
                     if (showDelete) {
                         IconButton(onClick = { showDeleteConfirm = true }) {
-                            Icon(painterResource(R.drawable.ic_delete_24dp), contentDescription = stringResource(R.string.menu_item_del_config))
+                            Icon(painterResource(R.drawable.ic_delete_24dp), contentDescription = stringResource(R.string.acc_delete))
                         }
                     }
                     IconButton(onClick = {
@@ -253,7 +255,7 @@ fun ServerGroupScreen(
                         val subIdx = subDisplay.indexOf(subValue).coerceAtLeast(0)
                         onSave(remarks, filter, typeIdx, subIdx, testOutbounds, fallbackTag)
                     }) {
-                        Icon(painterResource(R.drawable.ic_fab_check), contentDescription = stringResource(R.string.menu_item_save_config))
+                        Icon(painterResource(R.drawable.ic_fab_check), contentDescription = stringResource(R.string.acc_save))
                     }
                 }
             )
@@ -297,6 +299,7 @@ fun ServerGroupScreen(
                         editable = true
                     )
                 }
+                NavigationBarsSpacer()
             }
         }
     }

@@ -30,7 +30,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.v2ray.ang.dto.entities.ProfileItem
 import com.v2ray.ang.ui.compose.LocalDarkTheme
 import com.v2ray.ang.ui.compose.QRCodeDialog
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
@@ -44,7 +43,7 @@ fun MainScreen(
     val groups = uiState.groups
     val isLoading by mainViewModel.isLoading.collectAsStateWithLifecycle()
     val isRunning = uiState.isRunning
-    val displayText = uiState.statusText
+    val displayText = mainViewModel.formatStatus(uiState.status)
     val selectedGuid = uiState.selectedGuid
     val doubleColumnDisplay = uiState.doubleColumnDisplay
     val confirmRemove = uiState.confirmRemove
@@ -73,15 +72,11 @@ fun MainScreen(
     val lazyListStates = remember { mutableStateMapOf<String, LazyListState>() }
     val lazyGridStates = remember { mutableStateMapOf<String, LazyGridState>() }
 
-    var locateInProgress by remember { mutableStateOf(false) }
-
     LaunchedEffect(groups) {
         val validGroupIds = groups.map { it.id }.toSet()
         lazyListStates.keys.retainAll(validGroupIds)
         lazyGridStates.keys.retainAll(validGroupIds)
     }
-
-    val latestDoubleColumnDisplay by rememberUpdatedState(doubleColumnDisplay)
 
     LaunchedEffect(groups, uiState.selectedGroupId) {
         if (groups.isEmpty()) return@LaunchedEffect
@@ -93,66 +88,16 @@ fun MainScreen(
     }
 
     val latestGroups by rememberUpdatedState(groups)
-    val latestLocateInProgress by rememberUpdatedState(locateInProgress)
 
     LaunchedEffect(pagerState) {
         snapshotFlow { pagerState.settledPage }
             .distinctUntilChanged()
             .collect { page ->
                 val currentGroups = latestGroups
-                if (!latestLocateInProgress && page in currentGroups.indices) {
+                if (page in currentGroups.indices) {
                     onAction(MainAction.SelectGroup(currentGroups[page].id))
                 }
             }
-    }
-
-    LaunchedEffect(uiState.locateTarget) {
-        val target = uiState.locateTarget ?: return@LaunchedEffect
-        if (target.groupIndex !in 0 until pagerState.pageCount) {
-            mainViewModel.onAction(MainAction.LocateHandled(target))
-            return@LaunchedEffect
-        }
-
-        locateInProgress = true
-        try {
-            if (pagerState.settledPage != target.groupIndex) {
-                pagerState.navigateToPageOptimized(
-                    targetPage = target.groupIndex,
-                    animateAdjacentPage = false
-                )
-            }
-            onAction(MainAction.SelectGroup(target.groupId))
-
-            repeat(10) {
-                val ready = if (latestDoubleColumnDisplay) {
-                    lazyGridStates[target.groupId] != null
-                } else {
-                    lazyListStates[target.groupId] != null
-                }
-                if (ready) return@repeat
-                delay(16L)
-            }
-
-            if (latestDoubleColumnDisplay) {
-                lazyGridStates[target.groupId]?.let { gridState ->
-                    gridState.scrollToItem(
-                        index = target.itemPosition,
-                        scrollOffset = -gridState.layoutInfo.viewportSize.height / 3
-                    )
-                }
-            } else {
-                lazyListStates[target.groupId]?.let { listState ->
-                    listState.scrollToItem(
-                        index = target.itemPosition,
-                        scrollOffset = -listState.layoutInfo.viewportSize.height / 3
-                    )
-                }
-            }
-        } finally {
-            delay(32L)
-            locateInProgress = false
-            mainViewModel.onAction(MainAction.LocateHandled(target))
-        }
     }
 
     MainDialogs(
@@ -279,6 +224,7 @@ fun MainScreen(
                             groupId = group.id,
                             mainViewModel = mainViewModel,
                             selectedGuid = selectedGuid,
+                            locateTarget = uiState.locateTarget,
                             doubleColumnDisplay = doubleColumnDisplay,
                             confirmRemove = confirmRemove,
                             searchQuery = searchQuery,

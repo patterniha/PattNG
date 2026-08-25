@@ -8,6 +8,7 @@ import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -20,7 +21,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -52,6 +52,7 @@ import com.v2ray.ang.ui.compose.ReorderableListItem
 import com.v2ray.ang.ui.compose.SelectListDialog
 import com.v2ray.ang.ui.compose.SettingsSwitchItem
 import com.v2ray.ang.ui.compose.colorFabActive
+import com.v2ray.ang.ui.compose.NavigationBarsBottomPadding
 import com.v2ray.ang.ui.compose.verticalScrollbar
 import com.v2ray.ang.util.QRCodeDecoder
 import com.v2ray.ang.util.Utils
@@ -127,7 +128,7 @@ fun SubSettingScreen(
     }
 
     Scaffold(
-        contentWindowInsets = ScaffoldDefaults.contentWindowInsets,
+        contentWindowInsets = WindowInsets(0),
         topBar = {
             AppTopBar(
                 title = stringResource(R.string.title_sub_setting),
@@ -135,10 +136,10 @@ fun SubSettingScreen(
                 isLoading = isLoading,
                 actions = {
                     IconButton(onClick = onAddClick) {
-                        Icon(painterResource(R.drawable.ic_add_24dp), contentDescription = stringResource(R.string.menu_item_add_config))
+                        Icon(painterResource(R.drawable.ic_add_24dp), contentDescription = stringResource(R.string.acc_add_subscription))
                     }
                     IconButton(onClick = { showUpdateDialog = true }) {
-                        Icon(painterResource(R.drawable.ic_restore_24dp), contentDescription = stringResource(R.string.title_sub_update))
+                        Icon(painterResource(R.drawable.ic_restore_24dp), contentDescription = stringResource(R.string.acc_update_subscriptions))
                     }
                 }
             )
@@ -149,7 +150,8 @@ fun SubSettingScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .verticalScrollbar(lazyListState)
+                .verticalScrollbar(lazyListState),
+            contentPadding = NavigationBarsBottomPadding()
         ) {
             itemsIndexed(
                 items = subscriptions,
@@ -202,14 +204,14 @@ fun SubSettingScreen(
                                         }) {
                                             Icon(
                                                 painter = painterResource(R.drawable.ic_share_24dp),
-                                                contentDescription = "Share"
+                                                contentDescription = stringResource(R.string.acc_share_subscription)
                                             )
                                         }
                                     }
                                     IconButton(onClick = { onEditSub(subCache.guid) }) {
                                         Icon(
                                             painter = painterResource(R.drawable.ic_edit_24dp),
-                                            contentDescription = "Edit"
+                                            contentDescription = stringResource(R.string.acc_edit)
                                         )
                                     }
                                     IconButton(onClick = {
@@ -218,7 +220,7 @@ fun SubSettingScreen(
                                     }) {
                                         Icon(
                                             painter = painterResource(R.drawable.ic_delete_24dp),
-                                            contentDescription = "Delete"
+                                            contentDescription = stringResource(R.string.acc_delete)
                                         )
                                     }
                                 }
@@ -233,7 +235,7 @@ fun SubSettingScreen(
                                     modifier = Modifier.scale(0.7f),
                                     colors = SwitchDefaults.colors(
                                         checkedThumbColor = MaterialTheme.colorScheme.onSecondary,
-                                        checkedTrackColor = colorFabActive
+                                        checkedTrackColor = MaterialTheme.colorScheme.secondary
                                     )
                                 )
                             }
@@ -323,12 +325,12 @@ fun SubSettingScreen(
                     showUpdateDialog = false
                     onSubUpdate()
                 }) {
-                    Text(text = stringResource(android.R.string.ok))
+                    Text(text = stringResource(R.string.action_ok))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showUpdateDialog = false }) {
-                    Text(text = stringResource(android.R.string.cancel))
+                    Text(text = stringResource(R.string.action_cancel))
                 }
             }
         )
