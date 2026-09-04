@@ -892,8 +892,10 @@ object CoreConfigManager {
             enableParallelQuery = if ((domesticDns.size + remoteDns.size) > 2) true else null
         )
 
+        // DNS routing, inserted at the top so user rules cannot hijack DNS module queries
+        val dnsRouteRules = mutableListOf<V2rayConfig.RoutingBean.RulesBean>()
         if (domesticDnsTags.isNotEmpty()) {
-            v2rayConfig.routing.rules.add(
+            dnsRouteRules.add(
                 V2rayConfig.RoutingBean.RulesBean(
                     outboundTag = AppConfig.TAG_DIRECT,
                     inboundTag = ArrayList(domesticDnsTags),
@@ -904,7 +906,7 @@ object CoreConfigManager {
 
         val dnsProxyBalancerTag = policyGroupBalancerTags[AppConfig.TAG_PROXY]
         if (dnsProxyBalancerTag != null) {
-            v2rayConfig.routing.rules.add(
+            dnsRouteRules.add(
                 V2rayConfig.RoutingBean.RulesBean(
                     balancerTag = dnsProxyBalancerTag,
                     inboundTag = arrayListOf(AppConfig.TAG_DNS),
@@ -912,7 +914,7 @@ object CoreConfigManager {
                 )
             )
         } else {
-            v2rayConfig.routing.rules.add(
+            dnsRouteRules.add(
                 V2rayConfig.RoutingBean.RulesBean(
                     outboundTag = AppConfig.TAG_PROXY,
                     inboundTag = arrayListOf(AppConfig.TAG_DNS),
@@ -920,6 +922,7 @@ object CoreConfigManager {
                 )
             )
         }
+        v2rayConfig.routing.rules.addAll(0, dnsRouteRules)
     }
 
     private fun buildDnsHostsFromRoutingRules(configContext: CoreConfigContext): MutableMap<String, Any> {
@@ -1002,6 +1005,7 @@ object CoreConfigManager {
                     domains = cnDomains,
                     expectIPs = geoipCn,
                     skipFallback = true,
+                    finalQuery = true,
                     tag = cnDomesticDnsTag
                 )
             )
@@ -1027,6 +1031,7 @@ object CoreConfigManager {
                                 address = address,
                                 domains = rule.domain,
                                 skipFallback = true,
+                                finalQuery = true,
                                 tag = tag
                             )
                         )
