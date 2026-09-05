@@ -158,6 +158,8 @@ jobs:
         with:
           file: release-files/*
           tag: ${{ inputs.release_tag }}
+          release_name: PattNG v${{ inputs.release_tag }}
+          body: "."
           target_commit: ${{ github.sha }}
           file_glob: true
           prerelease: true
