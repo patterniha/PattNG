@@ -9,6 +9,7 @@ import com.v2ray.ang.ui.base.BaseViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import java.util.UUID
 
 class RoutingSettingsViewModel(application: Application) : BaseViewModel(application) {
     private val rulesets: MutableList<RulesetItem> = mutableListOf()
@@ -19,9 +20,14 @@ class RoutingSettingsViewModel(application: Application) : BaseViewModel(applica
     fun getAll(): List<RulesetItem> = rulesets.toList()
 
     fun reload() {
-        val loaded = MmkvManager.decodeRoutingRulesets() ?: mutableListOf()
-        if (SettingsManager.ensureRoutingRulesetIds(loaded)) {
-            MmkvManager.encodeRoutingRulesets(loaded)
+        val loaded = MmkvManager.decodeRoutingRulesets()?.toMutableList() ?: mutableListOf()
+        var needsSave = false
+        loaded.forEachIndexed { index, item ->
+            if (item.id.isEmpty()) {
+                item.id = UUID.randomUUID().toString()
+                SettingsManager.saveRoutingRuleset(index, item)
+                needsSave = true
+            }
         }
         rulesets.clear()
         rulesets.addAll(loaded)
@@ -31,7 +37,7 @@ class RoutingSettingsViewModel(application: Application) : BaseViewModel(applica
     fun update(position: Int, item: RulesetItem) {
         if (position in rulesets.indices) {
             rulesets[position] = item
-            SettingsManager.saveRoutingRuleset(item.id, item)
+            SettingsManager.saveRoutingRuleset(position, item)
             _rulesetsFlow.value = rulesets.toList()
         }
     }

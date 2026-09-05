@@ -65,15 +65,14 @@ class RoutingEditActivity : BaseComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        initial = SettingsManager.getRoutingRuleset(rulesetId)
+        initial = rulesetId?.let { SettingsManager.getRoutingRuleset(it) }
+        if (initial == null) {
+            finish()
+            return
+        }
         val profileRemarks = SettingsManager.getProfileRemarks()
         outboundSuggestions = (BUILTIN_OUTBOUND_TAGS.toList() + profileRemarks).distinct()
         canUseProcess = SettingsManager.canUseProcessRouting()
-        // Without an id this screen adds a new ruleset. With an id that no longer resolves the
-        // ruleset was removed in the meantime, so there is nothing left to edit.
-        if (!rulesetId.isNullOrEmpty() && initial == null) {
-            finish()
-        }
     }
 
     @Composable
