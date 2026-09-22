@@ -202,7 +202,7 @@ object AetherCoreManager {
         withTimeoutOrNull(timeoutMs) { output.receiveAsFlow().mapNotNull(match).firstOrNull() }
     }
 
-    /** Starts the session core for [profile], listening on [listenPort]. */
+    /** Starts the session core for [profile], listening on the port it chooses. */
     @Synchronized
     fun start(context: Context, profile: ProfileItem, onExit: () -> Unit) {
         stop()
@@ -213,6 +213,61 @@ object AetherCoreManager {
         val logLevel = coreLogLevel(MmkvManager.decodeSettingsString(AppConfig.PREF_LOGLEVEL))
         val arguments = buildArguments(profile, port, logLevel = logLevel)
         lifecycle.execute { open(next, appContext, arguments) }
+    }
+
+    /**
+     * Starts the session core with the [arguments] of a custom configuration's aetherCommand,
+     * which the app runs as they are written; [port] is where the warm-up waits for the listener.
+     */
+    @Synchronized
+    fun start(context: Context, arguments: List<String>, port: Int, onExit: () -> Unit) {
+        stop()
+        val next = Session(port, onExit)
+        session = next
+        val appContext = context.applicationContext
+        lifecycle.execute { open(next, appContext, arguments) }
+    }
+
+    /**
+     * Splits hand-written command text into arguments on whitespace; a quoted section keeps its
+     * text together, and a backslash quotes the next character, so an endpoint or a path with a
+     * space can still be written. There is no variable or pattern expansion: the text runs as it
+     * is written, nothing runs through a shell.
+     */
+    fun splitCommand(text: String): List<String> {
+        val arguments = mutableListOf<String>()
+        val argument = StringBuilder()
+        var quote: Char? = null
+        var escaped = false
+        var started = false
+
+        fun flush() {
+            if (started) arguments.add(argument.toString())
+            argument.clear()
+            started = false
+        }
+
+        for (char in text) {
+            when {
+                escaped -> {
+                    argument.append(char)
+                    escaped = false
+                }
+                char == '\\' && quote != '\'' -> escaped = true
+                quote != null -> if (char == quote) quote = null else argument.append(char)
+                char == '\'' || char == '"' -> {
+                    quote = char
+                    started = true
+                }
+                char.isWhitespace() -> flush()
+                else -> {
+                    argument.append(char)
+                    started = true
+                }
+            }
+        }
+        flush()
+        return arguments
     }
 
     @Synchronized

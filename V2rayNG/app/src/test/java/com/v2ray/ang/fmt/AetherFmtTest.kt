@@ -1,7 +1,6 @@
 package com.v2ray.ang.fmt
 
-import com.google.gson.JsonObject
-import com.google.gson.JsonParser
+import com.v2ray.ang.core.AetherCoreManager
 import com.v2ray.ang.dto.entities.ProfileItem
 import com.v2ray.ang.enums.AetherIpVersion
 import com.v2ray.ang.enums.AetherObfuscation
@@ -9,7 +8,6 @@ import com.v2ray.ang.enums.AetherProtocol
 import com.v2ray.ang.enums.AetherScanMode
 import com.v2ray.ang.enums.AetherTransport
 import com.v2ray.ang.enums.EConfigType
-import com.v2ray.ang.util.JsonUtil
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -399,17 +397,17 @@ class AetherFmtTest {
         assertNull(AetherFmt.storedListenPort(10819))
     }
 
-    /** aetherSettings as they are written into a full configuration: through the same Gson the app serializes with. */
-    private fun settingsOf(config: ProfileItem): JsonObject =
-        JsonParser.parseString(JsonUtil.toJson(AetherFmt.toSettings(config))).asJsonObject
-
-    private fun read(json: String): AetherFmt.Settings = AetherFmt.fromSettings(JsonParser.parseString(json).asJsonObject)
-
-    private fun valid(json: String): ProfileItem = (read(json) as AetherFmt.Settings.Valid).profile
+    /**
+     * The aetherCommand of a profile, split back into arguments the way the daemon runs a
+     * hand-written one: the arguments the daemon would build for the profile, the binary's name
+     * in place of the binary.
+     */
+    private fun commandOf(config: ProfileItem): List<String> =
+        AetherCoreManager.splitCommand(AetherFmt.toCommand(config))
 
     @Test
-    fun aPinnedMasqueNodeSurvivesItsSettings() {
-        val original = profile {
+    fun theCommandOfAProfileStartsTheSameCore() {
+        val pinned = profile {
             server = "162.159.198.1"
             serverPort = "443"
             aetherTransport = AetherTransport.HTTP2.type
@@ -420,119 +418,70 @@ class AetherFmtTest {
             aetherFragmentSize = "16-32"
             aetherFragmentDelay = "5"
         }
+        val arguments = AetherCoreManager.buildArguments(pinned, AetherCoreManager.listenPort(pinned))
 
-        val settings = settingsOf(original)
-        assertEquals(
-            """{"address":"162.159.198.1","port":"443","protocol":"masque","transport":"h2","scan":"stealth",""" +
-                """"noize":"aggressive","ip":"both","fragment":true,"fragmentSize":"16-32","fragmentDelay":"5"}""",
-            settings.toString()
-        )
-
-        val parsed = (AetherFmt.fromSettings(settings) as AetherFmt.Settings.Valid).profile
-        assertEquals(EConfigType.AETHER, parsed.configType)
-        assertEquals(original.duplicateIdentity(), parsed.duplicateIdentity())
+        assertEquals("aether ${arguments.joinToString(" ")}", AetherFmt.toCommand(pinned))
+        assertEquals(listOf("aether") + arguments, commandOf(pinned))
+        assertTrue(AetherCoreManager.runsProfile(arguments.drop(0), pinned))
     }
 
     @Test
-    fun bothGoolHopsSurviveTheirSettings() {
-        val original = profile {
+    fun theCommandOfAGoolProfileKeepsBothHops() {
+        val gool = profile {
             aetherProtocol = AetherProtocol.GOOL.type
             aetherWiwOuter = "162.159.192.1:2408"
             aetherWiwInner = "[2606:4700:d0::a29f:c001]:894"
             aetherFragment = false
         }
 
-        val settings = settingsOf(original)
+        val command = AetherFmt.toCommand(gool)
+        assertTrue("--wiw-outer 162.159.192.1:2408" in command)
+        assertTrue("--wiw-inner [2606:4700:d0::a29f:c001]:894" in command)
+        assertEquals(AetherCoreManager.buildArguments(gool, AetherCoreManager.listenPort(gool)), commandOf(gool).drop(1))
+    }
+
+    @Test
+    fun theCommandBindsThePortTheProfileListensOn() {
+        val defaultPort = profile { }
+        assertEquals(AetherCoreManager.socksPort, AetherFmt.bindPortOfCommand(commandOf(defaultPort).drop(1)))
+
+        val elsewhere = profile { aetherListenPort = "20808" }
+        assertTrue("--bind 127.0.0.1:20808" in AetherFmt.toCommand(elsewhere))
+        assertEquals(20808, AetherFmt.bindPortOfCommand(commandOf(elsewhere).drop(1)))
+    }
+
+    @Test
+    fun theBindPortIsReadFromACommandTheWayTheCoreReadsIt() {
+        assertEquals(10819, AetherFmt.bindPortOfCommand(listOf("--bind", "127.0.0.1:10819", "--protocol", "wg")))
+        assertEquals(41234, AetherFmt.bindPortOfCommand(listOf("--protocol", "wg", "--bind", "127.0.0.1:41234")))
+        assertNull(AetherFmt.bindPortOfCommand(listOf("--protocol", "wg")))
+        assertNull(AetherFmt.bindPortOfCommand(listOf("--bind")))
+        assertNull(AetherFmt.bindPortOfCommand(listOf("--bind", "10819")))
+        assertNull(AetherFmt.bindPortOfCommand(listOf("--bind", "127.0.0.1:0")))
+        assertNull(AetherFmt.bindPortOfCommand(listOf("--bind", "127.0.0.1:65536")))
+        assertNull(AetherFmt.bindPortOfCommand(emptyList()))
+    }
+
+    @Test
+    fun commandTextIsSplitOnWhitespaceWithQuoting() {
         assertEquals(
-            """{"protocol":"gool","scan":"balanced","noize":"balanced","ip":"v4",""" +
-                """"outer":"162.159.192.1:2408","inner":"[2606:4700:d0::a29f:c001]:894"}""",
-            settings.toString()
+            listOf("--bind", "127.0.0.1:10819", "--protocol", "wg"),
+            AetherCoreManager.splitCommand("--bind 127.0.0.1:10819 --protocol wg")
         )
-        val parsed = (AetherFmt.fromSettings(settings) as AetherFmt.Settings.Valid).profile
-        assertEquals(original.duplicateIdentity(), parsed.duplicateIdentity())
-    }
-
-    @Test
-    fun settingsLeaveOutWhatTheProtocolDoesNotUse() {
-        val scanned = settingsOf(
-            profile {
-                aetherProtocol = AetherProtocol.WIREGUARD.type
-                aetherWiwOuter = "162.159.192.1:2408"
-                aetherFragment = true
-            }
-        )
-        assertEquals("""{"protocol":"wg","scan":"balanced","noize":"balanced","ip":"v4"}""", scanned.toString())
-
-        val gool = settingsOf(profile { aetherProtocol = AetherProtocol.GOOL.type; server = "162.159.198.1"; serverPort = "443" })
-        assertFalse(gool.has("address"))
-        assertFalse(gool.has("port"))
-    }
-
-    @Test
-    fun emptySettingsAreTheDefaultsAndAScannedEndpoint() {
-        val parsed = valid("{}")
-        assertEquals(AetherProtocol.MASQUE.type, parsed.aetherProtocol)
-        assertEquals(AetherTransport.HTTP3.type, parsed.aetherTransport)
-        assertEquals(AetherScanMode.BALANCED.type, parsed.aetherScanMode)
-        assertEquals(AetherObfuscation.BALANCED.type, parsed.aetherObfuscation)
-        assertEquals(AetherIpVersion.V4.type, parsed.aetherIpVersion)
-        assertEquals(false, parsed.aetherFragment)
-        assertNull(parsed.server)
-        assertNull(parsed.serverPort)
-
-        // Null and empty values are left-out values.
-        val blank = valid("""{"address": "", "port": null, "protocol": null, "scan": " "}""")
-        assertNull(blank.server)
-        assertEquals(AetherProtocol.MASQUE.type, blank.aetherProtocol)
-        assertEquals(AetherScanMode.BALANCED.type, blank.aetherScanMode)
-    }
-
-    @Test
-    fun handWrittenSettingsMayUseNumbersAndCapitals() {
-        val parsed = valid(
-            """{"address": "188.114.96.77", "port": 443, "protocol": "WG", "scan": "Balanced", "noize": "aggressive", "ip": "both"}"""
-        )
-        assertEquals("188.114.96.77", parsed.server)
-        assertEquals("443", parsed.serverPort)
-        assertEquals(AetherProtocol.WIREGUARD.type, parsed.aetherProtocol)
-        assertEquals(AetherScanMode.BALANCED.type, parsed.aetherScanMode)
-        assertEquals(AetherObfuscation.AGGRESSIVE.type, parsed.aetherObfuscation)
-        assertEquals(AetherIpVersion.DUAL.type, parsed.aetherIpVersion)
-
-        val fragmented = valid("""{"transport": "h2", "fragment": true, "fragmentSize": 16, "fragmentDelay": "2-10", "port": "443"}""")
-        assertEquals(true, fragmented.aetherFragment)
-        assertEquals("16", fragmented.aetherFragmentSize)
-        assertEquals("2-10", fragmented.aetherFragmentDelay)
-        // A port without an address pins nothing.
-        assertNull(fragmented.serverPort)
-    }
-
-    @Test
-    fun anUnknownKeyOrModeIsReportedInsteadOfDefaulted() {
-        assertEquals(AetherFmt.Settings.Unknown("noise"), read("""{"noise": "off"}"""))
-        assertEquals(AetherFmt.Settings.Unknown("protocol: wireguard"), read("""{"protocol": "wireguard"}"""))
-        assertEquals(AetherFmt.Settings.Unknown("transport: quic"), read("""{"transport": "quic"}"""))
-        assertEquals(AetherFmt.Settings.Unknown("scan: fast"), read("""{"scan": "fast"}"""))
-        assertEquals(AetherFmt.Settings.Unknown("noize: gfw"), read("""{"noize": "gfw"}"""))
-        assertEquals(AetherFmt.Settings.Unknown("ip: 4"), read("""{"ip": 4}"""))
-        assertEquals(AetherFmt.Settings.Unknown("fragment: yes"), read("""{"fragment": "yes"}"""))
-        assertEquals(AetherFmt.Settings.Unknown("scan"), read("""{"scan": {"mode": "turbo"}}"""))
-        assertEquals(AetherFmt.Settings.Unknown("address"), read("""{"address": ["188.114.96.77"]}"""))
-    }
-
-    @Test
-    fun settingsTheEditorRefusesAreRefusedHereAsWell() {
-        assertEquals(AetherFmt.Settings.Refused(AetherFmt.Problem.INVALID_PEER), read("""{"address": "engage.cloudflareclient.com", "port": 2408}"""))
-        assertEquals(AetherFmt.Settings.Refused(AetherFmt.Problem.INVALID_PEER), read("""{"address": "188.114.96.77"}"""))
-        assertEquals(AetherFmt.Settings.Refused(AetherFmt.Problem.INVALID_PEER), read("""{"address": "188.114.96.77", "port": 70000}"""))
-        assertEquals(AetherFmt.Settings.Refused(AetherFmt.Problem.INVALID_HOP), read("""{"protocol": "gool", "outer": "162.159.192.1"}"""))
-        assertEquals(
-            AetherFmt.Settings.Refused(AetherFmt.Problem.SHARED_HOP),
-            read("""{"protocol": "gool", "outer": "162.159.192.1:2408", "inner": "162.159.192.1:894"}""")
-        )
-        assertEquals(
-            AetherFmt.Settings.Refused(AetherFmt.Problem.INVALID_FRAGMENT),
-            read("""{"transport": "h2", "fragment": true, "fragmentSize": "0"}""")
-        )
+        // Blank text, leading and repeated whitespace: no empty arguments.
+        assertEquals(emptyList<String>(), AetherCoreManager.splitCommand(""))
+        assertEquals(emptyList<String>(), AetherCoreManager.splitCommand("  \t \n"))
+        assertEquals(listOf("a", "b"), AetherCoreManager.splitCommand("  a   b  "))
+        // Quotes keep text together, empty quoted text is still an argument.
+        assertEquals(listOf("--peer", "188.114.96.77:443"), AetherCoreManager.splitCommand("--peer \"188.114.96.77:443\""))
+        assertEquals(listOf("--remark", "my node", "--scan"), AetherCoreManager.splitCommand("--remark \"my node\" --scan"))
+        assertEquals(listOf("a b", "c"), AetherCoreManager.splitCommand("'a b' c"))
+        assertEquals(listOf(""), AetherCoreManager.splitCommand("''"))
+        // A backslash quotes the next character, inside and outside quotes, but not in single quotes.
+        assertEquals(listOf("a b"), AetherCoreManager.splitCommand("a\\ b"))
+        assertEquals(listOf("a\"b"), AetherCoreManager.splitCommand("\"a\\\"b\""))
+        assertEquals(listOf("a\\b"), AetherCoreManager.splitCommand("'a\\b'"))
+        // An unterminated quote is no error: the text simply runs to the end.
+        assertEquals(listOf("a b"), AetherCoreManager.splitCommand("\"a b"))
     }
 }

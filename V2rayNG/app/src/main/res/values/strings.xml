@@ -619,9 +619,7 @@
     <string name="aether_scan_blocked">Disconnect the Aether profile before scanning; a scan would open a second tunnel on the running connection\'s key</string>
     <string name="aether_chain_entry_only">An Aether profile can only be the first hop of a proxy chain, the one that reaches the internet directly</string>
     <string name="aether_config_single_profile">A configuration can use only one Aether profile</string>
-    <string name="aether_custom_single_core">Only one Aether core can run: every outbound with aetherSettings has to use the same settings and the same port</string>
-    <string name="aether_custom_no_listener">The SOCKS outbound with aetherSettings has to dial %1$s and a port from 1 to 65535; the Aether core listens there</string>
-    <string name="aether_custom_unknown_entry">aetherSettings has an entry the Aether core does not know: %1$s</string>
+    <string name="aether_custom_no_listener">An aetherCommand has to bind a loopback port with --bind, and a SOCKS outbound has to dial %1$s and that port; the Aether core listens there</string>
     <string name="title_aether_core">Aether core</string>
     <string name="summary_aether_core">WARP client by CluvexStudio, bundled under the AGPL-3.0 license. Tap to open its source code.</string>
     <string-array name="aether_scan_entries">

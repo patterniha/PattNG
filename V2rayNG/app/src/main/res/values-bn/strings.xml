@@ -616,9 +616,7 @@
     <string name="aether_scan_blocked">স্ক্যান করার আগে Aether সংযোগ বিচ্ছিন্ন করুন; স্ক্যান চলমান সংযোগের কী দিয়ে দ্বিতীয় একটি টানেল খুলবে</string>
     <string name="aether_chain_entry_only">একটি Aether প্রোফাইল শুধুমাত্র প্রক্সি চেইনের প্রথম হপ হতে পারে, যেটি সরাসরি ইন্টারনেটে পৌঁছায়</string>
     <string name="aether_config_single_profile">একটি কনফিগারেশন শুধুমাত্র একটি Aether প্রোফাইল ব্যবহার করতে পারে</string>
-    <string name="aether_custom_single_core">শুধুমাত্র একটি Aether কোর চলতে পারে: aetherSettings থাকা সব আউটবাউন্ডকে একই সেটিংস ও একই পোর্ট ব্যবহার করতে হবে</string>
-    <string name="aether_custom_no_listener">aetherSettings থাকা SOCKS আউটবাউন্ডকে %1$s এবং 1 থেকে 65535 এর মধ্যে একটি পোর্টে সংযোগ করতে হবে; Aether কোর সেখানেই শোনে</string>
-    <string name="aether_custom_unknown_entry">aetherSettings-এ এমন একটি এন্ট্রি আছে যা Aether কোর চেনে না: %1$s</string>
+    <string name="aether_custom_no_listener">একটি aetherCommand-কে --bind দিয়ে একটি লুপব্যাক পোর্ট বাঁধতে হবে, এবং একটি SOCKS আউটবাউন্ডকে %1$s ও সেই পোর্টে সংযোগ করতে হবে; Aether কোর সেখানেই শোনে</string>
     <string name="title_aether_core">Aether কোর</string>
     <string name="summary_aether_core">CluvexStudio-এর WARP ক্লায়েন্ট, AGPL-3.0 লাইসেন্সে অন্তর্ভুক্ত। সোর্স কোড খুলতে ট্যাপ করুন।</string>
     <string-array name="aether_scan_entries">

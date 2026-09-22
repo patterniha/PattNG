@@ -614,9 +614,7 @@
     <string name="aether_scan_blocked">请先断开 Aether 连接，再进行扫描；扫描会使用当前连接的密钥打开第二条隧道</string>
     <string name="aether_chain_entry_only">Aether 配置只能作为代理链的第一跳，即直接连接互联网的那一跳</string>
     <string name="aether_config_single_profile">一个配置只能使用一个 Aether 配置</string>
-    <string name="aether_custom_single_core">只能运行一个 Aether 内核：所有带 aetherSettings 的出站必须使用相同的设置和相同的端口</string>
-    <string name="aether_custom_no_listener">带有 aetherSettings 的 SOCKS 出站必须连接 %1$s 和 1 到 65535 之间的端口；Aether 内核在该处监听</string>
-    <string name="aether_custom_unknown_entry">aetherSettings 中有 Aether 内核无法识别的条目：%1$s</string>
+    <string name="aether_custom_no_listener">aetherCommand 必须通过 --bind 绑定一个回环端口，并且一个 SOCKS 出站必须连接 %1$s 和该端口；Aether 内核在该处监听</string>
     <string name="title_aether_core">Aether 内核</string>
     <string name="summary_aether_core">由 CluvexStudio 开发的 WARP 客户端，以 AGPL-3.0 许可证随应用分发。点按查看源代码。</string>
     <string-array name="aether_scan_entries">

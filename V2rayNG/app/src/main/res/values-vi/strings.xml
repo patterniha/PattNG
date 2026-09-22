@@ -614,9 +614,7 @@
     <string name="aether_scan_blocked">Hãy ngắt kết nối Aether trước khi quét; việc quét sẽ mở một đường hầm thứ hai bằng khóa của kết nối hiện tại</string>
     <string name="aether_chain_entry_only">Hồ sơ Aether chỉ có thể là chặng đầu tiên của chuỗi proxy, chặng kết nối trực tiếp ra Internet</string>
     <string name="aether_config_single_profile">Một cấu hình chỉ có thể dùng một hồ sơ Aether</string>
-    <string name="aether_custom_single_core">Chỉ có thể chạy một lõi Aether: mọi outbound có aetherSettings phải dùng cùng thiết lập và cùng cổng</string>
-    <string name="aether_custom_no_listener">Outbound SOCKS có aetherSettings phải kết nối tới %1$s và một cổng từ 1 đến 65535; lõi Aether lắng nghe ở đó</string>
-    <string name="aether_custom_unknown_entry">aetherSettings có một mục mà lõi Aether không nhận biết: %1$s</string>
+    <string name="aether_custom_no_listener">Một aetherCommand phải gắn một cổng loopback bằng --bind, và một outbound SOCKS phải kết nối tới %1$s và cổng đó; lõi Aether lắng nghe ở đó</string>
     <string name="title_aether_core">Lõi Aether</string>
     <string name="summary_aether_core">Trình khách WARP của CluvexStudio, đi kèm theo giấy phép AGPL-3.0. Nhấn để mở mã nguồn.</string>
     <string-array name="aether_scan_entries">

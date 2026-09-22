@@ -624,9 +624,7 @@
     <string name="aether_scan_blocked">افصل ملف Aether قبل الفحص؛ الفحص سيفتح نفقًا ثانيًا بمفتاح الاتصال الحالي</string>
     <string name="aether_chain_entry_only">لا يمكن لملف Aether أن يكون إلا القفزة الأولى في سلسلة الوكيل، وهي القفزة التي تصل إلى الإنترنت مباشرة</string>
     <string name="aether_config_single_profile">لا يمكن للتكوين استخدام أكثر من ملف Aether واحد</string>
-    <string name="aether_custom_single_core">لا يمكن تشغيل أكثر من نواة Aether واحدة: يجب أن تستخدم جميع المخارج التي تحمل aetherSettings الإعدادات نفسها والمنفذ نفسه</string>
-    <string name="aether_custom_no_listener">يجب أن يتصل مخرج SOCKS الذي يحمل aetherSettings بالعنوان %1$s وبمنفذ من 1 إلى 65535؛ فهناك تستمع نواة Aether</string>
-    <string name="aether_custom_unknown_entry">يحتوي aetherSettings على إدخال لا تعرفه نواة Aether: %1$s</string>
+    <string name="aether_custom_no_listener">على aetherCommand أن يربط منفذًا محليًا بـ ‎--bind، وعلى مخرج SOCKS أن يتصل بـ %1$s وذلك المنفذ؛ فهناك تستمع نواة Aether</string>
     <string name="title_aether_core">نواة Aether</string>
     <string name="summary_aether_core">عميل WARP من CluvexStudio مضمّن بموجب رخصة AGPL-3.0. انقر لفتح الشيفرة المصدرية.</string>
     <string-array name="aether_scan_entries">

@@ -136,6 +136,22 @@ class RealPingWorkerService(
                 }
             }
         }
+        val aetherCommand = configResult.aetherCommand
+        if (aetherCommand != null) {
+            // A custom command has no profile a test tunnel could be opened from, so the test goes
+            // through the daemon's session core when this configuration runs it, and the running
+            // service is rebuilt for the port of the core that answers. Without a session there is
+            // no core to test through, and a foreign session's key cannot be shared.
+            val port = configResult.aetherPort
+            val activeGuid = MmkvManager.getSelectServer()
+            if (guid != activeGuid || !AetherCoreManager.awaitListening(AetherDelayTester.TEST_BUDGET_MS)) {
+                return AetherDelayTester.UNTESTED
+            }
+            val time = RealPingExecutionLimiter.run(config.configType) {
+                AetherDelayTester.requestDelay(port, SettingsManager.getDelayTestUrl())
+            }
+            return if (time >= 0) time else retFailure
+        }
         if (!config.configType.isComplexType()
             && config.configType != EConfigType.HYSTERIA2
             && config.configType != EConfigType.WIREGUARD

@@ -57,6 +57,9 @@ object CoreServiceManager {
 
     /** The Aether profile the running configuration depends on, null when it has no Aether outbound. */
     private var currentAether: ProfileItem? = null
+
+    /** The hand-written command of a running custom configuration's Aether core, when it has one. */
+    private var currentAetherCommand: List<String>? = null
     private var processFinder: XrayProcessFinder? = null
     private var browserDialer: IDialerService? = null
 
@@ -179,15 +182,21 @@ object CoreServiceManager {
 
         cancelAetherWarmUp()
         // One core serves every Aether outbound of the configuration: the selected profile itself, the
-        // entry hop of its chain, a routing target, a policy-group member, or the SOCKS outbound of a
-        // custom configuration that asks for it with aetherSettings. It listens on the profile's port.
+        // entry hop of its chain, a routing target, a policy-group member, or the core a custom
+        // configuration asks for with its aetherCommand. It listens on the profile's port, or on the
+        // port the command binds.
         val aether = result.aetherProfile
-        if (aether != null) {
+        val aetherCommand = result.aetherCommand
+        val aetherPort = when {
+            aether != null -> AetherCoreManager.listenPort(aether)
+            aetherCommand != null -> result.aetherPort
+            else -> 0
+        }
+        if (aether != null || aetherCommand != null) {
             if (!AetherCoreManager.isSupported(service)) {
                 throw StartFailure(service.getString(R.string.aether_unsupported_abi))
             }
             // Xray would take the port first, and the Aether outbound would dial the configuration's own inbound.
-            val aetherPort = AetherCoreManager.listenPort(aether)
             if (AetherDependency.inboundListensOn(result.content, aetherPort)) {
                 LogUtil.w(
                     AppConfig.TAG,
@@ -199,13 +208,17 @@ object CoreServiceManager {
                 throw StartFailure(service.getString(R.string.aether_listen_port_taken))
             }
             aetherExitHandled = false
-            AetherCoreManager.start(service, aether) { onAetherExit(guid) }
+            if (aether != null) {
+                AetherCoreManager.start(service, aether) { onAetherExit(guid) }
+            } else {
+                AetherCoreManager.start(service, aetherCommand.orEmpty(), aetherPort) { onAetherExit(guid) }
+            }
         } else {
             AetherCoreManager.stop()
         }
 
         try {
-            launchNativeCore(service, guid, config, aether, result.content, vpnInterface, isReload)
+            launchNativeCore(service, guid, config, aether, aetherCommand, result.content, vpnInterface, isReload)
         } catch (e: Exception) {
             // Setup failed after this attempt spawned the Aether process; release it with the rest.
             AetherCoreManager.stop()
@@ -219,12 +232,14 @@ object CoreServiceManager {
         guid: String,
         config: ProfileItem,
         aether: ProfileItem?,
+        aetherCommand: List<String>?,
         content: String,
         vpnInterface: ParcelFileDescriptor?,
         isReload: Boolean,
     ) {
         currentConfig = config
         currentAether = aether
+        currentAetherCommand = if (aether == null) aetherCommand else null
         var tunFd = vpnInterface?.fd ?: 0
         val dialerMode = BrowserDialerMode.from(config.browserDialerMode)
         val dialerAddr = if (dialerMode != null) {
@@ -264,7 +279,7 @@ object CoreServiceManager {
             else -> {}
         }
 
-        if (aether != null) {
+        if (aether != null || aetherCommand != null) {
             announceAetherWarmUp(service, guid, isReload)
         } else if (!isReload) {
             MessageHelper.sendMsg2UI(service, AppConfig.MSG_STATE_START_SUCCESS, "")
@@ -542,7 +557,7 @@ object CoreServiceManager {
         connectionTestScope.coroutineContext.cancelChildren()
         connectionTestScope.launch {
             // The same budget every other profile's probe gets; a tunnel still scanning past it is reported, not waited for.
-            if (currentAether != null && !AetherCoreManager.awaitListening(AetherDelayTester.TEST_BUDGET_MS)) {
+            if ((currentAether != null || currentAetherCommand != null) && !AetherCoreManager.awaitListening(AetherDelayTester.TEST_BUDGET_MS)) {
                 val reason = if (AetherCoreManager.isRunning) R.string.aether_core_connecting else R.string.aether_core_stopped
                 val stalled = ConnectionTestResult(delayMillis = -1L, errorMessage = service.getString(reason))
                 withContext(Dispatchers.Main.immediate) {

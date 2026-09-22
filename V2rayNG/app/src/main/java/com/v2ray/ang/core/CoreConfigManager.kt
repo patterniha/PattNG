@@ -98,8 +98,9 @@ object CoreConfigManager {
     /**
      * Build configuration for custom profiles.
      *
-     * A custom configuration asks for an Aether core with aetherSettings in a SOCKS outbound; the
-     * result names that core, and [aetherPort] moves its outbounds to the core a latency test opened.
+     * A custom configuration asks for an Aether core with an aetherCommand at its top level; the
+     * result names that command, and [aetherPort] moves the core's listener and the outbounds
+     * dialing it to the core a latency test opened.
      */
     private fun buildV2rayCustomConfig(configContext: CoreConfigContext, aetherPort: Int? = null): ConfigResult {
         val context = configContext.context
@@ -115,11 +116,15 @@ object CoreConfigManager {
 
         val dependency = AetherDependency.ofCustom(json)
         aetherFailure(context, configContext.guid, dependency)?.let { return it }
-        if (dependency is AetherDependency.Single) {
-            result.aetherProfile = dependency.profile
-            if (aetherPort != null) {
-                AetherDependency.rebindCustom(json, from = AetherCoreManager.listenPort(dependency.profile), port = aetherPort)
+        if (dependency is AetherDependency.Custom) {
+            val command = dependency.command
+            if (aetherPort != null && aetherPort != dependency.port) {
+                command = rebindCommand(command, aetherPort)
+                json.addProperty(AetherDependency.COMMAND_KEY, command.joinToString(" "))
+                AetherDependency.rebindCustom(json, from = dependency.port, port = aetherPort)
             }
+            result.aetherCommand = command
+            result.aetherPort = aetherPort ?: dependency.port
         }
 
         // Inject or remove traffic statistics configuration based on user preference
@@ -497,6 +502,11 @@ object CoreConfigManager {
      * Serialize a runtime configuration into a standard result object.
      */
     private fun toConfigResult(configContext: CoreConfigContext, v2rayConfig: V2rayConfig, dependency: AetherDependency): ConfigResult {
+        (dependency as? AetherDependency.Single)?.profile?.let { profile ->
+            // The core the configuration runs on, written into it as it would be started: exporting
+            // the configuration gives a custom configuration that starts the same core again.
+            v2rayConfig.aetherCommand = AetherFmt.toCommand(profile)
+        }
         return ConfigResult(
             status = true,
             guid = configContext.guid,
@@ -511,28 +521,26 @@ object CoreConfigManager {
      */
     private fun aetherFailure(context: Context, guid: String, dependency: AetherDependency): ConfigResult? {
         val message = when (dependency) {
-            AetherDependency.None, is AetherDependency.Single -> return null
+            AetherDependency.None, is AetherDependency.Single, is AetherDependency.Custom -> return null
             AetherDependency.Conflicting -> context.getString(R.string.aether_config_single_profile)
             is AetherDependency.NotEntryHop -> context.getString(R.string.aether_chain_entry_only)
-            AetherDependency.SeveralCores -> context.getString(R.string.aether_custom_single_core)
             AetherDependency.NoListener -> context.getString(R.string.aether_custom_no_listener, AppConfig.LOOPBACK)
-            is AetherDependency.UnusableSettings -> when (val reason = dependency.reason) {
-                is AetherFmt.Settings.Unknown -> context.getString(R.string.aether_custom_unknown_entry, reason.entry)
-                // The same values the Aether editor refuses, reported with its words.
-                is AetherFmt.Settings.Refused -> context.getString(
-                    when (reason.problem) {
-                        AetherFmt.Problem.INVALID_PEER -> R.string.aether_invalid_endpoint
-                        AetherFmt.Problem.INVALID_HOP -> R.string.aether_invalid_hop
-                        AetherFmt.Problem.SHARED_HOP -> R.string.aether_same_hop
-                        AetherFmt.Problem.INVALID_FRAGMENT -> R.string.aether_invalid_fragment
-                        AetherFmt.Problem.INVALID_LISTEN_PORT -> R.string.aether_invalid_listen_port
-                        AetherFmt.Problem.LISTEN_PORT_TAKEN -> R.string.aether_listen_port_taken
-                    }
-                )
-            }
         }
         LogUtil.w(AppConfig.TAG, "Aether cannot serve this configuration: $dependency, guid=$guid")
         return ConfigResult(status = false, guid = guid, errorMessage = message, localizedError = true)
+    }
+
+    /**
+     * The aetherCommand [command] with its listener moved to [port], for a latency test that runs
+     * the command's core on a port of its own. Arguments that merely look like the bind value are
+     * left alone; nothing is added to a command without a listener, which ofCustom already refused.
+     */
+    internal fun rebindCommand(command: List<String>, port: Int): List<String> {
+        val bind = command.indexOf("--bind")
+        if (bind < 0) return command
+        return command.mapIndexed { index, argument ->
+            if (index == bind + 1) "${AppConfig.LOOPBACK}:$port" else argument
+        }
     }
 
     /**

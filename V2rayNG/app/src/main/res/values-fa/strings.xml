@@ -616,9 +616,7 @@
     <string name="aether_scan_blocked">پیش از اسکن، اتصال Aether را قطع کنید؛ اسکن یک تونل دوم با کلید اتصال فعلی باز می‌کند</string>
     <string name="aether_chain_entry_only">پروفایل Aether فقط می‌تواند نخستین گام زنجیره پروکسی باشد؛ گامی که مستقیماً به اینترنت می‌رسد</string>
     <string name="aether_config_single_profile">یک پیکربندی فقط می‌تواند از یک پروفایل Aether استفاده کند</string>
-    <string name="aether_custom_single_core">فقط یک هسته Aether می‌تواند اجرا شود: همه خروجی‌های دارای aetherSettings باید تنظیمات یکسان و پورت یکسان داشته باشند</string>
-    <string name="aether_custom_no_listener">خروجی SOCKS دارای aetherSettings باید به %1$s و پورتی از 1 تا 65535 وصل شود؛ هسته Aether همان‌جا گوش می‌دهد</string>
-    <string name="aether_custom_unknown_entry">در aetherSettings موردی هست که هسته Aether آن را نمی‌شناسد: %1$s</string>
+    <string name="aether_custom_no_listener">یک aetherCommand باید با --bind یک پورت محلی را ببندد، و یک خروجی SOCKS باید به %1$s و همان پورت وصل شود؛ هسته Aether همان‌جا گوش می‌دهد</string>
     <string name="title_aether_core">هسته Aether</string>
     <string name="summary_aether_core">کلاینت WARP ساخته CluvexStudio که با مجوز AGPL-3.0 همراه برنامه است. برای دیدن کد منبع ضربه بزنید.</string>
     <string-array name="aether_scan_entries">

@@ -620,9 +620,7 @@
     <string name="aether_scan_blocked">Отключите профиль Aether, прежде чем сканировать: сканирование откроет второй туннель с ключом текущего подключения</string>
     <string name="aether_chain_entry_only">Профиль Aether может быть только первым звеном цепочки прокси, тем, которое выходит в интернет напрямую</string>
     <string name="aether_config_single_profile">Конфигурация может использовать только один профиль Aether</string>
-    <string name="aether_custom_single_core">Можно запустить только одно ядро Aether: все исходящие с aetherSettings должны использовать одинаковые настройки и один и тот же порт</string>
-    <string name="aether_custom_no_listener">Исходящий SOCKS с aetherSettings должен подключаться к %1$s и порту от 1 до 65535; там слушает ядро Aether</string>
-    <string name="aether_custom_unknown_entry">В aetherSettings есть запись, неизвестная ядру Aether: %1$s</string>
+    <string name="aether_custom_no_listener">aetherCommand должен привязывать порт обратной связи через --bind, а исходящий SOCKS должен подключаться к %1$s и этому порту; там слушает ядро Aether</string>
     <string name="title_aether_core">Ядро Aether</string>
     <string name="summary_aether_core">Клиент WARP от CluvexStudio, включён по лицензии AGPL-3.0. Нажмите, чтобы открыть исходный код.</string>
     <string-array name="aether_scan_entries">
