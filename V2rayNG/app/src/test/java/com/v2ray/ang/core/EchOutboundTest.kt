@@ -10,7 +10,6 @@ import com.v2ray.ang.dto.entities.ProfileItem
 import com.v2ray.ang.enums.EConfigType
 import com.v2ray.ang.util.JsonUtil
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -213,14 +212,6 @@ class EchOutboundTest {
             EchOutbound.Result.Invalid(EchOutbound.Error.NEEDS_ECH_CONFIG_LIST),
             EchOutbound.serialize(config(tlsOutbound("proxy", """{"tag": "ech", "protocol": "freedom"}""", echConfigList = null))),
         )
-    }
-
-    @Test
-    fun isUsedIn_findsTheEchSockoptThatSerializeWrites() {
-        val content = contentOf(EchOutbound.serialize(config(tlsOutbound("proxy", """{"tag": "ech", "protocol": "freedom"}"""))))
-
-        assertTrue(EchOutbound.isUsedIn(content))
-        assertFalse(EchOutbound.isUsedIn(contentOf(EchOutbound.serialize(config(tlsOutbound("proxy", null))))))
     }
 
     private companion object {

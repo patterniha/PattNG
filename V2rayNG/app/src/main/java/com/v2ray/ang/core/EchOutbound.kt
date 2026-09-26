@@ -52,9 +52,6 @@ object EchOutbound {
         return if (tag != null && tag.isJsonPrimitive && tag.asJsonPrimitive.isString) tag.asString else null
     }
 
-    /** Whether the configuration [content] sends its ECH config query through an ECH outbound. */
-    fun isUsedIn(content: String): Boolean = content.contains("\"echSockopt\"")
-
     /**
      * Serializes [config] with the ECH outbounds that CoreOutboundBuilder attached to its TLS outbounds:
      * the echSockopt of each of those outbounds points at the tag that its ECH outbound has in the
