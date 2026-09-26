@@ -244,7 +244,6 @@ class CoreVpnService : VpnService(), ServiceControl {
             builder.addAddress(vpnConfig.ipv6Client, 126)
             if (bypassLan) {
                 builder.addRoute("2000::", 3) // Currently only 1/8 of total IPv6 is in use
-                builder.addRoute("fc00::", 18) // Xray-core default FakeIPv6 Pool
             } else {
                 builder.addRoute("::", 0)
             }
