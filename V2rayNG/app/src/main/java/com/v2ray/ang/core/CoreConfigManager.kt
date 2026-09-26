@@ -246,7 +246,6 @@ object CoreConfigManager {
 
         // User routing rules (policyGroupBalancerTags rewrites TAG_PROXY→balancer when main is POLICYGROUP).
         configureRouting(configContext, v2rayConfig, policyGroupBalancerTags)
-        configureFakeDns(v2rayConfig)
         configureDns(configContext, v2rayConfig, policyGroupBalancerTags)
         configureLocalDns(configContext, v2rayConfig)
         configureRootModeDns(v2rayConfig)
@@ -651,17 +650,6 @@ object CoreConfigManager {
     }
 
     /**
-     * Enable fake DNS when local DNS and fake DNS are both enabled.
-     */
-    private fun configureFakeDns(v2rayConfig: V2rayConfig) {
-        if (MmkvManager.decodeSettingsBool(AppConfig.PREF_LOCAL_DNS_ENABLED, true)
-            && MmkvManager.decodeSettingsBool(AppConfig.PREF_FAKE_DNS_ENABLED, true)
-        ) {
-            v2rayConfig.fakedns = listOf(V2rayConfig.FakednsBean())
-        }
-    }
-
-    /**
      * Collect domain rules that target one outbound tag.
      */
     private fun collectUserRuleDomainsByTag(tag: String): ArrayList<String> {
@@ -717,6 +705,7 @@ object CoreConfigManager {
                 .distinct()
             val finalDomain = geositeCn + routingDomains
             // fakedns with all domains to make it always top priority
+            // PattNG: no "fakedns" block, so Xray-core applies its default fake IP pools
             v2rayConfig.dns?.servers?.add(
                 0,
                 V2rayConfig.DnsBean.ServersBean(

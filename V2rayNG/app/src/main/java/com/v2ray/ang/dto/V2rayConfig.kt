@@ -454,11 +454,6 @@ data class V2rayConfig(
         )
     }
 
-    data class FakednsBean(
-        var ipPool: String = "198.18.0.0/15",
-        var poolSize: Int = 10000
-    ) // roughly 10 times smaller than total ip pool
-
     fun getProxyOutbound(): OutboundBean? {
         outbounds.forEach { outbound ->
             EConfigType.entries.forEach {
