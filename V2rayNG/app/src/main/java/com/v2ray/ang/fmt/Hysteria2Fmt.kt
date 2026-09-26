@@ -70,6 +70,8 @@ object Hysteria2Fmt : FmtBase() {
         // PattNG: ECH travels in Hysteria2 links too, as in PattN's and in the other links here
         config.echConfigList?.nullIfBlank()?.let { dicQuery["ech"] = it }
         config.echOutbound?.nullIfBlank()?.let { dicQuery["echOutbound"] = it }
+        // PattNG: fm too, which parse reads back through getItemFormQuery as in the other links
+        config.finalMask?.nullIfBlank()?.let { dicQuery["fm"] = it }
         config.dialMode?.nullIfBlank()?.let { dicQuery["dialMode"] = it }
 
         return toUri(config, config.password, dicQuery)

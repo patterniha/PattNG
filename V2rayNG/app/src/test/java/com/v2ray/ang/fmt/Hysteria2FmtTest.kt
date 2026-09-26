@@ -8,7 +8,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Unit tests for Hysteria2Fmt, covering the ECH share-link parameters.
+ * Unit tests for Hysteria2Fmt, covering the ECH and finalMask share-link parameters.
  */
 class Hysteria2FmtTest {
 
@@ -46,5 +46,18 @@ class Hysteria2FmtTest {
 
         assertFalse(uri.contains("ech="))
         assertFalse(uri.contains("echOutbound="))
+    }
+
+    @Test
+    fun test_toUriAndParse_roundTripPreservesFinalMask() {
+        // PattNG: parse reads fm as the other links do, so toUri writes it as well.
+        val json = """{"udp": [{"type": "salamander", "settings": {"password": "fm-pass"}}]}"""
+        val config = createConfig().apply { finalMask = json }
+
+        val uri = Hysteria2Fmt.toUri(config)
+        assertTrue("uri should carry fm: $uri", uri.contains("fm="))
+
+        assertEquals(json, Hysteria2Fmt.parse("hysteria2://$uri").finalMask)
+        assertFalse(Hysteria2Fmt.toUri(createConfig()).contains("fm="))
     }
 }
