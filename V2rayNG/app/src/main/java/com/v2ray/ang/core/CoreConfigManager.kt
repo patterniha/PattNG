@@ -495,6 +495,8 @@ object CoreConfigManager {
      * Serialize a runtime configuration into a standard result object. The Aether core it runs on
      * is written into it as aetherCommand, so that the exported configuration runs again as a custom
      * one; [listeningOn] is the port of the core a latency test opened, when its outbounds were moved there.
+     * The ECH outbounds of its profiles are linked and appended as it is serialized; one that cannot be
+     * used fails it with a message from [context] meant for the screen.
      */
     private fun toConfigResult(
         context: Context,
@@ -506,18 +508,19 @@ object CoreConfigManager {
         val core = (dependency as? AetherDependency.Single)?.core
         v2rayConfig.aetherCommand = core?.let { if (listeningOn != null) it.on(listeningOn) else it }?.command
         // PattNG: the ECH outbounds of the profiles get their tags and go after every other outbound, as written
-        val echOutbounds = EchOutbound.link(v2rayConfig.outbounds)
-        val content = when (val appended = EchOutbound.appendTo(JsonUtil.toJsonPretty(v2rayConfig) ?: "", echOutbounds)) {
-            is EchOutbound.AppendResult.Done -> appended.content
-            is EchOutbound.AppendResult.TagConflict -> {
-                LogUtil.w(AppConfig.TAG, "ECH outbound tag is already used: ${appended.tag}, guid=${configContext.guid}")
-                return ConfigResult(
-                    status = false,
-                    guid = configContext.guid,
-                    errorMessage = context.getString(R.string.toast_ech_outbound_tag_conflict, appended.tag),
-                    localizedError = true,
-                )
-            }
+        val content = when (val serialized = EchOutbound.serialize(v2rayConfig)) {
+            is EchOutbound.Result.Done -> serialized.content
+            is EchOutbound.Result.Invalid -> return echOutboundFailure(configContext.guid, serialized, when (serialized.error) {
+                EchOutbound.Error.INVALID_JSON ->
+                    context.getString(R.string.toast_malformed_json_detail, context.getString(R.string.server_lab_ech_outbound))
+                EchOutbound.Error.NEEDS_ECH_CONFIG_LIST -> context.getString(R.string.toast_ech_outbound_needs_ech_config_list)
+                EchOutbound.Error.INVALID_TAG -> context.getString(R.string.toast_ech_outbound_invalid_tag)
+            })
+            is EchOutbound.Result.TagConflict -> return echOutboundFailure(
+                configContext.guid,
+                serialized,
+                context.getString(R.string.toast_ech_outbound_tag_conflict, serialized.tag),
+            )
         }
         return ConfigResult(
             status = true,
@@ -525,6 +528,12 @@ object CoreConfigManager {
             content = content,
             aetherCore = core,
         )
+    }
+
+    /** PattNG: a configuration whose ECH outbound cannot be used, as a failure whose message is meant for the screen. */
+    private fun echOutboundFailure(guid: String, result: EchOutbound.Result, message: String): ConfigResult {
+        LogUtil.w(AppConfig.TAG, "ECH outbound cannot be used: $result, guid=$guid")
+        return ConfigResult(status = false, guid = guid, errorMessage = message, localizedError = true)
     }
 
     /**

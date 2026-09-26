@@ -82,25 +82,28 @@ class CoreOutboundBuilderTest {
         }
 
     @Test
-    fun test_populateTlsSettings_attachesTheEchOutboundForTls() {
-        val streamSettings = OutboundBean.StreamSettingsBean()
+    fun test_populateTlsSettings_attachesTheEchOutboundForTlsAsWritten() {
+        // EchOutbound.serialize checks it, so an invalid one reaches it too and fails the configuration there.
+        for (echOutbound in listOf("""{"tag": "ech-out", "protocol": "freedom"}""", """{"tag": "proxy"}""")) {
+            val streamSettings = OutboundBean.StreamSettingsBean()
 
-        CoreOutboundBuilder.populateTlsSettings(streamSettings, echProfile(AppConfig.TLS, """{"tag": "ech-out", "protocol": "freedom"}"""), null)
+            CoreOutboundBuilder.populateTlsSettings(streamSettings, echProfile(AppConfig.TLS, echOutbound), null)
 
-        assertEquals("ech-out", streamSettings.tlsSettings?.echOutbound?.get("tag")?.asString)
+            assertEquals(echOutbound, streamSettings.tlsSettings?.echOutbound)
+        }
     }
 
     @Test
-    fun test_populateTlsSettings_attachesNoEchOutboundForRealityOrAnInvalidOne() {
+    fun test_populateTlsSettings_attachesNoEchOutboundForRealityOrABlankOne() {
         val reality = OutboundBean.StreamSettingsBean()
         CoreOutboundBuilder.populateTlsSettings(reality, echProfile(AppConfig.REALITY, """{"tag": "ech-out"}"""), null)
         assertNotNull(reality.realitySettings)
         assertNull(reality.realitySettings?.echOutbound)
 
-        val invalid = OutboundBean.StreamSettingsBean()
-        CoreOutboundBuilder.populateTlsSettings(invalid, echProfile(AppConfig.TLS, """{"tag": "proxy"}"""), null)
-        assertNotNull(invalid.tlsSettings)
-        assertNull(invalid.tlsSettings?.echOutbound)
+        val blank = OutboundBean.StreamSettingsBean()
+        CoreOutboundBuilder.populateTlsSettings(blank, echProfile(AppConfig.TLS, " "), null)
+        assertNotNull(blank.tlsSettings)
+        assertNull(blank.tlsSettings?.echOutbound)
     }
 
     @Test

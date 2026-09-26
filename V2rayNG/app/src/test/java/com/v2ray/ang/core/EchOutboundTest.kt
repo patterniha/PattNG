@@ -3,22 +3,32 @@ package com.v2ray.ang.core
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
+import com.v2ray.ang.AppConfig
+import com.v2ray.ang.dto.V2rayConfig
 import com.v2ray.ang.dto.V2rayConfig.OutboundBean
 import com.v2ray.ang.dto.entities.ProfileItem
 import com.v2ray.ang.enums.EConfigType
 import com.v2ray.ang.util.JsonUtil
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Unit tests for EchOutbound: the checks made when a profile is saved, the tags the ECH outbounds get
- * in a configuration, and how they are appended to it.
+ * Unit tests for EchOutbound: the checks made when a profile is saved, and how a configuration is
+ * serialized with the ECH outbounds that its profiles carry.
  */
 class EchOutboundTest {
 
-    private fun profile(echOutbound: String?, echConfigList: String? = ECH_CONFIG_LIST): ProfileItem =
-        ProfileItem.create(EConfigType.VLESS).apply {
+    private fun profile(
+        echOutbound: String?,
+        echConfigList: String? = ECH_CONFIG_LIST,
+        configType: EConfigType = EConfigType.VLESS,
+        security: String? = AppConfig.TLS,
+    ): ProfileItem =
+        ProfileItem.create(configType).apply {
+            this.security = security
             this.echConfigList = echConfigList
             this.echOutbound = echOutbound
         }
@@ -26,29 +36,36 @@ class EchOutboundTest {
     private fun json(text: String): JsonObject = JsonParser.parseString(text).asJsonObject
 
     /** A TLS proxy outbound as CoreOutboundBuilder builds it, carrying [echOutbound]. */
-    private fun tlsOutbound(echOutbound: String?): OutboundBean =
+    private fun tlsOutbound(tag: String, echOutbound: String?, echConfigList: String? = ECH_CONFIG_LIST): OutboundBean =
         OutboundBean(
+            tag = tag,
             protocol = "vless",
             streamSettings = OutboundBean.StreamSettingsBean(
                 security = "tls",
                 tlsSettings = OutboundBean.StreamSettingsBean.TlsSettingsBean(
-                    echConfigList = ECH_CONFIG_LIST,
-                    echOutbound = echOutbound?.let { json(it) },
+                    echConfigList = echConfigList,
+                    echOutbound = echOutbound,
                 ),
             ),
+        )
+
+    /** A configuration with [outbounds], then the direct outbound. */
+    private fun config(vararg outbounds: OutboundBean): V2rayConfig =
+        V2rayConfig(
+            log = V2rayConfig.LogBean(),
+            inbounds = arrayListOf(),
+            outbounds = arrayListOf(*outbounds, OutboundBean(tag = AppConfig.TAG_DIRECT, protocol = "freedom")),
+            routing = V2rayConfig.RoutingBean(domainStrategy = "AsIs", rules = arrayListOf()),
         )
 
     private fun dialerProxyOf(outbound: OutboundBean): String? =
         outbound.streamSettings?.tlsSettings?.echSockopt?.dialerProxy
 
-    /** A generated configuration with the proxy and direct outbounds and, optionally, one tagged [extraTag]. */
-    private fun config(extraTag: String? = null): String {
-        val extra = extraTag?.let { """, {"tag": "$it", "protocol": "dns"}""" }.orEmpty()
-        return """{"outbounds": [{"tag": "proxy", "protocol": "vless"}, {"tag": "direct", "protocol": "freedom"}$extra]}"""
-    }
+    private fun contentOf(result: EchOutbound.Result): String = (result as EchOutbound.Result.Done).content
 
-    private fun outboundsOf(result: EchOutbound.AppendResult): JsonArray =
-        JsonParser.parseString((result as EchOutbound.AppendResult.Done).content).asJsonObject.getAsJsonArray("outbounds")
+    private fun outboundsOf(result: EchOutbound.Result): JsonArray = json(contentOf(result)).getAsJsonArray("outbounds")
+
+    private fun tagsOf(outbounds: JsonArray): List<String> = outbounds.map { it.asJsonObject.get("tag").asString }
 
     @Test
     fun validate_acceptsAnEmptyOrValidEchOutbound() {
@@ -92,77 +109,118 @@ class EchOutboundTest {
     }
 
     @Test
-    fun link_sharesAnEchOutboundAndNumbersADifferentOneUnderTheSameTag() {
+    fun validate_ignoresAnEchOutboundWhereItDoesNotApply() {
+        // The editor hides it there and no configuration uses it, so an imported value must not block saving.
+        val invalid = """{"tag": "proxy"}"""
+        assertNull(EchOutbound.validate(profile(invalid, security = AppConfig.REALITY)))
+        assertNull(EchOutbound.validate(profile(invalid, security = null)))
+        for (configType in listOf(EConfigType.SOCKS, EConfigType.HTTP, EConfigType.WIREGUARD, EConfigType.AETHER)) {
+            assertNull(configType.name, EchOutbound.validate(profile(invalid, configType = configType)))
+        }
+        // Trojan uses it under TLS, and Hysteria2 always runs over TLS: a blank security is saved as TLS.
+        assertEquals(EchOutbound.Error.INVALID_TAG, EchOutbound.validate(profile(invalid, configType = EConfigType.TROJAN)))
+        assertEquals(
+            EchOutbound.Error.INVALID_TAG,
+            EchOutbound.validate(profile(invalid, configType = EConfigType.HYSTERIA2, security = null)),
+        )
+    }
+
+    @Test
+    fun serialize_sharesAnEchOutboundAndNumbersADifferentOneUnderTheSameTag() {
         val shared = """{"tag": "ech", "protocol": "freedom"}"""
-        val outbounds = listOf(
-            tlsOutbound(shared),
-            tlsOutbound("""{"tag": "ech", "protocol": "blackhole"}"""),
-            tlsOutbound(shared),
-            tlsOutbound(null),
+        val outbounds = arrayOf(
+            tlsOutbound("proxy-1", shared),
+            tlsOutbound("proxy-2", """{"tag": "ech", "protocol": "blackhole"}"""),
+            tlsOutbound("proxy-3", shared),
+            tlsOutbound("proxy-4", null),
         )
 
-        val echOutbounds = EchOutbound.link(outbounds)
+        val appended = outboundsOf(EchOutbound.serialize(config(*outbounds)))
 
         assertEquals(listOf("ech", "ech-2", "ech", null), outbounds.map { dialerProxyOf(it) })
-        assertEquals(listOf("ech", "ech-2"), echOutbounds.map { EchOutbound.tagOf(it) })
-        assertEquals("blackhole", echOutbounds[1].get("protocol").asString)
+        assertEquals(listOf("proxy-1", "proxy-2", "proxy-3", "proxy-4", "direct", "ech", "ech-2"), tagsOf(appended))
+        assertEquals("blackhole", appended.last().asJsonObject.get("protocol").asString)
     }
 
     @Test
-    fun link_numbersTheCopyThatIsAppendedAndNotTheProfilesOwnJson() {
-        val second = tlsOutbound("""{"tag": "ech", "protocol": "blackhole"}""")
+    fun serialize_numbersClearOfTheTagsOfOtherOutbounds() {
+        // "ech-2" is another outbound of the configuration, so the second ECH outbound takes "ech-3".
+        val outbounds = arrayOf(
+            tlsOutbound("proxy-1", """{"tag": "ech", "protocol": "freedom"}"""),
+            tlsOutbound("proxy-2", """{"tag": "ech", "protocol": "blackhole"}"""),
+            OutboundBean(tag = "ech-2", protocol = "freedom"),
+        )
 
-        EchOutbound.link(listOf(tlsOutbound("""{"tag": "ech", "protocol": "freedom"}"""), second))
+        val appended = outboundsOf(EchOutbound.serialize(config(*outbounds)))
 
-        assertEquals("ech", EchOutbound.tagOf(second.streamSettings!!.tlsSettings!!.echOutbound!!))
+        assertEquals(listOf("ech", "ech-3", null), outbounds.map { dialerProxyOf(it) })
+        assertEquals(listOf("proxy-1", "proxy-2", "ech-2", "direct", "ech", "ech-3"), tagsOf(appended))
     }
 
     @Test
-    fun link_leavesTheAttachedEchOutboundOutOfTheSerializedOutbound() {
-        val outbound = tlsOutbound("""{"tag": "ech", "protocol": "freedom"}""")
-        EchOutbound.link(listOf(outbound))
+    fun serialize_appendsTheEchOutboundLastAsWritten() {
+        // tcpCongestion is in no bean, so it only gets through when the outbound is appended as written.
+        val echOutbound = """{"tag": "ech-out", "protocol": "freedom", "streamSettings": {"sockopt": {"tcpCongestion": "bbr"}}}"""
 
-        val tlsSettings = json(JsonUtil.toJsonPretty(outbound)!!).getAsJsonObject("streamSettings").getAsJsonObject("tlsSettings")
+        val content = contentOf(EchOutbound.serialize(config(tlsOutbound("proxy", echOutbound))))
+
+        assertEquals(json(echOutbound), json(content).getAsJsonArray("outbounds").last())
+        assertTrue(content.contains("\"tcpCongestion\": \"bbr\""))
+    }
+
+    @Test
+    fun serialize_leavesTheAttachedTextOutOfTheConfiguration() {
+        val content = contentOf(EchOutbound.serialize(config(tlsOutbound("proxy", """{"tag": "ech", "protocol": "freedom"}"""))))
+        val tlsSettings = json(content).getAsJsonArray("outbounds")[0].asJsonObject
+            .getAsJsonObject("streamSettings").getAsJsonObject("tlsSettings")
 
         assertNull(tlsSettings.get("echOutbound"))
         assertEquals("ech", tlsSettings.getAsJsonObject("echSockopt").get("dialerProxy").asString)
     }
 
     @Test
-    fun appendTo_addsTheEchOutboundsLastAsWritten() {
-        // tcpKeepAliveIdle is not in any bean: the outbound has to reach the configuration as written.
-        val echOutbound = json("""{"tag": "ech-out", "protocol": "freedom", "streamSettings": {"sockopt": {"tcpKeepAliveIdle": 100}}}""")
+    fun serialize_leavesAConfigurationWithoutEchOutboundsAsBefore() {
+        val config = config(tlsOutbound("proxy", null))
+        val before = JsonUtil.toJsonPretty(config)!!
 
-        val outbounds = outboundsOf(EchOutbound.appendTo(config(), listOf(echOutbound)))
-
-        assertEquals(3, outbounds.size())
-        assertEquals(echOutbound, outbounds.last())
+        assertEquals(EchOutbound.Result.Done(before), EchOutbound.serialize(config))
     }
 
     @Test
-    fun appendTo_leavesAConfigurationWithoutEchOutboundsAlone() {
-        val content = config()
-
-        assertEquals(EchOutbound.AppendResult.Done(content), EchOutbound.appendTo(content, emptyList()))
-    }
-
-    @Test
-    fun appendTo_reportsATagThatTheConfigurationAlreadyHas() {
-        val result = EchOutbound.appendTo(config(extraTag = "dns-out"), listOf(json("""{"tag": "dns-out", "protocol": "freedom"}""")))
-
-        assertEquals(EchOutbound.AppendResult.TagConflict("dns-out"), result)
-    }
-
-    @Test
-    fun linkAndAppend_keepEachEchOutboundUnderItsOwnTag() {
-        val outbounds = listOf(
-            tlsOutbound("""{"tag": "ech", "protocol": "freedom"}"""),
-            tlsOutbound("""{"tag": "ech", "protocol": "blackhole"}"""),
+    fun serialize_reportsATagThatAnotherOutboundHas() {
+        val result = EchOutbound.serialize(
+            config(
+                tlsOutbound("proxy", """{"tag": "dns-out", "protocol": "freedom"}"""),
+                OutboundBean(tag = "dns-out", protocol = "dns"),
+            )
         )
 
-        val appended = outboundsOf(EchOutbound.appendTo(config(), EchOutbound.link(outbounds)))
+        assertEquals(EchOutbound.Result.TagConflict("dns-out"), result)
+    }
 
-        assertEquals(listOf("proxy", "direct", "ech", "ech-2"), appended.map { it.asJsonObject.get("tag").asString })
+    @Test
+    fun serialize_failsOnAnEchOutboundTheEditorNeverChecked() {
+        // An imported ECH outbound is checked here, rather than letting the ECH config query go direct.
+        assertEquals(
+            EchOutbound.Result.Invalid(EchOutbound.Error.INVALID_TAG),
+            EchOutbound.serialize(config(tlsOutbound("proxy", """{"tag": "proxy-ech", "protocol": "freedom"}"""))),
+        )
+        assertEquals(
+            EchOutbound.Result.Invalid(EchOutbound.Error.INVALID_JSON),
+            EchOutbound.serialize(config(tlsOutbound("proxy", "freedom"))),
+        )
+        assertEquals(
+            EchOutbound.Result.Invalid(EchOutbound.Error.NEEDS_ECH_CONFIG_LIST),
+            EchOutbound.serialize(config(tlsOutbound("proxy", """{"tag": "ech", "protocol": "freedom"}""", echConfigList = null))),
+        )
+    }
+
+    @Test
+    fun isUsedIn_findsTheEchSockoptThatSerializeWrites() {
+        val content = contentOf(EchOutbound.serialize(config(tlsOutbound("proxy", """{"tag": "ech", "protocol": "freedom"}"""))))
+
+        assertTrue(EchOutbound.isUsedIn(content))
+        assertFalse(EchOutbound.isUsedIn(contentOf(EchOutbound.serialize(config(tlsOutbound("proxy", null))))))
     }
 
     private companion object {

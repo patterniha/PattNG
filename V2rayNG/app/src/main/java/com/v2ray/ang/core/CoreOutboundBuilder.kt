@@ -626,8 +626,8 @@ object CoreOutboundBuilder {
             streamSettings.tlsSettings = tlsSetting
             streamSettings.realitySettings = null
             // PattNG: the ECH config query goes through the profile's ECH outbound, which
-            // CoreConfigManager points echSockopt at and appends after every other outbound
-            tlsSetting.echOutbound = EchOutbound.outboundOf(profileItem)
+            // EchOutbound.serialize checks, points echSockopt at and appends after every other outbound
+            tlsSetting.echOutbound = profileItem.echOutbound.nullIfBlank()
         } else if (streamSettings.security == AppConfig.REALITY) {
             streamSettings.tlsSettings = null
             streamSettings.realitySettings = tlsSetting
