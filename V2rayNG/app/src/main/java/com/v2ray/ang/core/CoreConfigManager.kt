@@ -45,7 +45,7 @@ object CoreConfigManager {
             }
             val dependency = AetherDependency.of(configContext.resolvedOutbounds)
             aetherFailure(context, guid, dependency)?.let { return it }
-            return toConfigResult(configContext, buildUnifiedConfig(configContext), dependency)
+            return toConfigResult(context, configContext, buildUnifiedConfig(configContext), dependency)
         } catch (e: Exception) {
             LogUtil.e(AppConfig.TAG, "Failed to get V2ray config", e)
             return ConfigResult(
@@ -83,7 +83,7 @@ object CoreConfigManager {
                 rebindAetherOutbounds(v2rayConfig.outbounds, from = dependency.core.port, port = aetherPort)
             }
 
-            return toConfigResult(configContext, v2rayConfig, dependency, listeningOn = aetherPort)
+            return toConfigResult(context, configContext, v2rayConfig, dependency, listeningOn = aetherPort)
         } catch (e: Exception) {
             LogUtil.e(AppConfig.TAG, "Failed to get V2ray config for speedtest", e)
             return ConfigResult(
@@ -497,6 +497,7 @@ object CoreConfigManager {
      * one; [listeningOn] is the port of the core a latency test opened, when its outbounds were moved there.
      */
     private fun toConfigResult(
+        context: Context,
         configContext: CoreConfigContext,
         v2rayConfig: V2rayConfig,
         dependency: AetherDependency,
@@ -504,10 +505,24 @@ object CoreConfigManager {
     ): ConfigResult {
         val core = (dependency as? AetherDependency.Single)?.core
         v2rayConfig.aetherCommand = core?.let { if (listeningOn != null) it.on(listeningOn) else it }?.command
+        // PattNG: the ECH outbounds of the profiles get their tags and go after every other outbound, as written
+        val echOutbounds = EchOutbound.link(v2rayConfig.outbounds)
+        val content = when (val appended = EchOutbound.appendTo(JsonUtil.toJsonPretty(v2rayConfig) ?: "", echOutbounds)) {
+            is EchOutbound.AppendResult.Done -> appended.content
+            is EchOutbound.AppendResult.TagConflict -> {
+                LogUtil.w(AppConfig.TAG, "ECH outbound tag is already used: ${appended.tag}, guid=${configContext.guid}")
+                return ConfigResult(
+                    status = false,
+                    guid = configContext.guid,
+                    errorMessage = context.getString(R.string.toast_ech_outbound_tag_conflict, appended.tag),
+                    localizedError = true,
+                )
+            }
+        }
         return ConfigResult(
             status = true,
             guid = configContext.guid,
-            content = JsonUtil.toJsonPretty(v2rayConfig) ?: "",
+            content = content,
             aetherCore = core,
         )
     }

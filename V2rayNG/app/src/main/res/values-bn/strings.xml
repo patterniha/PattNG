@@ -134,6 +134,10 @@
     <string name="server_lab_final_mask">finalMask-এর কাঁচা JSON, ফরম্যাট: { FinalMaskObject }</string>
     <string name="server_lab_dial_mode" translatable="false">dialMode</string>
     <string name="server_lab_ech_config_list" translatable="false">echConfigList</string>
+    <string name="server_lab_ech_outbound">echOutbound-এর কাঁচা JSON, ফরম্যাট: { OutboundObject }</string>
+    <string name="toast_ech_outbound_needs_ech_config_list">echOutbound-এর জন্য echConfigList প্রয়োজন</string>
+    <string name="toast_ech_outbound_invalid_tag">echOutbound-এ একটি খালি নয় এমন \"tag\" থাকতে হবে, যা direct বা block নয় এবং proxy দিয়ে শুরু হয় না</string>
+    <string name="toast_ech_outbound_tag_conflict">echOutbound-এর \"%1$s\" ট্যাগটি ইতিমধ্যে অন্য একটি outbound ব্যবহার করছে</string>
     <string name="server_lab_verify_peer_cert_by_name">নাম দিয়ে পিয়ার সার্টিফিকেট যাচাই করুন</string>
     <string name="server_lab_pinned_ca256">সার্টিফিকেট ফিঙ্গারপ্রিন্ট (SHA-256)</string>
     <string name="server_lab_browser_dialer">Browser Dialer চালু করুন</string>

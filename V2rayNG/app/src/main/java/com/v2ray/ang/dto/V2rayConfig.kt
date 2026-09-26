@@ -1,5 +1,6 @@
 package com.v2ray.ang.dto
 
+import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.enums.EConfigType
@@ -231,6 +232,9 @@ data class V2rayConfig(
                 val disableSystemRoot: Boolean? = null,
                 val enableSessionResumption: Boolean? = null,
                 var echConfigList: String? = null,
+                var echSockopt: SockoptBean? = null,
+                // PattNG: the profile's ECH outbound, which CoreConfigManager links and appends; never serialized
+                @Transient var echOutbound: JsonObject? = null,
                 var verifyPeerCertByName: String? = null,
                 var pinnedPeerCertSha256: String? = null,
                 // REALITY settings

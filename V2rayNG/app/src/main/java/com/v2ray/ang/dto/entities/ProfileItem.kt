@@ -44,6 +44,7 @@ data class ProfileItem(
     var cipherSuites: String? = null,
     var insecure: Boolean? = null,
     var echConfigList: String? = null,
+    var echOutbound: String? = null,
     var verifyPeerCertByName: String? = null,
     var pinnedCA256: String? = null,
 

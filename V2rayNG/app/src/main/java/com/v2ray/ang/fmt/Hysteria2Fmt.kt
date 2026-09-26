@@ -67,6 +67,9 @@ object Hysteria2Fmt : FmtBase() {
         if (config.pinnedCA256.isNotNullEmpty()) {
             dicQuery["pinSHA256"] = config.pinnedCA256.orEmpty()
         }
+        // PattNG: ECH travels in Hysteria2 links too, as in PattN's and in the other links here
+        config.echConfigList?.nullIfBlank()?.let { dicQuery["ech"] = it }
+        config.echOutbound?.nullIfBlank()?.let { dicQuery["echOutbound"] = it }
         config.dialMode?.nullIfBlank()?.let { dicQuery["dialMode"] = it }
 
         return toUri(config, config.password, dicQuery)

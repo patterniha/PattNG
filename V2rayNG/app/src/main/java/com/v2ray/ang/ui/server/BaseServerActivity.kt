@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import com.v2ray.ang.AppConfig.REALITY
 import com.v2ray.ang.AppConfig.TLS
 import com.v2ray.ang.R
+import com.v2ray.ang.core.EchOutbound
 import com.v2ray.ang.dto.entities.ProfileItem
 import com.v2ray.ang.enums.EConfigType
 import com.v2ray.ang.enums.NetworkType
@@ -324,6 +325,11 @@ abstract class BaseServerActivity : BaseComponentActivity() {
                     { state.echConfigList = it }
                 )
                 FormTextField(
+                    stringResource(R.string.server_lab_ech_outbound),
+                    state.echOutbound,
+                    { state.echOutbound = it }
+                )
+                FormTextField(
                     stringResource(R.string.server_lab_verify_peer_cert_by_name),
                     state.verifyPeerCertByName,
                     { state.verifyPeerCertByName = it }
@@ -440,6 +446,17 @@ abstract class BaseServerActivity : BaseComponentActivity() {
         }
         if (!config.finalMask.isNullOrBlank() && JsonUtil.parseString(config.finalMask) == null) {
             toast(R.string.server_lab_final_mask)
+            return false
+        }
+        // PattNG: the ECH outbound is an outbound JSON object with a tag of its own, used with echConfigList
+        val echOutboundError = when (EchOutbound.validate(config)) {
+            null -> null
+            EchOutbound.Error.INVALID_JSON -> R.string.server_lab_ech_outbound
+            EchOutbound.Error.NEEDS_ECH_CONFIG_LIST -> R.string.toast_ech_outbound_needs_ech_config_list
+            EchOutbound.Error.INVALID_TAG -> R.string.toast_ech_outbound_invalid_tag
+        }
+        if (echOutboundError != null) {
+            toast(echOutboundError)
             return false
         }
         return true

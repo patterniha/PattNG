@@ -134,6 +134,10 @@
     <string name="server_lab_final_mask">JSON خام لحقل finalMask، بالتنسيق: { FinalMaskObject }</string>
     <string name="server_lab_dial_mode" translatable="false">dialMode</string>
     <string name="server_lab_ech_config_list" translatable="false">echConfigList</string>
+    <string name="server_lab_ech_outbound">JSON خام لحقل echOutbound، بالتنسيق: { OutboundObject }</string>
+    <string name="toast_ech_outbound_needs_ech_config_list">يتطلب echOutbound وجود echConfigList</string>
+    <string name="toast_ech_outbound_invalid_tag">يجب أن يحتوي echOutbound على \"tag\" غير فارغ، ليس direct أو block، ولا يبدأ بـ proxy</string>
+    <string name="toast_ech_outbound_tag_conflict">الوسم \"%1$s\" في echOutbound مستخدم بالفعل من قبل outbound آخر</string>
     <string name="server_lab_verify_peer_cert_by_name">التحقق من شهادة النظير بالاسم</string>
     <string name="server_lab_pinned_ca256">بصمة الشهادة (SHA-256)</string>
     <string name="server_lab_browser_dialer">تمكين Browser Dialer</string>

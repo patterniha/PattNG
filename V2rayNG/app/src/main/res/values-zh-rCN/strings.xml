@@ -134,6 +134,10 @@
     <string name="server_lab_final_mask">FinalMask 原始 JSON 格式: { FinalMaskObject }</string>
     <string name="server_lab_dial_mode" translatable="false">dialMode</string>
     <string name="server_lab_ech_config_list" translatable="false">echConfigList</string>
+    <string name="server_lab_ech_outbound">echOutbound 原始 JSON 格式: { OutboundObject }</string>
+    <string name="toast_ech_outbound_needs_ech_config_list">echOutbound 需要填写 echConfigList</string>
+    <string name="toast_ech_outbound_invalid_tag">echOutbound 必须包含非空的 \"tag\"，不能是 direct 或 block，且不能以 proxy 开头</string>
+    <string name="toast_ech_outbound_tag_conflict">echOutbound 的 tag \"%1$s\" 已被其他出站使用</string>
     <string name="server_lab_verify_peer_cert_by_name">Verify peer cert by name</string>
     <string name="server_lab_pinned_ca256">证书指纹 (SHA-256)</string>
     <string name="server_lab_browser_dialer">启用 Browser Dialer</string>

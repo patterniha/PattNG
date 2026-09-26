@@ -71,6 +71,38 @@ class CoreOutboundBuilderTest {
         assertEquals("code-1", outbound.streamSettings?.sockopt?.dialMode)
     }
 
+    /** A profile whose sni and finalMask keep populateTlsSettings away from Utils and MMKV. */
+    private fun echProfile(security: String, echOutbound: String): ProfileItem =
+        ProfileItem.create(EConfigType.VLESS).apply {
+            this.security = security
+            sni = "example.com"
+            finalMask = "{}"
+            echConfigList = "cloudflare-ech.com+https://1.1.1.1/dns-query"
+            this.echOutbound = echOutbound
+        }
+
+    @Test
+    fun test_populateTlsSettings_attachesTheEchOutboundForTls() {
+        val streamSettings = OutboundBean.StreamSettingsBean()
+
+        CoreOutboundBuilder.populateTlsSettings(streamSettings, echProfile(AppConfig.TLS, """{"tag": "ech-out", "protocol": "freedom"}"""), null)
+
+        assertEquals("ech-out", streamSettings.tlsSettings?.echOutbound?.get("tag")?.asString)
+    }
+
+    @Test
+    fun test_populateTlsSettings_attachesNoEchOutboundForRealityOrAnInvalidOne() {
+        val reality = OutboundBean.StreamSettingsBean()
+        CoreOutboundBuilder.populateTlsSettings(reality, echProfile(AppConfig.REALITY, """{"tag": "ech-out"}"""), null)
+        assertNotNull(reality.realitySettings)
+        assertNull(reality.realitySettings?.echOutbound)
+
+        val invalid = OutboundBean.StreamSettingsBean()
+        CoreOutboundBuilder.populateTlsSettings(invalid, echProfile(AppConfig.TLS, """{"tag": "proxy"}"""), null)
+        assertNotNull(invalid.tlsSettings)
+        assertNull(invalid.tlsSettings?.echOutbound)
+    }
+
     @Test
     fun test_applyTargetStrategy_setsOutboundTargetStrategy() {
         val outbound = OutboundBean(protocol = "vless")

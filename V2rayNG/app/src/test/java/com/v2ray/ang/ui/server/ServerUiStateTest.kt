@@ -45,6 +45,19 @@ class ServerUiStateTest {
     }
 
     @Test
+    fun theEchOutboundIsCarriedToTheProfileAndStoredOnlyWhenSet() {
+        val json = """{"tag": "ech-out", "protocol": "freedom"}"""
+        val profile = ProfileItem.create(EConfigType.VLESS).apply { echOutbound = json }
+
+        val state = ServerUiState.from(profile)
+        assertEquals(json, state.echOutbound)
+        assertEquals(json, state.toProfileItem(profile).echOutbound)
+
+        state.echOutbound = "  "
+        assertNull(state.toProfileItem(profile).echOutbound)
+    }
+
+    @Test
     fun theTargetStrategyDefaultsToAsIsAndIsStoredOnlyWhenChanged() {
         val profile = ProfileItem.create(EConfigType.VLESS)
 
