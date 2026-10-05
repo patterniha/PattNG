@@ -1120,6 +1120,9 @@ object AetherCoreManager {
     internal fun listenerPortOf(argv: List<String>): Int? =
         listenerAddressOf(argv)?.substringAfterLast(':', "")?.toIntOrNull()
 
+    /** The proxy [argv] tell the core to dial out through, as written; null when they name none. */
+    internal fun upstreamOf(argv: List<String>): String? = valueAfter(argv, UPSTREAM)
+
     /** The port of the address after [flag], null when there is none or it cannot be read. */
     internal fun portAfter(argv: List<String>, flag: String): Int? =
         valueAfter(argv, flag)?.substringAfterLast(':', "")?.toIntOrNull()

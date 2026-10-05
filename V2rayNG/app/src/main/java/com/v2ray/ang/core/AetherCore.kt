@@ -2,10 +2,13 @@ package com.v2ray.ang.core
 
 import com.google.gson.JsonParser
 import com.v2ray.ang.AppConfig
+import com.v2ray.ang.dto.V2rayConfig.InboundBean.InSettingsBean.SocksAccountBean
 import com.v2ray.ang.dto.entities.ProfileItem
 import com.v2ray.ang.enums.AetherProtocol
+import com.v2ray.ang.enums.AetherTor
 import com.v2ray.ang.extension.nullIfBlank
 import com.v2ray.ang.util.JsonUtil
+import com.v2ray.ang.util.Utils
 import java.security.MessageDigest
 
 /**
@@ -16,6 +19,17 @@ import java.security.MessageDigest
  * so that what the profile or the configuration says is what runs. Two cores with the same
  * arguments are one core, which is how one process comes to serve several outbounds, as long as
  * they dial out through the same [exit] as well: a process dials out through one.
+ *
+ * PattNG: the core dials out through Xray's secondary-socks inbound on the loopback address, where any
+ * app could reach it and leave past the VPN, so no configuration opens it without a password:
+ * - an ordinary core signs in as [UPSTREAM_USER] with a password new on every build, see [newUpstreamAccount];
+ * - Tor around the tunnel or alone takes no password: with a plain exit-node the core dials out
+ *   directly, with no inbound, see [dialsOutDirectly]; with a finalMask, a dialMode or a chain hop,
+ *   which only Xray applies, the configuration is refused, see [needsOpenInbound];
+ * - a custom configuration exported from a session keeps the app's account, which gets a new password
+ *   on every build, and one exported before the accounts gets one; one whose Tor would dial such an
+ *   inbound without a password is refused. Accounts and upstreams a configuration has of its own are
+ *   left as written. See AetherDependency.routeThroughXray.
  */
 data class AetherCore(val arguments: List<String>, val exit: AetherExit = AetherExit.PLAIN) {
 
@@ -50,15 +64,48 @@ data class AetherCore(val arguments: List<String>, val exit: AetherExit = Aether
 
     /**
      * This core dialling out through the SOCKS inbound on [port] of the loopback address, which Xray
-     * serves so that what the core sends leaves through Xray. A core told an upstream of its own keeps it.
+     * serves so that what the core sends leaves through Xray, signing in there as [account] when the
+     * inbound asks for one. A core told an upstream of its own keeps it.
      */
-    fun through(port: Int): AetherCore =
-        if (hasUpstream) this else copy(arguments = arguments + listOf(AetherCoreManager.UPSTREAM, "socks5://${AppConfig.LOOPBACK}:$port"))
+    fun through(port: Int, account: SocksAccountBean? = null): AetherCore {
+        if (hasUpstream) return this
+        val credentials = account?.let { "${it.user}:${it.pass}@" }.orEmpty()
+        return copy(arguments = arguments + listOf(AetherCoreManager.UPSTREAM, "socks5://$credentials${AppConfig.LOOPBACK}:$port"))
+    }
+
+    /**
+     * PattNG: a new account for the secondary-socks inbound, [UPSTREAM_USER] with a random password; null
+     * when the core cannot sign in, see [torDialsTheInternet]. See [AetherCore] for where it is used.
+     */
+    fun newUpstreamAccount(): SocksAccountBean? = if (torDialsTheInternet) null else SocksAccountBean(UPSTREAM_USER, Utils.getUuid())
+
+    /**
+     * PattNG: true when the core dials out directly, with no inbound: it cannot sign in, and Xray would add
+     * nothing to a plain exit-node. The app's own process, the core's too, is outside the VPN and the root redirect.
+     */
+    val dialsOutDirectly: Boolean get() = torDialsTheInternet && exit == AetherExit.PLAIN
+
+    /**
+     * PattNG: true when the core would need a secondary-socks inbound without a password, which any app
+     * could use to leave past the VPN: it cannot sign in, and its exit-node has something only Xray applies.
+     * A configuration on such a core is refused.
+     */
+    val needsOpenInbound: Boolean get() = !hasUpstream && torDialsTheInternet && exit != AetherExit.PLAIN
+
+    /**
+     * PattNG: true when Tor dials the internet itself, around the tunnel or alone. Tor takes a SOCKS
+     * address without a password to dial out through, and the core does not start it with one.
+     */
+    private val torDialsTheInternet: Boolean
+        get() = AetherCoreManager.torModeOf(arguments).let { it == AetherTor.REVERSE || it == AetherTor.ONLY }
 
     companion object {
 
         /** The name a command line starts with; the app runs its own copy of the core whatever the name says. */
         const val COMMAND_NAME = "aether"
+
+        /** PattNG: the user name of the account the core signs in with to the inbound it dials out through, see [newUpstreamAccount]. */
+        const val UPSTREAM_USER = "pattng-aether"
 
         /** The listeners a core may be told to bind: the core's own, Tor's, Psiphon's. */
         private val LISTENERS = listOf("--bind", AetherCoreManager.TOR_BIND, AetherCoreManager.PSIPHON_BIND)

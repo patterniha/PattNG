@@ -691,6 +691,9 @@
     <string name="aether_chain_one_profile">یه زنجیره پروکسی فقط ایتره یه پروفایل Aether داشته بۊ</string>
     <string name="aether_exit_node_name_taken">یه پروفایل وا نوم exit-node ایچو من مسیریابی استفاده ابۊ، وو exit-node نوم outbound ـیه که هسته Aether زه ری وو بیرون وصل ابۊ؛ نوم او پروفایل نه آلشت کنین</string>
     <string name="aether_chain_hop_missing">گامی که پروفایل Aether ای زنجیره پروکسی زه ری وو بیرون وصل ابۊ ساخته نبی، وو هسته Aether بی او وو اینترنت ارسی</string>
+    <string name="config_main_outbound_missing">کانفیگ پسند وابیڌه ساخته نبی، وو همه ترافیک بی او وو بیرون ارفت؛ تنظیماتس بسنجین، وو ای که کانفیگا زنجیره پروکسی یا بونکۊ سیاستس هنی هستن</string>
+    <string name="aether_tor_needs_exit_node">من حالت «اول تور، بعد WARP» یا «فقط تور»، تور رزم نئگره، سی همی نتره زه ری پروکسی که finalMask، dialMode گره خروجی یا گام زنجیره ای کانفیگ Aether لازمس هی وو بیرون وصل بۊ، وو هر برنومه دیه ای تونست وا او پروکسی VPN ن دور بزنه؛ اوونا ن وردارین، یا «اول WARP، بعد تور» ن کار بگیرین</string>
+    <string name="aether_custom_tor_open_inbound">هسته Aether ای کانفیگ تور ن من حالت «اول تور، بعد WARP» یا «فقط تور» ره ابره که رزم نئگره، وو زه ری ورودی secondary-socks که رزم نئخوا وو بیرون وصل ابۊ، سی همی هر برنومه دیه ای تونست وا او VPN ن دور بزنه؛ او ورودی وو --upstream ن ز aetherCommand وردارین تا تور یه راست وو بیرون وصل بۊ</string>
     <string name="aether_config_single_profile">یه پیکربندی فقط ایتره زه یه پروفایل Aether استفاده کنه</string>
     <string name="aether_config_two_exits">ایچو یه هسته Aether باید وا دو جور زه ری وو بیرون وصل بۊ: همو تونل تنهایی وو پشت یه گام زنجیره پروکسی، یا پشت دو گام جدا، یا وا دو تنظیم جدا exit-node استفاده بیه</string>
     <string name="aether_custom_no_outbound">هیچ خروجی SOCKS من پیکربندی به %1$s:%2$d وصل نیبۊ؛ فرمان Aether همۊچو گوش اکنه</string>

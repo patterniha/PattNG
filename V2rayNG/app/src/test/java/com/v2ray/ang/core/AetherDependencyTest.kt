@@ -9,6 +9,7 @@ import com.v2ray.ang.enums.CoreResolvedType
 import com.v2ray.ang.enums.EConfigType
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
@@ -345,8 +346,14 @@ class AetherDependencyTest {
         assertEquals(10822, inbound.get("port").asInt)
         assertEquals("127.0.0.1", inbound.get("listen").asString)
         assertEquals("mixed", inbound.get("protocol").asString)
-        assertTrue(inbound.getAsJsonObject("settings").get("udp").asBoolean)
+        val settings = inbound.getAsJsonObject("settings")
+        assertTrue(settings.get("udp").asBoolean)
         assertFalse(inbound.has("sniffing"))
+        // Only the core may dial out through it: another app on the phone would leave past the VPN.
+        assertEquals("password", settings.get("auth").asString)
+        val account = settings.getAsJsonArray("accounts").single().asJsonObject
+        val user = account.get("user").asString
+        val pass = account.get("pass").asString
 
         val outbound = config.getAsJsonArray("outbounds").last().asJsonObject
         assertEquals("exit-node", outbound.get("tag").asString)
@@ -359,8 +366,19 @@ class AetherDependencyTest {
         assertEquals("exit-node", rules[0].asJsonObject.get("outboundTag").asString)
         assertEquals("direct", rules[1].asJsonObject.get("outboundTag").asString)
 
-        assertEquals("aether --bind 127.0.0.1:10819 --protocol wg --upstream socks5://127.0.0.1:10822", core.command)
+        assertEquals("aether --bind 127.0.0.1:10819 --protocol wg --upstream socks5://$user:$pass@127.0.0.1:10822", core.command)
         assertEquals(core.command, config.get("aetherCommand").asString)
+    }
+
+    @Test
+    fun aCustomConfigurationWhoseTorDialsTheInternetItselfDialsOutDirectly() {
+        // A custom configuration's core has a plain exit-node: nothing for Xray to add, and no inbound any app could dial out through.
+        val config = customOnCore("aether --bind 127.0.0.1:10819 --tor-only")
+        val asWritten = config.deepCopy()
+        val core = routed(config)
+
+        assertFalse(core.hasUpstream)
+        assertEquals(asWritten, config)
     }
 
     @Test
@@ -412,7 +430,7 @@ class AetherDependencyTest {
 
     @Test
     fun aCustomConfigurationRoutedAlreadyIsLeftAsWritten() {
-        // An exported configuration carries the entries and its core the upstream already.
+        // A core with an upstream of its own, which is no inbound of the configuration, keeps it.
         val exported = customOnCore("aether --bind 127.0.0.1:10819 --upstream socks5://127.0.0.1:10821")
         val exportedAsWritten = exported.deepCopy()
         val exportedCore = coreOf(AetherDependency.ofCustom(exported))
@@ -430,5 +448,116 @@ class AetherDependencyTest {
             assertFalse((routing(config, core) as AetherDependency.Routing.Routed).core.hasUpstream)
             assertEquals(asWritten, config)
         }
+    }
+
+    private fun secondarySettings(config: JsonObject): JsonObject = config.getAsJsonArray("inbounds")
+        .single { it.asJsonObject.get("tag").asString == "secondary-socks" }.asJsonObject.getAsJsonObject("settings")
+
+    private fun accountsOf(config: JsonObject): List<Pair<String, String>> = secondarySettings(config).getAsJsonArray("accounts")
+        .map { it.asJsonObject.let { account -> account.get("user").asString to account.get("pass").asString } }
+
+    /** What a session exports: the entries, and the core signing in to the inbound with that session's account. */
+    private fun exported(): JsonObject = customOnCore("aether --bind 127.0.0.1:10819 --protocol wg").also { routed(it) }
+
+    /** A configuration exported before the inbound asked for an account, with [command] for its core. */
+    private fun exportedWithoutAccount(command: String): JsonObject = customOnCore(command).apply {
+        getAsJsonArray("inbounds").add(JsonParser.parseString(
+            """{"tag": "secondary-socks", "port": 10822, "listen": "127.0.0.1", "protocol": "mixed", "settings": {"udp": true}}"""
+        ))
+    }
+
+    @Test
+    fun anExportedConfigurationSignsInWithANewPasswordEverySession() {
+        val config = exported()
+        val before = accountsOf(config).single()
+        val outbounds = config.getAsJsonArray("outbounds").size()
+
+        val core = routed(config)
+        val (user, pass) = accountsOf(config).single()
+        // The user name stays, so that a rule that picks the account still does; the password is new.
+        assertEquals(AetherCore.UPSTREAM_USER, user)
+        assertNotEquals(before.second, pass)
+        assertEquals("aether --bind 127.0.0.1:10819 --protocol wg --upstream socks5://$user:$pass@127.0.0.1:10822", core.command)
+        assertEquals(core.command, config.get("aetherCommand").asString)
+        assertEquals(outbounds, config.getAsJsonArray("outbounds").size())
+    }
+
+    @Test
+    fun accountsWrittenBesideTheAppsOwnStayAsTheyAre() {
+        val config = exported()
+        val before = accountsOf(config).single()
+        secondarySettings(config).getAsJsonArray("accounts").add(JsonParser.parseString("""{"user": "alice", "pass": "secret"}"""))
+
+        routed(config)
+        val accounts = accountsOf(config)
+        assertEquals(listOf(AetherCore.UPSTREAM_USER, "alice"), accounts.map { it.first })
+        assertNotEquals(before.second, accounts[0].second)
+        assertEquals("secret", accounts[1].second)
+    }
+
+    @Test
+    fun aConfigurationExportedBeforeTheAccountsGetsOne() {
+        val config = exportedWithoutAccount("aether --bind 127.0.0.1:10819 --protocol wg --upstream socks5://127.0.0.1:10822")
+
+        val core = routed(config)
+        assertEquals("password", secondarySettings(config).get("auth").asString)
+        assertTrue(secondarySettings(config).get("udp").asBoolean)
+        val (user, pass) = accountsOf(config).single()
+        assertEquals(AetherCore.UPSTREAM_USER, user)
+        assertEquals("socks5://$user:$pass@127.0.0.1:10822", core.arguments.last())
+    }
+
+    @Test
+    fun anExportWhoseTorWouldDialAnInboundWithoutAPasswordIsRefused() {
+        // Tor cannot sign in, and the inbound as the app wrote it asks for no password: any app could use it.
+        val config = exportedWithoutAccount("aether --bind 127.0.0.1:10819 --tor-only --upstream socks5://127.0.0.1:10822")
+        val asWritten = config.deepCopy()
+
+        assertEquals(AetherDependency.Routing.OpenInbound, routing(config))
+        assertEquals(asWritten, config)
+
+        // An inbound with an auth of its own is the configuration's, and is left as written.
+        val own = customOnCore("aether --bind 127.0.0.1:10819 --tor-only --upstream socks5://127.0.0.1:10822").apply {
+            getAsJsonArray("inbounds").add(JsonParser.parseString(
+                """{"tag": "secondary-socks", "port": 10822, "listen": "127.0.0.1", "protocol": "mixed", "settings": {"auth": "password", "accounts": [{"user": "a", "pass": "b"}]}}"""
+            ))
+        }
+        val ownCore = coreOf(AetherDependency.ofCustom(own))
+        assertEquals(AetherDependency.Routing.Routed(ownCore), routing(own, ownCore))
+    }
+
+    @Test
+    fun aCustomConfigurationWhoseCoreSignsInWithAnAccountOfItsOwnIsLeftAsWritten() {
+        val accounts = """[{"user": "alice", "pass": "secret"}, {"user": "bob", "pass": "other"}]"""
+        val inbound = """{"tag": "secondary-socks", "port": 10822, "listen": "127.0.0.1", "protocol": "mixed",
+            "settings": {"auth": "password", "accounts": $accounts, "udp": true}}"""
+        val config = customOnCore("aether --bind 127.0.0.1:10819 --upstream socks5://alice:secret@127.0.0.1:10822").apply {
+            getAsJsonArray("inbounds").add(JsonParser.parseString(inbound))
+            // What the core sends goes out by the rule that picks its account.
+            getAsJsonObject("routing").getAsJsonArray("rules").add(JsonParser.parseString("""{"user": ["alice"], "outboundTag": "direct"}"""))
+        }
+        val asWritten = config.deepCopy()
+        val core = coreOf(AetherDependency.ofCustom(config))
+
+        assertEquals(AetherDependency.Routing.Routed(core), routing(config, core))
+        assertEquals(asWritten, config)
+
+        // The app's own user name with another password is no account of the app's either.
+        val lookalike = customOnCore("aether --bind 127.0.0.1:10819 --upstream socks5://${AetherCore.UPSTREAM_USER}:mine@127.0.0.1:10822").apply {
+            getAsJsonArray("inbounds").add(JsonParser.parseString(inbound.replace("alice", AetherCore.UPSTREAM_USER).replace("\"secret\"", "\"other password\"")))
+        }
+        val lookalikeAsWritten = lookalike.deepCopy()
+        routed(lookalike)
+        assertEquals(lookalikeAsWritten, lookalike)
+
+        // Nor is an inbound with an auth of its own and no account.
+        val open = customOnCore("aether --bind 127.0.0.1:10819 --upstream socks5://127.0.0.1:10822").apply {
+            getAsJsonArray("inbounds").add(JsonParser.parseString(
+                """{"tag": "secondary-socks", "port": 10822, "listen": "127.0.0.1", "protocol": "mixed", "settings": {"auth": "noauth"}}"""
+            ))
+        }
+        val openAsWritten = open.deepCopy()
+        routed(open)
+        assertEquals(openAsWritten, open)
     }
 }

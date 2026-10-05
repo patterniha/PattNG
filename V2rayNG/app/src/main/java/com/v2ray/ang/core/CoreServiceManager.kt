@@ -14,6 +14,7 @@ import com.v2ray.ang.AppConfig
 import com.v2ray.ang.R
 import com.v2ray.ang.contracts.IDialerService
 import com.v2ray.ang.contracts.ServiceControl
+import com.v2ray.ang.dto.ConfigResult
 import com.v2ray.ang.dto.ConnectionTestResult
 import com.v2ray.ang.dto.OutboundTrafficStat
 import com.v2ray.ang.dto.SubscriptionUpdateMessage
@@ -47,6 +48,22 @@ import libv2ray.CoreController
 import libv2ray.ProcessFinder
 import java.lang.ref.SoftReference
 import java.net.InetSocketAddress
+
+/**
+ * A start or reload failure whose message is a localized resource string, meant for the main
+ * screen. Every other failure reaches the UI without a reason: its message is technical and
+ * belongs in the log, and the UI shows only resource text.
+ *
+ * PattNG: outside [CoreServiceManager], which creates the native core controller as it loads, so that
+ * a JVM test can follow a failure to the reason the UI gets.
+ */
+private class StartFailure(message: String) : RuntimeException(message)
+
+internal fun userFacingReason(e: Exception): String = if (e is StartFailure) e.message.orEmpty() else ""
+
+/** PattNG: what a start or reload fails with when its configuration, [result], could not be built. */
+internal fun configFailure(result: ConfigResult): Exception =
+    if (result.localizedError) StartFailure(result.errorMessage) else IllegalStateException(result.errorMessage.ifBlank { "Failed to get V2Ray config" })
 
 object CoreServiceManager {
 
@@ -143,15 +160,6 @@ object CoreServiceManager {
         }
     }
 
-    /**
-     * A start or reload failure whose message is a localized resource string, meant for the main
-     * screen. Every other failure reaches the UI without a reason: its message is technical and
-     * belongs in the log, and the UI shows only resource text.
-     */
-    private class StartFailure(message: String) : RuntimeException(message)
-
-    private fun userFacingReason(e: Exception): String = if (e is StartFailure) e.message.orEmpty() else ""
-
     @Throws(Exception::class)
     private fun doStartCoreLoop(service: Service, vpnInterface: ParcelFileDescriptor?) {
         val mFilter = IntentFilter(AppConfig.BROADCAST_ACTION_SERVICE)
@@ -172,11 +180,9 @@ object CoreServiceManager {
 
         LogUtil.i(AppConfig.TAG, "StartCore-Manager: Starting core loop for ${config.remarks}")
         val result = CoreConfigManager.getV2rayConfig(service, guid)
-        LogUtil.d(AppConfig.TAG, result.content)
-        if (!result.status) {
-            if (result.localizedError) throw StartFailure(result.errorMessage)
-            error(result.errorMessage.ifBlank { "Failed to get V2Ray config" })
-        }
+        // Not the configuration itself: it carries the profile's secrets, and the log can be copied out of the app.
+        LogUtil.d(AppConfig.TAG, "StartCore-Manager: configuration built, status=${result.status}, guid=$guid")
+        if (!result.status) throw configFailure(result)
 
         cancelAetherWarmUp()
         // Starting a configuration ends the config tests, whatever the configuration: that is what a start

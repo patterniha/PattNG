@@ -691,6 +691,9 @@
     <string name="aether_chain_one_profile">یک زنجیره پروکسی فقط می‌تواند یک پروفایل Aether داشته باشد</string>
     <string name="aether_exit_node_name_taken">در مسیریابی اینجا از پروفایلی با نام exit-node استفاده شده، و exit-node نام outbound ـی است که هستهٔ Aether از راه آن به بیرون وصل می‌شود؛ نام آن پروفایل را تغییر دهید</string>
     <string name="aether_chain_hop_missing">گامی که پروفایل Aether این زنجیرهٔ پروکسی از راه آن به بیرون وصل می‌شود ساخته نشد، و هستهٔ Aether بدون آن به اینترنت می‌رسید</string>
+    <string name="config_main_outbound_missing">پروفایل انتخاب‌شده ساخته نشد، و همهٔ ترافیک بدون آن بیرون می‌رفت؛ تنظیمات آن را بررسی کنید، و اینکه پروفایل‌های زنجیرهٔ پروکسی یا گروه خط‌مشی آن هنوز وجود دارند</string>
+    <string name="aether_tor_needs_exit_node">در حالت «اول تور، بعد WARP» یا «فقط تور»، تور گذرواژه نمی‌پذیرد، پس نمی‌تواند از راه پروکسی‌ای که finalMask، dialMode گرهٔ خروجی یا گام زنجیرهٔ این پروفایل Aether لازم دارند به بیرون وصل شود، و هر برنامهٔ دیگری می‌توانست با آن پروکسی VPN را دور بزند؛ آن‌ها را بردارید، یا از «اول WARP، بعد تور» استفاده کنید</string>
+    <string name="aether_custom_tor_open_inbound">هستهٔ Aether این پیکربندی تور را در حالت «اول تور، بعد WARP» یا «فقط تور» اجرا می‌کند که گذرواژه نمی‌پذیرد، و از راه ورودی secondary-socks که گذرواژه نمی‌خواهد به بیرون وصل می‌شود، پس هر برنامهٔ دیگری می‌توانست با آن VPN را دور بزند؛ آن ورودی و --upstream را از aetherCommand بردارید تا تور مستقیم به بیرون وصل شود</string>
     <string name="aether_config_single_profile">یک پیکربندی فقط می‌تواند از یک پروفایل Aether استفاده کند</string>
     <string name="aether_config_two_exits">اینجا یک هستهٔ Aether باید از دو راه به بیرون وصل شود: همان تونل هم به‌تنهایی و هم پشت یک گام زنجیرهٔ پروکسی، یا پشت دو گام متفاوت، یا با دو تنظیم متفاوت exit-node به کار رفته است</string>
     <string name="aether_custom_no_outbound">هیچ خروجی SOCKS در پیکربندی به %1$s:%2$d وصل نمی‌شود؛ فرمان Aether همان‌جا گوش می‌دهد</string>

@@ -689,6 +689,9 @@
     <string name="aether_chain_one_profile">一個代理鏈只能包含一個 Aether 設定檔</string>
     <string name="aether_exit_node_name_taken">此處路由使用了名為 exit-node 的設定檔，而 exit-node 是 Aether 核心向外連線所經出站的名稱；請重新命名該設定檔</string>
     <string name="aether_chain_hop_missing">無法建立此代理鏈中 Aether 設定檔向外連線所經的那一跳，Aether 核心將會不經它直接連線網際網路</string>
+    <string name="config_main_outbound_missing">無法建立所選設定檔，所有流量將會不經它直接送出；請檢查其設定，以及其代理鏈或策略組中的設定檔是否仍然存在</string>
+    <string name="aether_tor_needs_exit_node">在 Tor → WARP 或 僅 Tor 模式下，Tor 不接受密碼，因此無法經由此 Aether 設定檔的出口節點 finalMask、dialMode 或鏈中跳點所需的代理向外連線，而其他任何應用程式都可藉該代理繞過 VPN；請移除它們，或改用 WARP → Tor</string>
+    <string name="aether_custom_tor_open_inbound">此設定的 Aether 核心執行 Tor → WARP 或 僅 Tor，Tor 不接受密碼，卻經由不要求密碼的 secondary-socks 入站向外連線，其他任何應用程式都可藉它繞過 VPN；請移除該入站以及 aetherCommand 中的 --upstream，讓 Tor 直接向外連線</string>
     <string name="aether_config_single_profile">一個設定只能使用一個 Aether 設定檔</string>
     <string name="aether_config_two_exits">這裡一個 Aether 核心將不得不以兩種方式向外連線：同一隧道既單獨使用又位於代理鏈的某一跳之後，或位於兩個不同的跳之後，或使用兩種不同的 exit-node 設定</string>
     <string name="aether_custom_no_outbound">設定中沒有 SOCKS 出站連線到 %1$s:%2$d，而 Aether 命令在該處監聽</string>

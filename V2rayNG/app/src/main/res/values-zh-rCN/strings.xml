@@ -689,6 +689,9 @@
     <string name="aether_chain_one_profile">一个代理链只能包含一个 Aether 配置</string>
     <string name="aether_exit_node_name_taken">此处路由使用了名为 exit-node 的配置，而 exit-node 是 Aether 内核向外连接所经出站的名称；请重命名该配置</string>
     <string name="aether_chain_hop_missing">无法构建此代理链中 Aether 配置向外连接所经的那一跳，Aether 内核将会不经它直接连接互联网</string>
+    <string name="config_main_outbound_missing">无法构建所选配置，所有流量将会不经它直接发出；请检查其设置，以及其代理链或策略组中的配置是否仍然存在</string>
+    <string name="aether_tor_needs_exit_node">在 Tor → WARP 或 仅 Tor 模式下，Tor 不接受密码，因此无法经由此 Aether 配置的出口节点 finalMask、dialMode 或链中跳点所需的代理向外连接，而其他任何应用都可借该代理绕过 VPN；请移除它们，或改用 WARP → Tor</string>
+    <string name="aether_custom_tor_open_inbound">此配置的 Aether 内核运行 Tor → WARP 或 仅 Tor，Tor 不接受密码，却经由不要求密码的 secondary-socks 入站向外连接，其他任何应用都可借它绕过 VPN；请移除该入站以及 aetherCommand 中的 --upstream，让 Tor 直接向外连接</string>
     <string name="aether_config_single_profile">一个配置只能使用一个 Aether 配置</string>
     <string name="aether_config_two_exits">这里一个 Aether 内核将不得不以两种方式向外连接：同一隧道既单独使用又位于代理链的某一跳之后，或位于两个不同的跳之后，或使用两种不同的 exit-node 设置</string>
     <string name="aether_custom_no_outbound">配置中没有 SOCKS 出站连接 %1$s:%2$d，而 Aether 命令在该处监听</string>

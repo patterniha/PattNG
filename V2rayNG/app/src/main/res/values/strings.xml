@@ -697,6 +697,9 @@
     <string name="aether_chain_one_profile">A proxy chain can have only one Aether profile</string>
     <string name="aether_exit_node_name_taken">A profile named exit-node is used by routing here, and exit-node is the name of the outbound the Aether core dials out by; rename that profile</string>
     <string name="aether_chain_hop_missing">The hop the Aether profile of this proxy chain dials out through could not be built, and the Aether core would reach the internet without it</string>
+    <string name="config_main_outbound_missing">The selected profile could not be built, and all traffic would leave without it; check its settings, and that the profiles of its proxy chain or policy group still exist</string>
+    <string name="aether_tor_needs_exit_node">With Tor → WARP or Tor only, Tor takes no password, so it cannot dial out through the proxy that the exit-node finalMask, dialMode or chain hop of this Aether profile needs, and any other app could use that proxy to bypass the VPN; remove them, or use WARP → Tor</string>
+    <string name="aether_custom_tor_open_inbound">The Aether core of this configuration runs Tor → WARP or Tor only, which takes no password, and dials out through the secondary-socks inbound, which asks for none, so any other app could use it to bypass the VPN; remove that inbound and the --upstream of aetherCommand, so that Tor dials out directly</string>
     <string name="aether_config_single_profile">A configuration can use only one Aether profile</string>
     <string name="aether_config_two_exits">One Aether core would have to dial out two ways here: the same tunnel is used on its own and behind a proxy chain\'s hop, behind two different hops, or with two different exit-node settings</string>
     <string name="aether_custom_no_outbound">No SOCKS outbound of the configuration dials %1$s:%2$d, where the Aether command listens</string>

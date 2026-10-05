@@ -2,6 +2,7 @@ package com.v2ray.ang.core
 
 import android.content.Context
 import android.text.TextUtils
+import androidx.annotation.StringRes
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.v2ray.ang.AppConfig
@@ -46,11 +47,12 @@ object CoreConfigManager {
             val dependency = AetherDependency.of(configContext.resolvedOutbounds)
             aetherFailure(context, guid, dependency)?.let { return it }
             if (takesExitNodeName(dependency, configContext.resolvedOutbounds)) return exitNodeNameFailure(context, guid)
-            val v2rayConfig = buildUnifiedConfig(configContext)
+            val v2rayConfig = buildUnifiedConfig(configContext) ?: return mainOutboundFailure(context, guid)
             // PattNG: what the Aether core sends out leaves through Xray.
             val secondaryPort = AetherCoreManager.secondarySocksPort
             val core = (dependency as? AetherDependency.Single)?.core?.let {
                 if (lacksChainHop(it, v2rayConfig.outbounds)) return chainHopFailure(context, guid)
+                if (it.needsOpenInbound) return openInboundFailure(context, guid, R.string.aether_tor_needs_exit_node)
                 routeAetherThroughXray(v2rayConfig, it, secondaryPort) ?: return secondaryPortFailure(context, guid, secondaryPort)
             }
             return toConfigResult(context, configContext, v2rayConfig, core)
@@ -85,7 +87,7 @@ object CoreConfigManager {
             val dependency = AetherDependency.of(configContext.resolvedOutbounds.take(1))
             aetherFailure(context, guid, dependency)?.let { return it }
             if (takesExitNodeName(dependency, configContext.resolvedOutbounds)) return exitNodeNameFailure(context, guid)
-            val v2rayConfig = buildUnifiedConfig(configContext)
+            val v2rayConfig = buildUnifiedConfig(configContext) ?: return mainOutboundFailure(context, guid)
             postProcessForSpeedtest(v2rayConfig)
 
             // Not routed through an inbound of this configuration: a test's core of its own dials out through
@@ -164,6 +166,7 @@ object CoreConfigManager {
                 when (val routing = AetherDependency.routeThroughXray(json, core, secondaryPort)) {
                     is AetherDependency.Routing.Routed -> result.aetherCore = routing.core
                     AetherDependency.Routing.PortTaken -> return secondaryPortFailure(context, configContext.guid, secondaryPort)
+                    AetherDependency.Routing.OpenInbound -> return openInboundFailure(context, configContext.guid, R.string.aether_custom_tor_open_inbound)
                     is AetherDependency.Routing.ExitNodeSelected ->
                         return exitNodeSelectorFailure(context, configContext.guid, routing.selector)
                 }
@@ -239,8 +242,9 @@ object CoreConfigManager {
      *
      * The analyzed outbound plan is consumed in order and converted to concrete
      * outbounds before routing, DNS, and runtime extras are assembled.
+     * PattNG: null when the main server produced no outbound, see [lacksMainOutbound].
      */
-    private fun buildUnifiedConfig(configContext: CoreConfigContext): V2rayConfig {
+    private fun buildUnifiedConfig(configContext: CoreConfigContext): V2rayConfig? {
         require(configContext.resolvedOutbounds.isNotEmpty()) { "resolvedOutbounds must not be empty for a non-CUSTOM context" }
         val primaryResolvedOutbound = configContext.resolvedOutbounds.first()
 
@@ -269,6 +273,7 @@ object CoreConfigManager {
                 balancerStrategies = balancerStrategies,
             )
         }
+        if (lacksMainOutbound(v2rayConfig)) return null
 
         // User routing rules (policyGroupBalancerTags rewrites TAG_PROXY→balancer when main is POLICYGROUP).
         configureRouting(configContext, v2rayConfig, policyGroupBalancerTags)
@@ -566,24 +571,31 @@ object CoreConfigManager {
 
     /**
      * PattNG: has what the Aether [core] sends out leave through Xray: the secondary-socks inbound on
-     * [port], three above the Aether listen port, after the other inbounds, with no sniffing; the
+     * [port], three above the Aether listen port, after the other inbounds, with no sniffing and the
+     * core's account, see [AetherCore]; the
      * exit-node of the core, after the other outbounds, unless a hop of a chain the core dials out
      * through is the exit-node already, see [handleProxyChainResolvedOutbound]: a freedom outbound
      * with its profile's finalMask and dialMode; and a rule ahead of every other that sends what comes
      * in on that inbound out by that outbound. Returns the core told to dial out through the inbound,
      * or null, with nothing added, when an inbound of the configuration listens on [port] already. A
-     * core that names an upstream of its own, as a profile's hand-written command may, is left as it is.
+     * core that names an upstream of its own, as a profile's hand-written command may, is left as it is,
+     * and so is one that dials out directly. A core that [AetherCore.needsOpenInbound] is refused before.
      */
     internal fun routeAetherThroughXray(v2rayConfig: V2rayConfig, core: AetherCore, port: Int): AetherCore? {
-        if (core.hasUpstream) return core
+        if (core.hasUpstream || core.dialsOutDirectly) return core
         if (v2rayConfig.inbounds.any { it.port == port }) return null
+        val account = checkNotNull(core.newUpstreamAccount()) { "A core that cannot sign in is refused before it is routed" }
         v2rayConfig.inbounds.add(
             V2rayConfig.InboundBean(
                 tag = AppConfig.TAG_SECONDARY_SOCKS,
                 port = port,
                 protocol = "mixed",
                 listen = AppConfig.LOOPBACK,
-                settings = V2rayConfig.InboundBean.InSettingsBean(udp = true),
+                settings = V2rayConfig.InboundBean.InSettingsBean(
+                    auth = "password",
+                    udp = true,
+                    accounts = listOf(account),
+                ),
             )
         )
         if (v2rayConfig.outbounds.none { it.tag == AppConfig.TAG_EXIT_NODE }) {
@@ -596,7 +608,16 @@ object CoreConfigManager {
                 outboundTag = AppConfig.TAG_EXIT_NODE,
             )
         )
-        return core.through(port)
+        return core.through(port, account)
+    }
+
+    /**
+     * PattNG: a configuration whose Aether core would dial out through a secondary-socks inbound without
+     * a password, see [AetherCore.needsOpenInbound], as a failure with [message], a resource meant for the screen.
+     */
+    private fun openInboundFailure(context: Context, guid: String, @StringRes message: Int): ConfigResult {
+        LogUtil.w(AppConfig.TAG, "The Aether core cannot sign in to the inbound it would dial out through, guid=$guid")
+        return ConfigResult(status = false, guid = guid, errorMessage = context.getString(message), localizedError = true)
     }
 
     /** PattNG: a configuration with an inbound of its own on the secondary-socks [port], as a failure whose message is meant for the screen. */
@@ -643,6 +664,26 @@ object CoreConfigManager {
             status = false,
             guid = guid,
             errorMessage = context.getString(R.string.aether_chain_hop_missing),
+            localizedError = true,
+        )
+    }
+
+    /**
+     * PattNG: true when [v2rayConfig] has neither the outbound tagged proxy nor the balancer of the main
+     * server: the main server could not be built, and Xray would send everything, the rules that name
+     * proxy included, out by the first outbound left, which is direct.
+     */
+    internal fun lacksMainOutbound(v2rayConfig: V2rayConfig): Boolean =
+        v2rayConfig.outbounds.none { it.tag == AppConfig.TAG_PROXY }
+            && v2rayConfig.routing.balancers.orEmpty().none { it.tag == AppConfig.TAG_BALANCER }
+
+    /** PattNG: see [lacksMainOutbound], as a failure whose message is meant for the screen. */
+    private fun mainOutboundFailure(context: Context, guid: String): ConfigResult {
+        LogUtil.w(AppConfig.TAG, "The main server produced no outbound, guid=$guid")
+        return ConfigResult(
+            status = false,
+            guid = guid,
+            errorMessage = context.getString(R.string.config_main_outbound_missing),
             localizedError = true,
         )
     }

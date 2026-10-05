@@ -1,5 +1,6 @@
 package com.v2ray.ang.core
 
+import com.v2ray.ang.dto.V2rayConfig.InboundBean.InSettingsBean.SocksAccountBean
 import com.v2ray.ang.dto.entities.ProfileItem
 import com.v2ray.ang.enums.AetherProtocol
 import com.v2ray.ang.enums.AetherPsiphon
@@ -8,6 +9,7 @@ import com.v2ray.ang.enums.EConfigType
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -242,6 +244,51 @@ class AetherCoreTest {
         val own = AetherCore.ofCommand("aether --bind 127.0.0.1:10819 --upstream socks5://127.0.0.1:1080")!!
         assertTrue(own.hasUpstream)
         assertEquals(own, own.through(10821))
+        assertEquals(own, own.through(10821, SocksAccountBean("user", "pass")))
+    }
+
+    @Test
+    fun aCoreSignsInToXrayWithANewAccountUnlessTorDialsTheInternetItself() {
+        val core = AetherCore.ofCommand("aether --bind 127.0.0.1:10819 --protocol wg")!!
+        val account = core.newUpstreamAccount()!!
+        // The app knows its account by the user name; the password is what keeps other apps out.
+        assertEquals(AetherCore.UPSTREAM_USER, account.user)
+        assertTrue(account.pass.isNotEmpty())
+        assertNotEquals(account.pass, core.newUpstreamAccount()!!.pass)
+
+        val routed = core.through(10821, account)
+        assertEquals("socks5://${account.user}:${account.pass}@127.0.0.1:10821", valueAfter(routed.arguments, "--upstream"))
+        assertTrue(core.runsAs(routed.arguments))
+
+        // Tor inside the tunnel dials through the tunnel; around it, or alone, it dials the upstream and takes no password there.
+        assertNotNull(AetherCore.ofCommand("aether --bind 127.0.0.1:10819 --tor")!!.newUpstreamAccount())
+        assertNull(AetherCore.ofCommand("aether --bind 127.0.0.1:10819 --protocol masque --tor-reverse")!!.newUpstreamAccount())
+        assertNull(AetherCore.ofCommand("aether --bind 127.0.0.1:10819 --tor-only")!!.newUpstreamAccount())
+    }
+
+    @Test
+    fun aCoreDialsOutDirectlyOnlyWhenItCannotSignInAndXrayWouldAddNothing() {
+        val reverse = AetherCore.ofCommand("aether --bind 127.0.0.1:10819 --protocol masque --tor-reverse")!!
+        assertTrue(reverse.dialsOutDirectly)
+        assertTrue(AetherCore.ofCommand("aether --bind 127.0.0.1:10819 --tor-only")!!.dialsOutDirectly)
+
+        assertFalse(reverse.needsOpenInbound)
+
+        // An exit-node with something of its own is Xray's to build: a finalMask, a dialMode, a chain hop.
+        // Such a core would need an inbound it cannot sign in to, and is refused.
+        for (exit in listOf(AetherExit("""{"tcp": []}""", null), AetherExit(dialMode = "code-1"), AetherExit.through(listOf(pinned)))) {
+            assertFalse(reverse.copy(exit = exit).dialsOutDirectly, "$exit")
+            assertTrue(reverse.copy(exit = exit).needsOpenInbound, "$exit")
+        }
+        // One told an upstream of its own needs no inbound of the app's.
+        val own = AetherCore.ofCommand("aether --bind 127.0.0.1:10819 --tor-only --upstream socks5://127.0.0.1:1080")!!
+        assertFalse(own.copy(exit = AetherExit(dialMode = "code-1")).needsOpenInbound)
+
+        // A core that can sign in dials out through Xray.
+        for (core in listOf(AetherCore.ofCommand("aether --bind 127.0.0.1:10819 --protocol wg")!!, AetherCore.ofCommand("aether --bind 127.0.0.1:10819 --tor")!!)) {
+            assertFalse(core.dialsOutDirectly)
+            assertFalse(core.copy(exit = AetherExit(dialMode = "code-1")).needsOpenInbound)
+        }
     }
 
     @Test

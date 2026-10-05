@@ -689,6 +689,9 @@
     <string name="aether_chain_one_profile">Một chuỗi proxy chỉ có thể có một hồ sơ Aether</string>
     <string name="aether_exit_node_name_taken">Định tuyến ở đây dùng một hồ sơ tên exit-node, mà exit-node là tên outbound qua đó lõi Aether kết nối ra ngoài; hãy đổi tên hồ sơ đó</string>
     <string name="aether_chain_hop_missing">Không thể dựng chặng mà hồ sơ Aether trong chuỗi proxy này dùng để kết nối ra ngoài, và lõi Aether sẽ ra Internet mà không qua nó</string>
+    <string name="config_main_outbound_missing">Không thể dựng hồ sơ đã chọn, và mọi lưu lượng sẽ ra ngoài mà không qua nó; hãy kiểm tra cài đặt của nó, và các hồ sơ trong chuỗi proxy hoặc nhóm chính sách của nó vẫn còn tồn tại</string>
+    <string name="aether_tor_needs_exit_node">Với Tor → WARP hoặc Chỉ Tor, Tor không nhận mật khẩu, nên không thể kết nối ra ngoài qua proxy mà finalMask, dialMode của exit-node hoặc chặng chuỗi của hồ sơ Aether này cần, và bất kỳ ứng dụng nào khác cũng có thể dùng proxy đó để vượt qua VPN; hãy bỏ chúng, hoặc dùng WARP → Tor</string>
+    <string name="aether_custom_tor_open_inbound">Lõi Aether của cấu hình này chạy Tor → WARP hoặc Chỉ Tor, vốn không nhận mật khẩu, và kết nối ra ngoài qua inbound secondary-socks không yêu cầu mật khẩu, nên bất kỳ ứng dụng nào khác cũng có thể dùng nó để vượt qua VPN; hãy bỏ inbound đó và --upstream trong aetherCommand để Tor kết nối ra ngoài trực tiếp</string>
     <string name="aether_config_single_profile">Một cấu hình chỉ có thể dùng một hồ sơ Aether</string>
     <string name="aether_config_two_exits">Ở đây một lõi Aether sẽ phải kết nối ra ngoài theo hai cách: cùng một đường hầm được dùng riêng lẻ và sau một chặng của chuỗi proxy, sau hai chặng khác nhau, hoặc với hai thiết lập exit-node khác nhau</string>
     <string name="aether_custom_no_outbound">Không có outbound SOCKS nào của cấu hình kết nối tới %1$s:%2$d, nơi lệnh Aether lắng nghe</string>

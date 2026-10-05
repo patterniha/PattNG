@@ -95,8 +95,12 @@ object CoreOutboundBuilder {
 
             if (muxEnabled) {
                 outbound.mux?.enabled = true
-                outbound.mux?.concurrency = MmkvManager.decodeSettingsString(AppConfig.PREF_MUX_CONCURRENCY, "8").orEmpty().toInt()
-                outbound.mux?.xudpConcurrency = MmkvManager.decodeSettingsString(AppConfig.PREF_MUX_XUDP_CONCURRENCY, AppConfig.DEFAULT_MUX_XUDP_CONCURRENCY).orEmpty().toInt()
+                // PattNG: the settings fields take any text; a blank one must not leave the outbound unbuilt.
+                outbound.mux?.concurrency = Utils.parseInt(MmkvManager.decodeSettingsString(AppConfig.PREF_MUX_CONCURRENCY, "8"), 8)
+                outbound.mux?.xudpConcurrency = Utils.parseInt(
+                    MmkvManager.decodeSettingsString(AppConfig.PREF_MUX_XUDP_CONCURRENCY, AppConfig.DEFAULT_MUX_XUDP_CONCURRENCY),
+                    AppConfig.DEFAULT_MUX_XUDP_CONCURRENCY.toInt(),
+                )
                 outbound.mux?.xudpProxyUDP443 = MmkvManager.decodeSettingsString(AppConfig.PREF_MUX_XUDP_QUIC, "reject")
                 if (protocol.equals(EConfigType.VLESS.name, true) && outbound.settings?.flow?.isNotEmpty() == true) {
                     outbound.mux?.concurrency = -1

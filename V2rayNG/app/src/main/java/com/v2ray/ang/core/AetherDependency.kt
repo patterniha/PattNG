@@ -7,6 +7,7 @@ import com.google.gson.JsonParseException
 import com.google.gson.JsonParser
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.dto.CoreConfigContext
+import com.v2ray.ang.dto.V2rayConfig.InboundBean.InSettingsBean.SocksAccountBean
 import com.v2ray.ang.enums.CoreResolvedType
 import com.v2ray.ang.enums.EConfigType
 
@@ -67,6 +68,12 @@ sealed interface AetherDependency {
 
         /** A balancer or an observatory of the configuration picks outbounds by [selector], which would pick the exit-node too. */
         data class ExitNodeSelected(val selector: String) : Routing
+
+        /**
+         * The core dials out through the secondary-socks inbound as the app wrote it, with no password,
+         * and cannot sign in there: any app could use it to leave past the VPN. See [AetherCore].
+         */
+        data object OpenInbound : Routing
     }
 
     companion object {
@@ -120,18 +127,21 @@ sealed interface AetherDependency {
         /**
          * Has what the Aether [core] of the custom configuration [config] sends out leave through
          * Xray, as the configuration of a profile does: the secondary-socks inbound on [port], three
-         * above the Aether listen port for every Aether core, after the other inbounds, a freedom outbound
+         * above the Aether listen port for every Aether core, with the core's account, see [AetherCore],
+         * after the other inbounds, a freedom outbound
          * after the other outbounds, and a rule ahead of every other that joins the two. Returns the
          * core told to dial out through that inbound, which is also written back as aetherCommand.
          * Nothing is added when an inbound of the configuration listens on [port] already, nor when a
          * balancer or an observatory would pick the freedom outbound among its own, since those pick
          * outbounds by the start of their tags: what it balances could leave directly. A core that
-         * names an upstream of its own, as one exported from the app does, is left as it is with the
-         * configuration; so is a configuration that already has an inbound or an outbound under those
-         * tags, or something else than a list where they would go.
+         * names an upstream of its own is left as it is with the configuration, but for one exported
+         * from a session, see [withNewAccount]; so is a core that dials out directly, and a configuration
+         * that already has an inbound or an outbound under those tags, or something else than a list
+         * where they would go.
          */
         fun routeThroughXray(config: JsonObject, core: AetherCore, port: Int): Routing {
-            if (core.hasUpstream) return Routing.Routed(core)
+            if (core.hasUpstream) return withNewAccount(config, core)
+            if (core.dialsOutDirectly) return Routing.Routed(core)
             val inbounds = listOrNew(config, "inbounds") ?: return Routing.Routed(core)
             val outbounds = listOrNew(config, "outbounds") ?: return Routing.Routed(core)
             val routing = objectOrNew(config, "routing") ?: return Routing.Routed(core)
@@ -143,12 +153,17 @@ sealed interface AetherDependency {
             }
             if (taken.any { port in it }) return Routing.PortTaken
             exitNodeSelector(config, routing)?.let { return Routing.ExitNodeSelected(it) }
+            // A custom configuration's core has a plain exit-node: one that cannot sign in dials out directly.
+            val account = core.newUpstreamAccount() ?: return Routing.OpenInbound
             inbounds.add(JsonObject().apply {
                 addProperty("tag", AppConfig.TAG_SECONDARY_SOCKS)
                 addProperty("port", port)
                 addProperty("listen", AppConfig.LOOPBACK)
                 addProperty("protocol", "mixed")
-                add("settings", JsonObject().apply { addProperty("udp", true) })
+                add("settings", JsonObject().apply {
+                    addProperty("udp", true)
+                    askFor(this, account)
+                })
             })
             outbounds.add(JsonObject().apply {
                 addProperty("tag", AppConfig.TAG_EXIT_NODE)
@@ -166,9 +181,59 @@ sealed interface AetherDependency {
             config.add("outbounds", outbounds)
             config.add("routing", routing)
 
-            val routed = core.through(port)
+            val routed = core.through(port, account)
             config.addProperty(COMMAND_KEY, routed.command)
             return Routing.Routed(routed)
+        }
+
+        /**
+         * [core], whose upstream names the secondary-socks inbound of [config] as a session exports it,
+         * signing in there with a new password, which is written back with aetherCommand. Only what the
+         * app wrote is touched: its own account gets the new password, and an inbound with no account and
+         * no auth of its own, as one exported before the accounts, gets that account; the other accounts,
+         * and the rules that pick them, stay as they are. [Routing.OpenInbound] when the core cannot sign
+         * in to such an inbound without a password. Any other upstream is left as written.
+         */
+        private fun withNewAccount(config: JsonObject, core: AetherCore): Routing {
+            val asWritten = Routing.Routed(core)
+            val inbound = config.get("inbounds")?.takeIf { it.isJsonArray }?.asJsonArray
+                ?.firstOrNull { it.isJsonObject && it.asJsonObject.get("tag")?.let(::textOf) == AppConfig.TAG_SECONDARY_SOCKS }
+                ?.asJsonObject ?: return asWritten
+            val port = inbound.get("port")?.let(::portOf) ?: return asWritten
+            if (inbound.get("listen")?.let(::textOf) != AppConfig.LOOPBACK || inbound.get("protocol")?.let(::textOf) != "mixed") return asWritten
+            val upstream = AetherCoreManager.upstreamOf(core.arguments)
+                ?.takeIf { it.startsWith(AppConfig.SOCKS5) }?.removePrefix(AppConfig.SOCKS5) ?: return asWritten
+            if (upstream.substringAfterLast('@') != "${AppConfig.LOOPBACK}:$port") return asWritten
+
+            val settings = inbound.get("settings")?.takeIf { it.isJsonObject }?.asJsonObject
+            val signedInAs = upstream.substringBeforeLast('@', "")
+            // As the app wrote the inbound before it asked for an account.
+            val withoutPassword = signedInAs.isEmpty() && (settings == null || !(settings.has("auth") || settings.has("accounts")))
+            val account = core.newUpstreamAccount() ?: return if (withoutPassword) Routing.OpenInbound else asWritten
+            if (signedInAs.isEmpty()) {
+                if (!withoutPassword) return asWritten
+                askFor(settings ?: JsonObject().also { inbound.add("settings", it) }, account)
+            } else {
+                val own = settings?.get("accounts")?.takeIf { it.isJsonArray }?.asJsonArray
+                    ?.mapNotNull { it.takeIf(JsonElement::isJsonObject)?.asJsonObject }
+                    ?.firstOrNull { it.get("user")?.let(::textOf) == AetherCore.UPSTREAM_USER && signedInAs == "${AetherCore.UPSTREAM_USER}:${it.get("pass")?.let(::textOf)}" }
+                    ?: return asWritten
+                own.addProperty("pass", account.pass)
+            }
+            val renewed = core.copy(arguments = AetherCoreManager.withoutOption(core.arguments, AetherCoreManager.UPSTREAM)).through(port, account)
+            config.addProperty(COMMAND_KEY, renewed.command)
+            return Routing.Routed(renewed)
+        }
+
+        /** Has the inbound with [settings] ask for [account] and no other. */
+        private fun askFor(settings: JsonObject, account: SocksAccountBean) {
+            settings.addProperty("auth", "password")
+            settings.add("accounts", JsonArray().apply {
+                add(JsonObject().apply {
+                    addProperty("user", account.user)
+                    addProperty("pass", account.pass)
+                })
+            })
         }
 
         /**

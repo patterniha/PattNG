@@ -699,6 +699,9 @@
     <string name="aether_chain_one_profile">لا يمكن أن تحتوي سلسلة الوكيل إلا على ملف Aether واحد</string>
     <string name="aether_exit_node_name_taken">يُستخدم ملف باسم exit-node في التوجيه هنا، وexit-node هو اسم المنفذ الصادر الذي تتصل عبره نواة Aether بالخارج؛ غيّر اسم ذلك الملف</string>
     <string name="aether_chain_hop_missing">تعذّر إنشاء القفزة التي يتصل عبرها ملف Aether في سلسلة الوكيل هذه بالخارج، وكانت نواة Aether ستصل إلى الإنترنت بدونها</string>
+    <string name="config_main_outbound_missing">تعذّر إنشاء الملف المحدد، وكانت كل حركة المرور ستخرج بدونه؛ تحقق من إعداداته، ومن أن ملفات سلسلة الوكيل أو مجموعة السياسات الخاصة به لا تزال موجودة</string>
+    <string name="aether_tor_needs_exit_node">في وضع «عبر تور إلى WARP» أو «تور فقط» لا يقبل تور كلمة مرور، فلا يمكنه الاتصال بالخارج عبر الوكيل الذي يحتاجه finalMask أو dialMode لعقدة الخروج أو قفزة السلسلة في ملف Aether هذا، وكان بإمكان أي تطبيق آخر استخدام ذلك الوكيل لتجاوز VPN؛ أزلها، أو استخدم «عبر WARP إلى تور»</string>
+    <string name="aether_custom_tor_open_inbound">تشغّل نواة Aether في هذا الإعداد تور في وضع «عبر تور إلى WARP» أو «تور فقط»، وهو لا يقبل كلمة مرور، وتتصل بالخارج عبر الوارد secondary-socks الذي لا يطلب كلمة مرور، فكان بإمكان أي تطبيق آخر استخدامه لتجاوز VPN؛ أزل ذلك الوارد و--upstream من aetherCommand ليتصل تور بالخارج مباشرة</string>
     <string name="aether_config_single_profile">لا يمكن للتكوين استخدام أكثر من ملف Aether واحد</string>
     <string name="aether_config_two_exits">سيتعين على نواة Aether واحدة أن تتصل بالخارج بطريقتين هنا: النفق نفسه مستخدم بمفرده وخلف قفزة في سلسلة وكيل، أو خلف قفزتين مختلفتين، أو بإعدادين مختلفين لـ exit-node</string>
     <string name="aether_custom_no_outbound">لا يتصل أي مخرج SOCKS في الإعدادات بالعنوان %1$s:%2$d، حيث يستمع أمر Aether</string>

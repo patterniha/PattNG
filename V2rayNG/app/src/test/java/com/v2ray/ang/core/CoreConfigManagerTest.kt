@@ -10,6 +10,7 @@ import com.v2ray.ang.util.JsonUtil
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
@@ -49,6 +50,28 @@ class CoreConfigManagerTest {
     }
 
     @Test
+    fun aMainServerThatProducedNoOutboundIsMissing() {
+        fun config(outbounds: List<String>, balancers: List<String> = emptyList()) = V2rayConfig(
+            log = V2rayConfig.LogBean(),
+            inbounds = arrayListOf(),
+            outbounds = outbounds.mapTo(ArrayList()) { V2rayConfig.OutboundBean(tag = it, protocol = "freedom") },
+            routing = V2rayConfig.RoutingBean(
+                domainStrategy = "AsIs",
+                rules = arrayListOf(),
+                balancers = balancers.map { V2rayConfig.RoutingBean.BalancerBean(tag = it, selector = listOf("$it-")) },
+            ),
+        )
+
+        // The template's outbounds alone: Xray would send everything out by direct.
+        assertTrue(CoreConfigManager.lacksMainOutbound(config(listOf(AppConfig.TAG_DIRECT, AppConfig.TAG_BLOCKED))))
+        assertFalse(CoreConfigManager.lacksMainOutbound(config(listOf(AppConfig.TAG_PROXY, AppConfig.TAG_DIRECT))))
+        // A policy group as the main server is its balancer.
+        assertFalse(CoreConfigManager.lacksMainOutbound(config(listOf("proxy-proxy-1-a", AppConfig.TAG_DIRECT), listOf(AppConfig.TAG_BALANCER))))
+        // The balancer of a routing target is not the main server's.
+        assertTrue(CoreConfigManager.lacksMainOutbound(config(listOf("proxy-group-1-a", AppConfig.TAG_DIRECT), listOf("${AppConfig.TAG_BALANCER_PRE}-group"))))
+    }
+
+    @Test
     fun whatTheAetherCoreSendsOutLeavesThroughXray() {
         val config = V2rayConfig(
             log = V2rayConfig.LogBean(),
@@ -68,6 +91,9 @@ class CoreConfigManagerTest {
         assertEquals(AppConfig.LOOPBACK, inbound.listen)
         assertEquals(true, inbound.settings?.udp)
         assertNull(inbound.sniffing)
+        // Only the core may dial out through it: another app on the phone would leave past the VPN.
+        assertEquals("password", inbound.settings?.auth)
+        val account = inbound.settings?.accounts!!.single()
 
         val outbound = config.outbounds.last()
         assertEquals(AppConfig.TAG_EXIT_NODE, outbound.tag)
@@ -79,7 +105,42 @@ class CoreConfigManagerTest {
         assertEquals(listOf(AppConfig.TAG_SECONDARY_SOCKS), config.routing.rules.first().inboundTag)
         assertEquals(AppConfig.TAG_EXIT_NODE, config.routing.rules.first().outboundTag)
 
-        assertEquals("socks5://127.0.0.1:10822", core.arguments.last())
+        assertEquals("socks5://${account.user}:${account.pass}@127.0.0.1:10822", core.arguments.last())
+    }
+
+    private fun configOnCore() = V2rayConfig(
+        log = V2rayConfig.LogBean(),
+        inbounds = arrayListOf(),
+        outbounds = arrayListOf(socks(AppConfig.LOOPBACK, 10819)),
+        routing = V2rayConfig.RoutingBean(domainStrategy = "AsIs", rules = arrayListOf()),
+    )
+
+    @Test
+    fun aCoreWhoseTorDialsTheInternetItselfDialsOutDirectly() {
+        for (mode in listOf("--protocol masque --tor-reverse", "--tor-only")) {
+            val config = configOnCore()
+            val core = AetherCore.ofCommand("aether --bind 127.0.0.1:10819 $mode")!!
+
+            // No inbound that it could not sign in to, and that any app could dial out past the VPN through.
+            assertEquals(core, CoreConfigManager.routeAetherThroughXray(config, core, 10822), mode)
+            assertTrue(config.inbounds.isEmpty(), mode)
+            assertEquals(1, config.outbounds.size, mode)
+            assertTrue(config.routing.rules.isEmpty(), mode)
+        }
+    }
+
+    @Test
+    fun noInboundIsBuiltForACoreThatCannotSignIn() {
+        // The finalMask is Xray's to apply, and Tor takes no password: the configuration is refused before
+        // it is routed, see CoreConfigBuildTest, and routing it builds no inbound any app could use.
+        val config = configOnCore()
+        val core = AetherCore.ofCommand("aether --bind 127.0.0.1:10819 --protocol masque --tor-reverse")!!
+            .copy(exit = AetherExit("""{"tcp": [{"type": "fragment"}]}""", null))
+        assertTrue(core.needsOpenInbound)
+
+        assertThrows(IllegalStateException::class.java) { CoreConfigManager.routeAetherThroughXray(config, core, 10822) }
+        assertTrue(config.inbounds.isEmpty())
+        assertTrue(config.routing.rules.isEmpty())
     }
 
     @Test

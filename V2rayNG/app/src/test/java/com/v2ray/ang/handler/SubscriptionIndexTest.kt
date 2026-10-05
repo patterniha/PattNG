@@ -10,7 +10,6 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mockStatic
 import org.mockito.kotlin.any
-import org.mockito.kotlin.mock
 import org.mockito.kotlin.never
 import org.mockito.kotlin.reset
 import org.mockito.kotlin.verify
@@ -95,17 +94,14 @@ class SubscriptionIndexTest {
     }
 
     companion object {
-        private val main: MMKV = mock()
-        private val subs: MMKV = mock()
-        private val settings: MMKV = mock()
+        // The stores MmkvManager keeps for the run, whichever test class opened them first.
+        private val main: MMKV = FakeMmkv.store("MAIN")
+        private val subs: MMKV = FakeMmkv.store("SUB")
 
         @BeforeAll
         @JvmStatic
         fun initializeHandles() {
-            mockStatic(MMKV::class.java).use {
-                it.`when`<MMKV> { MMKV.mmkvWithID("MAIN", MMKV.MULTI_PROCESS_MODE) }.thenReturn(main)
-                it.`when`<MMKV> { MMKV.mmkvWithID("SUB", MMKV.MULTI_PROCESS_MODE) }.thenReturn(subs)
-                it.`when`<MMKV> { MMKV.mmkvWithID("SETTING", MMKV.MULTI_PROCESS_MODE) }.thenReturn(settings)
+            FakeMmkv.open().use {
                 MmkvManager.decodeSubscriptions()
                 MmkvManager.decodeSettingsString("test-initialize")
             }
