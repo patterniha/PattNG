@@ -95,7 +95,8 @@ object CoreConfigManager {
                 return buildV2rayCustomConfig(configContext)
             }
             // Only the primary outbound is measured, beside the fallback a group that is the primary names.
-            unresolvedNameFailure(context, guid, configContext.resolvedOutbounds.take(1).firstNotNullOfOrNull { it.unresolvedHop })?.let { return it }
+            val unresolved = configContext.resolvedOutbounds.firstNotNullOfOrNull { it.unresolvedHop } ?: configContext.unresolvedTarget
+            unresolvedNameFailure(context, guid, unresolved)?.let { return it }
             val dependency = AetherDependency.of(configContext.resolvedOutbounds.take(1))
             aetherFailure(context, guid, dependency)?.let { return it }
             speedtestCoresRefusal(configContext.resolvedOutbounds)?.let { refusal -> aetherFailure(context, guid, refusal)?.let { return it } }
@@ -103,6 +104,7 @@ object CoreConfigManager {
             val v2rayConfig = buildUnifiedConfig(configContext)
             // A test would measure the direct way out in place of the profile.
             if (lacksMainOutbound(v2rayConfig)) return mainOutboundFailure(context, guid)
+            unbuiltRoutingTarget(v2rayConfig)?.let { return routingTargetFailure(context, guid, it) }
             postProcessForSpeedtest(v2rayConfig)
 
             // Not routed through an inbound of this configuration: a test's core of its own dials out through
@@ -547,7 +549,7 @@ object CoreConfigManager {
             return firstMemberTag
         }
         return if (strategyType.supportsObservatory && profile.policyGroupTestOutbounds != false) {
-            profile.policyGroupFallbackTag
+            profile.policyGroupFallbackTag?.trim()
                 ?.takeIf { it.isNotEmpty() && it != AppConfig.TAG_PROXY }
             // Xray excludes dead random/roundRobin candidates only when fallbackTag is set;
             // without this default, an enabled empty field creates no observatory.
@@ -816,6 +818,10 @@ object CoreConfigManager {
     internal fun unbuiltRoutingTarget(v2rayConfig: V2rayConfig): String? =
         v2rayConfig.routing.rules.firstNotNullOfOrNull { rule ->
             rule.outboundTag?.takeIf { tag ->
+                tag.isNotBlank() && tag !in AppConfig.BUILTIN_OUTBOUND_TAGS && v2rayConfig.outbounds.none { it.tag == tag }
+            }
+        } ?: v2rayConfig.routing.balancers.orEmpty().firstNotNullOfOrNull { balancer ->
+            balancer.fallbackTag?.takeIf { tag ->
                 tag.isNotBlank() && tag !in AppConfig.BUILTIN_OUTBOUND_TAGS && v2rayConfig.outbounds.none { it.tag == tag }
             }
         }

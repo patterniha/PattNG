@@ -77,6 +77,18 @@ class CoreConfigManagerTest {
         // One to a profile that was not built is named, the first of them.
         val unbuilt = listOf(rule(AppConfig.TAG_DIRECT), rule("routed chain"), rule("france"))
         assertEquals("routed chain", CoreConfigManager.unbuiltRoutingTarget(config(AppConfig.TAG_PROXY, rules = unbuilt)))
+        // And so is the fallback of a policy group whose profile could not be built.
+        val withFallback = config(AppConfig.TAG_PROXY, rules = emptyList()).apply {
+            routing.balancers = listOf(
+                V2rayConfig.RoutingBean.BalancerBean(
+                    tag = AppConfig.TAG_BALANCER,
+                    selector = listOf("${AppConfig.TAG_PROXY}-"),
+                    fallbackTag = "unbuilt fallback",
+                )
+            )
+        }
+        assertEquals("unbuilt fallback", CoreConfigManager.unbuiltRoutingTarget(withFallback))
+        assertNull(CoreConfigManager.unbuiltRoutingTarget(withFallback.apply { outbounds.add(V2rayConfig.OutboundBean(tag = "unbuilt fallback", protocol = "vless")) }))
     }
 
     @Test
@@ -329,6 +341,7 @@ class CoreConfigManagerTest {
         // Random and round robin that test their members: the fallback the group names, or else their first member.
         assertEquals("other", CoreConfigManager.resolvePolicyGroupFallbackTag(BalancerStrategyType.RANDOM, group, first))
         assertEquals(first, CoreConfigManager.resolvePolicyGroupFallbackTag(BalancerStrategyType.ROUND_ROBIN, group.copy(policyGroupFallbackTag = ""), first))
+        assertEquals(first, CoreConfigManager.resolvePolicyGroupFallbackTag(BalancerStrategyType.ROUND_ROBIN, group.copy(policyGroupFallbackTag = "  "), first))
         assertEquals(first, CoreConfigManager.resolvePolicyGroupFallbackTag(BalancerStrategyType.RANDOM, group.copy(policyGroupFallbackTag = AppConfig.TAG_PROXY), first))
         // Random or round robin that do not test their members: none.
         assertNull(CoreConfigManager.resolvePolicyGroupFallbackTag(BalancerStrategyType.RANDOM, group.copy(policyGroupTestOutbounds = false), first))
