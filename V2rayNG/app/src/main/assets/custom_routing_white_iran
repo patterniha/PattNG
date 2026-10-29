@@ -24,7 +24,7 @@
     "outboundTag": "direct",
     "domain": [
       "domain:ir",
-      "geosite:category-ir"
+      "geosite:ir"
     ]
   },
   {
