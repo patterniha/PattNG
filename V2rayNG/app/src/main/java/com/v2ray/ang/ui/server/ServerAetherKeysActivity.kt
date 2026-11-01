@@ -285,7 +285,7 @@ class ServerAetherKeysActivity : BaseComponentActivity() {
             viewModel::setFinalMask,
             enabled = enabled && freedom
         )
-        FormTextField(
+        DialModeField(
             stringResource(R.string.aether_lab_exit_dial_mode),
             settings.dialMode,
             viewModel::setDialMode,

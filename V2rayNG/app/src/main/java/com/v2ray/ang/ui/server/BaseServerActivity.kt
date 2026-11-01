@@ -281,7 +281,7 @@ abstract class BaseServerActivity : BaseComponentActivity() {
     /** dialMode goes to streamSettings.sockopt, so every protocol offers it. */
     @Composable
     protected fun CommonDialModeField(state: ServerUiState) {
-        FormTextField(
+        DialModeField(
             stringResource(R.string.server_lab_dial_mode),
             state.dialMode,
             { state.dialMode = it }

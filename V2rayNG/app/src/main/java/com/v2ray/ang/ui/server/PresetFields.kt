@@ -75,6 +75,30 @@ internal fun CipherSuitesField(
 }
 
 /**
+ * The dialMode field of the server editors and of the exit-node on the Aether pages: written by hand, or one of the
+ * dialModes the arrow lists, matched only when the field has exactly its text, since Xray reads a dialMode as it is
+ * written.
+ */
+@Composable
+internal fun DialModeField(
+    label: String,
+    value: String,
+    onValueChange: (String) -> Unit,
+    enabled: Boolean = true,
+) {
+    PresetField(
+        label = label,
+        setting = stringResource(R.string.preset_setting_dial_mode),
+        value = value,
+        onValueChange = onValueChange,
+        presetNames = R.array.dial_mode_preset_names,
+        presetValues = R.array.dial_mode_preset_values,
+        match = FieldPresets.Match.EXACT,
+        enabled = enabled
+    )
+}
+
+/**
  * A text field with an arrow that lists ready-made values by name, for a setting whose value can be too long to list.
  * A pick puts its value in the field, which stays free to edit, so what is saved is the pick as edited, and the name of
  * the value the field holds shows under it. Only the arrow opens the list, so that a tap in the text only moves the

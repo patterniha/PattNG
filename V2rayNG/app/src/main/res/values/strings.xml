@@ -142,6 +142,7 @@
     <string name="acc_choose_preset">Choose a ready-made %1$s</string>
     <string name="preset_setting_final_mask" translatable="false">finalMask</string>
     <string name="preset_setting_cipher_suites" translatable="false">cipherSuites</string>
+    <string name="preset_setting_dial_mode" translatable="false">dialMode</string>
     <string name="server_lab_dial_mode" translatable="false">dialMode</string>
     <string name="server_lab_target_strategy" translatable="false">targetStrategy</string>
     <string name="server_lab_ech_config_list" translatable="false">echConfigList</string>

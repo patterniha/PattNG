@@ -313,7 +313,7 @@ class ServerAetherActivity : BaseServerActivity() {
                 { uiState.finalMask = it },
                 enabled = freedom
             )
-            FormTextField(
+            DialModeField(
                 stringResource(R.string.aether_lab_exit_dial_mode),
                 uiState.dialMode,
                 { uiState.dialMode = it },

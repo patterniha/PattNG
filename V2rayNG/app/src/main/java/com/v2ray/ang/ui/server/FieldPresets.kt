@@ -19,6 +19,12 @@ internal class FieldPresets(private val values: List<String>, private val match:
          * none, as Xray skips it.
          */
         NAMES,
+
+        /**
+         * Text the core reads as it is written, such as a dialMode, which Xray neither trims nor folds the case of: a
+         * field holds one only when it has exactly its text.
+         */
+        EXACT,
     }
 
     /** Read on the first match, on the thread that matches. */
@@ -41,6 +47,7 @@ internal class FieldPresets(private val values: List<String>, private val match:
             null
         }
         Match.NAMES -> text.split(':').map { it.trim() }.filter { it.isNotEmpty() }
+        Match.EXACT -> text
     }
 
     companion object {
@@ -49,7 +56,7 @@ internal class FieldPresets(private val values: List<String>, private val match:
 
         /**
          * The pick, chosen until another is, that leaves the setting at its default: a blank field, which is no
-         * finalMask, and for cipherSuites Xray's own suites.
+         * finalMask and no dialMode, and for cipherSuites Xray's own suites.
          */
         const val DEFAULT = -2
 
