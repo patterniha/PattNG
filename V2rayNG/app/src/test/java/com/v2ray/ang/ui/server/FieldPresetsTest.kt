@@ -125,8 +125,8 @@ class FieldPresetsTest {
     fun theFinalMaskFieldsOfferTheGivenFinalMasksEachLaidOutAsWrittenUnderItsName() {
         val names = AppResources.stringArray("final_mask_preset_names")
         val values = AppResources.stringArray("final_mask_preset_values").map(::readAsAapt)
-        assertEquals(listOf("tlshello-0-len (0-104-1-0-0-114-1-1-11)", "tlshello (6-98-1-0-0-114-1-1-11)", "udp-noise (rnd-24-1200-1230)"), names)
-        assertEquals(listOf(TLSHELLO_0_LEN, TLSHELLO, UDP_NOISE), values)
+        assertEquals(listOf("tlshello-0-len (0-104-1-0-0-114-1-1-11)", "tlshello (6-98-1-0-0-114-1-1-11)", "udp-noise (rnd-24-1200-1230)", "merge"), names)
+        assertEquals(listOf(TLSHELLO_0_LEN, TLSHELLO, UDP_NOISE, MERGE), values)
         // Each is one an exit-node takes, as an outbound does, and the list tells each apart from the others.
         val listed = FieldPresets(values, Match.JSON)
         values.forEachIndexed { index, value ->
@@ -221,6 +221,14 @@ class FieldPresetsTest {
                     ]
                   }
                 }
+              ]
+            }
+        """.trimIndent()
+
+        val MERGE = """
+            {
+              "tcp": [
+                {"type": "merge", "settings": {"times": 100, "delayMs": 30, "maxBytes": 16384}}
               ]
             }
         """.trimIndent()

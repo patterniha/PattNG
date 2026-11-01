@@ -360,11 +360,13 @@
         <item>tlshello-0-len (0-104-1-0-0-114-1-1-11)</item>
         <item>tlshello (6-98-1-0-0-114-1-1-11)</item>
         <item>udp-noise (rnd-24-1200-1230)</item>
+        <item>merge</item>
     </string-array>
     <string-array name="final_mask_preset_values" translatable="false">
         <item>"{\n  \"tcp\": [\n    {\"type\": \"fragment\", \"settings\": {\"packets\": \"tlshello\", \"lengths\": [\"0\", \"104\", \"1\"], \"delays\": [\"0\"], \"maxSplit\": \"0\"}},\n    {\"type\": \"fragment\", \"settings\": {\"packets\": \"1-1\", \"lengths\": [\"114\", \"1\"], \"delays\": [\"1\"], \"maxSplit\": \"11\"}}\n  ]\n}"</item>
         <item>"{\n  \"tcp\": [\n    {\"type\": \"fragment\", \"settings\": {\"packets\": \"tlshello\", \"lengths\": [\"6\", \"98\", \"1\"], \"delays\": [\"0\"], \"maxSplit\": \"0\"}},\n    {\"type\": \"fragment\", \"settings\": {\"packets\": \"1-1\", \"lengths\": [\"114\", \"1\"], \"delays\": [\"1\"], \"maxSplit\": \"11\"}}\n  ]\n}"</item>
         <item>"{\n  \"udp\": [\n    {\n      \"type\": \"noise\",\n      \"settings\": {\n        \"reset\": \"28\",\n        \"noise\": [\n          {\"rand\": \"1200-1230\", \"delay\": \"10\"}, {\"rand\": \"1200-1230\", \"delay\": \"10\"}, {\"rand\": \"1200-1230\", \"delay\": \"10\"},\n          {\"rand\": \"1200-1230\", \"delay\": \"10\"}, {\"rand\": \"1200-1230\", \"delay\": \"10\"}, {\"rand\": \"1200-1230\", \"delay\": \"10\"},\n          {\"rand\": \"1200-1230\", \"delay\": \"10\"}, {\"rand\": \"1200-1230\", \"delay\": \"10\"}, {\"rand\": \"1200-1230\", \"delay\": \"10\"},\n          {\"rand\": \"1200-1230\", \"delay\": \"10\"}, {\"rand\": \"1200-1230\", \"delay\": \"10\"}, {\"rand\": \"1200-1230\", \"delay\": \"10\"},\n          {\"rand\": \"1200-1230\", \"delay\": \"10\"}, {\"rand\": \"1200-1230\", \"delay\": \"10\"}, {\"rand\": \"1200-1230\", \"delay\": \"10\"},\n          {\"rand\": \"1200-1230\", \"delay\": \"10\"}, {\"rand\": \"1200-1230\", \"delay\": \"10\"}, {\"rand\": \"1200-1230\", \"delay\": \"10\"},\n          {\"rand\": \"1200-1230\", \"delay\": \"10\"}, {\"rand\": \"1200-1230\", \"delay\": \"10\"}, {\"rand\": \"1200-1230\", \"delay\": \"10\"},\n          {\"rand\": \"1200-1230\", \"delay\": \"10\"}, {\"rand\": \"1200-1230\", \"delay\": \"10\"}, {\"rand\": \"1200-1230\", \"delay\": \"10\"}\n        ]\n      }\n    }\n  ]\n}"</item>
+        <item>"{\n  \"tcp\": [\n    {\"type\": \"merge\", \"settings\": {\"times\": 100, \"delayMs\": 30, \"maxBytes\": 16384}}\n  ]\n}"</item>
     </string-array>
     <!-- The lists the cipherSuites field offers, by name, and at the same index the names a pick puts in the field,
          joined by ':' as Xray reads them. -->
