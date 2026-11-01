@@ -1393,7 +1393,7 @@ object CoreConfigManager {
         return hosts
     }
 
-    private fun buildDnsCnModeFromRoutingRules(configContext: CoreConfigContext, servers: ArrayList<Any>, domesticDns: List<String>): List<String> {
+    internal fun buildDnsCnModeFromRoutingRules(configContext: CoreConfigContext, servers: ArrayList<Any>, domesticDns: List<String>): List<String> {
         val cnRegionFilter = { domain: String ->
             domain.startsWith("geosite:") && (domain.endsWith("-cn") || domain.endsWith("@cn"))
                     || domain == AppConfig.GEOSITE_CN
@@ -1428,7 +1428,6 @@ object CoreConfigManager {
                     domains = cnDomains,
                     expectIPs = geoipCn,
                     skipFallback = true,
-                    finalQuery = true,
                     tag = cnDomesticDnsTag
                 )
             )
@@ -1437,7 +1436,7 @@ object CoreConfigManager {
         return cnDomesticDnsTags
     }
 
-    private fun buildDnsFromRoutingRules(
+    internal fun buildDnsFromRoutingRules(
         configContext: CoreConfigContext,
         servers: ArrayList<Any>,
         remoteDns: List<String>,

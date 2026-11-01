@@ -1,5 +1,6 @@
 package com.v2ray.ang.core
 
+import android.content.Context
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.dto.CoreConfigContext
 import com.v2ray.ang.dto.V2rayConfig
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.mockito.kotlin.mock
 
 class CoreConfigManagerTest {
 
@@ -372,5 +374,32 @@ class CoreConfigManagerTest {
         assertFalse(CoreConfigManager.shouldUseStandardObservatory(BalancerStrategyType.LEAST_LOAD, "proxy-group-1-a"))
         assertTrue(CoreConfigManager.shouldUseStandardObservatory(BalancerStrategyType.RANDOM, "proxy-group-1-a"))
         assertFalse(CoreConfigManager.shouldUseStandardObservatory(BalancerStrategyType.ROUND_ROBIN, null))
+    }
+
+    @Test
+    fun aChinaModeDomainGoesThroughEveryDomesticServerAndNeverReachesTheRemoteOne() {
+        val configContext = CoreConfigContext(
+            context = mock<Context>(),
+            guid = "guid",
+            routingDomainRules = listOf(
+                CoreConfigContext.RoutingDomainRule(listOf("geosite:google"), AppConfig.TAG_PROXY),
+                CoreConfigContext.RoutingDomainRule(listOf(AppConfig.GEOSITE_CN), AppConfig.TAG_DIRECT),
+            ),
+        )
+        val domesticDns = listOf("223.5.5.5", "119.29.29.29")
+        val servers = ArrayList<Any>()
+        CoreConfigManager.buildDnsCnModeFromRoutingRules(configContext, servers, domesticDns)
+        CoreConfigManager.buildDnsFromRoutingRules(configContext, servers, listOf("https://8.8.8.8/dns-query"), domesticDns)
+
+        // The servers the core asks for a geosite:cn domain: those whose domains match, in order, up to the first
+        // with finalQuery.
+        val matching = servers.filterIsInstance<V2rayConfig.DnsBean.ServersBean>()
+            .filter { AppConfig.GEOSITE_CN in it.domains.orEmpty() }
+        val last = matching.indexOfFirst { it.finalQuery == true }
+        assertTrue(last >= 0, "a geosite:cn domain must stop at a domestic server, before the remote one")
+        val asked = matching.take(last + 1)
+        // A Chinese IP from each domestic server first, then any answer from them, and never the remote server.
+        assertEquals(domesticDns + domesticDns, asked.map { it.address })
+        assertEquals(listOf(listOf(AppConfig.GEOIP_CN), listOf(AppConfig.GEOIP_CN), null, null), asked.map { it.expectIPs })
     }
 }
