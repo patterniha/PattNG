@@ -377,8 +377,26 @@ class AetherDependencyTest {
         assertEquals("exit-node", rules[0].asJsonObject.get("outboundTag").asString)
         assertEquals("direct", rules[1].asJsonObject.get("outboundTag").asString)
 
-        assertEquals("aether --bind 127.0.0.1:10819 --protocol wg --upstream socks5://127.0.0.1:10822", core.command)
+        // The core alone knows the password of that inbound, and an exported configuration keeps the two together.
+        val settings = inbound.getAsJsonObject("settings")
+        assertEquals("password", settings.get("auth").asString)
+        val account = settings.getAsJsonArray("accounts").single().asJsonObject
+        val user = account.get("user").asString
+        assertEquals(AetherCoreManager.UPSTREAM_USER, user)
+        val upstream = "socks5://$user:${account.get("pass").asString}@127.0.0.1:10822"
+        assertEquals("aether --bind 127.0.0.1:10819 --protocol wg --upstream $upstream", core.command)
         assertEquals(core.command, config.get("aetherCommand").asString)
+    }
+
+    @Test
+    fun aCustomCoreWhoseTorDialsTheInboundItselfGetsItWithoutAPassword() {
+        val config = customOnCore("aether --bind 127.0.0.1:10819 --tor-only")
+        val core = routed(config)
+
+        val settings = config.getAsJsonArray("inbounds").last().asJsonObject.getAsJsonObject("settings")
+        assertFalse(settings.has("auth"))
+        assertFalse(settings.has("accounts"))
+        assertEquals("aether --bind 127.0.0.1:10819 --tor-only --upstream socks5://127.0.0.1:10822", core.command)
     }
 
     @Test

@@ -168,7 +168,41 @@ class CoreConfigManagerTest {
         assertEquals(listOf(AppConfig.TAG_SECONDARY_SOCKS), config.routing.rules.first().inboundTag)
         assertEquals(AppConfig.TAG_EXIT_NODE, config.routing.rules.first().outboundTag)
 
-        assertEquals("socks5://127.0.0.1:10822", core.arguments.last())
+        // The core alone knows the password of that inbound, so no other app can leave past the VPN through it.
+        assertEquals("password", inbound.settings?.auth)
+        val account = inbound.settings?.accounts?.single()!!
+        assertEquals(AetherCoreManager.UPSTREAM_USER, account.user)
+        assertTrue(account.pass.length >= 32)
+        assertEquals(upstreamThrough(config), core.arguments.last())
+    }
+
+    @Test
+    fun aCoreWhoseTorDialsTheInboundItselfGetsItWithoutAPassword() {
+        fun config() = V2rayConfig(
+            log = V2rayConfig.LogBean(),
+            inbounds = arrayListOf(),
+            outbounds = arrayListOf(socks(AppConfig.LOOPBACK, 10819)),
+            routing = V2rayConfig.RoutingBean(domainStrategy = "AsIs", rules = arrayListOf()),
+        )
+        // Tor before WARP, or alone, takes a socks5 address without a password (aether tor.rs).
+        for (mode in listOf("--tor-reverse", "--tor-only")) {
+            val config = config()
+            val core = CoreConfigManager.routeAetherThroughXray(config, AetherCore.ofCommand("aether --bind 127.0.0.1:10819 $mode")!!, 10822)!!
+            assertNull(config.inbounds.last().settings?.auth)
+            assertNull(config.inbounds.last().settings?.accounts)
+            assertEquals("socks5://127.0.0.1:10822", core.arguments.last())
+        }
+        // Tor inside the tunnel dials through the tunnel, and the inbound keeps its password.
+        val config = config()
+        val core = CoreConfigManager.routeAetherThroughXray(config, AetherCore.ofCommand("aether --bind 127.0.0.1:10819 --tor --tor-bind 127.0.0.1:10820")!!, 10822)!!
+        assertEquals("password", config.inbounds.last().settings?.auth)
+        assertEquals(upstreamThrough(config), core.arguments.last())
+    }
+
+    /** The upstream of a core that signs in to the secondary-socks inbound of [config] on 10822. */
+    private fun upstreamThrough(config: V2rayConfig): String {
+        val account = config.inbounds.single { it.tag == AppConfig.TAG_SECONDARY_SOCKS }.settings?.accounts?.single()!!
+        return "socks5://${account.user}:${account.pass}@127.0.0.1:10822"
     }
 
     @Test
@@ -229,7 +263,7 @@ class CoreConfigManagerTest {
         assertEquals("trojan", exitNode.protocol)
         assertEquals(AppConfig.TAG_EXIT_NODE, config.routing.rules.first().outboundTag)
         assertEquals(core.exit, routed.exit)
-        assertEquals("socks5://127.0.0.1:10822", routed.arguments.last())
+        assertEquals(upstreamThrough(config), routed.arguments.last())
     }
 
     @Test
@@ -279,7 +313,8 @@ class CoreConfigManagerTest {
 
         assertNull(CoreConfigManager.exitNodeProblem(core, config.outbounds, node))
         // Else the port of the secondary inbound would be blamed for the profile that went missing in between.
-        assertEquals("socks5://127.0.0.1:10822", CoreConfigManager.routeAetherThroughXray(config, core, 10822, node)!!.arguments.last())
+        val routed = CoreConfigManager.routeAetherThroughXray(config, core, 10822, node)!!
+        assertEquals(upstreamThrough(config), routed.arguments.last())
         assertEquals("trojan", config.outbounds.last().protocol)
         assertEquals(1, lookups)
     }

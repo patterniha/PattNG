@@ -328,6 +328,24 @@ class AetherCoreTest {
     }
 
     @Test
+    fun aCoreSignsInToTheInboundItDialsOutThroughWithANewPassword() {
+        val core = AetherCore.ofCommand("aether --bind 127.0.0.1:10819 --protocol masque")!!
+        val password = core.newUpstreamPassword()!!
+        assertNotEquals(password, core.newUpstreamPassword())
+        val routed = core.through(10821, password)
+        assertEquals("socks5://${AetherCoreManager.UPSTREAM_USER}:$password@127.0.0.1:10821", valueAfter(routed.arguments, "--upstream"))
+        // The command the session writes out reads back as the same core.
+        assertEquals(routed, AetherCore.ofCommand(routed.command))
+        assertTrue(core.runsAs(routed.arguments))
+
+        // Tor dials the upstream itself before WARP or alone, and takes no password there; inside the tunnel it does not.
+        assertNull(AetherCore.ofCommand("aether --bind 127.0.0.1:10819 --tor-reverse")!!.newUpstreamPassword())
+        assertNull(AetherCore.ofCommand("aether --bind 127.0.0.1:10819 --tor-only")!!.newUpstreamPassword())
+        assertTrue(AetherCore.ofCommand("aether --bind 127.0.0.1:10819 --tor --tor-bind 127.0.0.1:10820")!!.newUpstreamPassword() != null)
+        assertTrue(AetherCore.ofCommand("aether --bind 127.0.0.1:10819 --psiphon-reverse")!!.newUpstreamPassword() != null)
+    }
+
+    @Test
     fun theSecondarySocksPortIsThreeAboveTheListenPortWhereNoCoreListens() {
         // Psiphon inside the tunnel and Tor around it take the most ports: the listen port and the two above it.
         val most = profile {

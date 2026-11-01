@@ -98,6 +98,9 @@ object AetherCoreManager {
     /** The option that names the proxy the core dials out through. */
     internal const val UPSTREAM = "--upstream"
 
+    /** PattNG: the user the core signs in to the secondary-socks inbound as, see [AetherCore.newUpstreamPassword]. */
+    internal const val UPSTREAM_USER = "aether"
+
     /**
      * The pluggable transport Tor's bridges run through, shipped beside the core as a library. It is
      * lyrebird, which speaks every transport the core asks bridges for; the core is told so by name,
