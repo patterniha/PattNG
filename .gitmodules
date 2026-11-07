@@ -4,7 +4,3 @@
 [submodule "hev-socks5-tunnel"]
 	path = hev-socks5-tunnel
 	url = https://github.com/heiher/hev-socks5-tunnel
-[submodule "aether"]
-	path = aether
-	url = https://github.com/patterniha/Aether.git
-	branch = main

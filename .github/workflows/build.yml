@@ -17,13 +17,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      # The latest stable release, as aether's own release workflow builds with. The libaether
-      # cache is keyed by the rustc it installs, so a new stable release builds the core afresh.
-      RUST_TOOLCHAIN: "stable"
-      # The Go line the Psiphon client's go.mod asks for, which also covers lyrebird's older one;
-      # aether/psiphon-build.sh and aether/pt-build.sh pin the programs themselves. Bump it when a
-      # bumped aether submodule pins a program that asks for a newer line.
-      GO_VERSION: "1.26"
+      # The Aether core now ships as a prebuilt artifact (android arm64-v8a only) from
+      # l3p8/Aether, so neither the Rust nor the Go toolchain is needed, and tor or
+      # psiphon are not built.
 
     steps:
     - name: Checkout code
@@ -46,7 +42,7 @@ jobs:
           --install "ndk;30.0.16248370"
         echo "NDK_HOME=$ANDROID_HOME/ndk/30.0.16248370" >> $GITHUB_ENV
         sed -i '10i\
-        \
+\
             ndkVersion = "30.0.16248370"' ${{ github.workspace }}/V2rayNG/app/build.gradle.kts
 
     - name: Restore cached libhevtun
@@ -68,93 +64,18 @@ jobs:
         path: ${{ github.workspace }}/libs
         key: libhevtun-${{ runner.os }}-${{ env.NDK_HOME }}-${{ hashFiles('.git/modules/hev-socks5-tunnel/HEAD') }}-${{ hashFiles('compile-hevtun.sh') }}
 
-    - name: Install Rust
-      id: rust-toolchain
-      uses: dtolnay/rust-toolchain@master
-      with:
-        toolchain: ${{ env.RUST_TOOLCHAIN }}
-        targets: aarch64-linux-android,armv7-linux-androideabi,x86_64-linux-android
-
-    - name: Restore cached libaether
-      id: cache-libaether-restore
-      uses: actions/cache/restore@v6
-      with:
-        path: ${{ github.workspace }}/libs-aether
-        key: libaether-${{ runner.os }}-${{ env.NDK_HOME }}-${{ steps.rust-toolchain.outputs.cachekey }}-${{ hashFiles('.git/modules/aether/HEAD') }}-${{ hashFiles('compile-aether.sh') }}
-
-    - name: Build libaether
-      if: steps.cache-libaether-restore.outputs.cache-hit != 'true'
+    # The Aether core ships as a prebuilt artifact (android arm64-v8a only); no Rust/Go
+    # toolchain and no tor or psiphon builds are needed.
+    - name: Download the Aether core
+      env:
+        GH_TOKEN: ${{ github.token }}
       run: |
         bash compile-aether.sh
-
-    - name: Save libaether
-      if: steps.cache-libaether-restore.outputs.cache-hit != 'true'
-      uses: actions/cache/save@v6
-      with:
-        path: ${{ github.workspace }}/libs-aether
-        key: libaether-${{ runner.os }}-${{ env.NDK_HOME }}-${{ steps.rust-toolchain.outputs.cachekey }}-${{ hashFiles('.git/modules/aether/HEAD') }}-${{ hashFiles('compile-aether.sh') }}
-
-    - name: Install Go
-      uses: actions/setup-go@v5
-      with:
-        go-version: ${{ env.GO_VERSION }}
-        # The client is built from a checkout of its own; there is no go.sum here to cache by.
-        cache: false
-
-    # The Aether core runs Psiphon as a program of its own, the psiphon-tunnel-core console client,
-    # which the app ships beside the core as libpsiphon-tunnel-core.so; see compile-psiphon.sh.
-    - name: Restore cached Psiphon client
-      id: cache-psiphon-restore
-      uses: actions/cache/restore@v6
-      with:
-        path: ${{ github.workspace }}/libs-psiphon
-        key: psiphon-${{ runner.os }}-${{ env.GO_VERSION }}-${{ hashFiles('aether/psiphon-build.sh') }}-${{ hashFiles('compile-psiphon.sh') }}
-
-    - name: Build the Psiphon client
-      if: steps.cache-psiphon-restore.outputs.cache-hit != 'true'
-      run: |
-        bash compile-psiphon.sh
-
-    - name: Save the Psiphon client
-      if: steps.cache-psiphon-restore.outputs.cache-hit != 'true'
-      uses: actions/cache/save@v6
-      with:
-        path: ${{ github.workspace }}/libs-psiphon
-        key: psiphon-${{ runner.os }}-${{ env.GO_VERSION }}-${{ hashFiles('aether/psiphon-build.sh') }}-${{ hashFiles('compile-psiphon.sh') }}
-
-    # Tor's bridges run through a pluggable transport, a program of its own: lyrebird, which aether
-    # builds and the app ships beside the core as liblyrebird.so; see compile-pt.sh.
-    - name: Restore cached pluggable transport
-      id: cache-pt-restore
-      uses: actions/cache/restore@v6
-      with:
-        path: ${{ github.workspace }}/libs-pt
-        key: pt-${{ runner.os }}-${{ env.GO_VERSION }}-${{ hashFiles('aether/pt-build.sh') }}-${{ hashFiles('compile-pt.sh') }}
-
-    - name: Build the pluggable transport
-      if: steps.cache-pt-restore.outputs.cache-hit != 'true'
-      run: |
-        bash compile-pt.sh
-
-    - name: Save the pluggable transport
-      if: steps.cache-pt-restore.outputs.cache-hit != 'true'
-      uses: actions/cache/save@v6
-      with:
-        path: ${{ github.workspace }}/libs-pt
-        key: pt-${{ runner.os }}-${{ env.GO_VERSION }}-${{ hashFiles('aether/pt-build.sh') }}-${{ hashFiles('compile-pt.sh') }}
 
     - name: Stage the native libraries
       run: |
         cp -r ${{ github.workspace }}/libs ${{ github.workspace }}/V2rayNG/app
         cp -r ${{ github.workspace }}/libs-aether/. ${{ github.workspace }}/V2rayNG/app/libs/
-        cp -r ${{ github.workspace }}/libs-psiphon/. ${{ github.workspace }}/V2rayNG/app/libs/
-        cp -r ${{ github.workspace }}/libs-pt/. ${{ github.workspace }}/V2rayNG/app/libs/
-
-    # Psiphon's client starts with the newest server list the build could fetch, so a fresh install has
-    # servers before it can reach the list on its own; see fetch-psiphon-servers.sh.
-    - name: Fetch the Psiphon server list
-      run: |
-        bash fetch-psiphon-servers.sh
 
     - name: Fetch AndroidLibXrayLite tag
       run: |
@@ -198,22 +119,16 @@ jobs:
     
     - name: Check the native libraries in the APKs
       run: |
-        # Looked into as ZIP files: every ABI the Aether core is built for has to carry the core, its
-        # Psiphon client and its pluggable transport, and each APK's native files are listed for the record.
+        # Only android arm64-v8a is shipped, and libaether.so is the Aether core the app runs.
         status=0
         for apk in ${{ github.workspace }}/V2rayNG/app/build/outputs/apk/*/release/*.apk; do
           entries=$(unzip -Z1 "$apk" | grep '^lib/' || true)
           echo "$(basename "$apk"):"
           echo "$entries" | sed 's/^/  /'
-          for abi in arm64-v8a armeabi-v7a x86_64; do
-            echo "$entries" | grep -q "^lib/$abi/" || continue
-            for lib in libaether.so libpsiphon-tunnel-core.so liblyrebird.so; do
-              if ! echo "$entries" | grep -qx "lib/$abi/$lib"; then
-                echo "::error::$(basename "$apk") lacks lib/$abi/$lib"
-                status=1
-              fi
-            done
-          done
+          if ! echo "$entries" | grep -qx "lib/arm64-v8a/libaether.so"; then
+            echo "::error::$(basename "$apk") lacks lib/arm64-v8a/libaether.so"
+            status=1
+          fi
         done
         exit $status
 
@@ -223,27 +138,6 @@ jobs:
       with:
         name: arm64-v8a
         path: ${{ github.workspace }}/V2rayNG/app/build/outputs/apk/*/release/*arm64-v8a*.apk
-
-    - name: Upload armeabi-v7a APK
-      uses: actions/upload-artifact@v7
-      if: ${{  success() }}
-      with:
-        name: armeabi-v7a
-        path: ${{ github.workspace }}/V2rayNG/app/build/outputs/apk/*/release/*armeabi-v7a*.apk
-
-    - name: Upload x86 APK
-      uses: actions/upload-artifact@v7
-      if: ${{  success() }}
-      with:
-        name: x86-apk
-        path: ${{ github.workspace }}/V2rayNG/app/build/outputs/apk/*/release/*x86*.apk
-
-    - name: Upload universal APK
-      uses: actions/upload-artifact@v7
-      if: ${{ success() }}
-      with:
-        name: universal-apk
-        path: ${{ github.workspace }}/V2rayNG/app/build/outputs/apk/*/release/*universal*.apk
 
   sign-and-release:
     needs: build
