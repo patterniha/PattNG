@@ -1,6 +1,8 @@
 package com.v2ray.ang.ui.compose
 
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class FormFieldsTest {
@@ -40,5 +42,20 @@ class FormFieldsTest {
     @Test
     fun unmatchedQueryKeepsNothing() {
         assertEquals(emptyList<String>(), filterDropdownOptions(names, "zzz"))
+    }
+
+    // PattNG: a tap opens the menu only when it has something to list.
+
+    @Test
+    fun aMenuWithNothingToListStaysClosed() {
+        assertFalse(dropdownHasEntries(filterDropdownOptions(names, "zzz"), defaultOption = null))
+        assertFalse(dropdownHasEntries(emptyList(), defaultOption = null))
+    }
+
+    @Test
+    fun aMatchOrADefaultEntryIsSomethingToList() {
+        assertTrue(dropdownHasEntries(filterDropdownOptions(names, "ab"), defaultOption = null))
+        assertTrue(dropdownHasEntries(filterDropdownOptions(names, ""), defaultOption = null))
+        assertTrue(dropdownHasEntries(filterDropdownOptions(names, "zzz"), defaultOption = "default"))
     }
 }

@@ -105,7 +105,7 @@ fun FormDropdownField(
             if (!editable && newExpanded) {
                 keyboardController?.hide()
             }
-            expanded = newExpanded
+            expanded = newExpanded && dropdownHasEntries(visibleOptions, defaultOption)
         },
         modifier = modifier
             .fillMaxWidth()
@@ -198,3 +198,10 @@ internal fun filterDropdownOptions(options: List<String>, query: String): List<S
         options.filter { it.contains(trimmed, ignoreCase = true) }
     }
 }
+
+/**
+ * PattNG: whether a dropdown's menu has anything to list, its default entry or an option [visibleOptions] keeps. A tap
+ * opens no empty menu, as typing never does.
+ */
+internal fun dropdownHasEntries(visibleOptions: List<String>, defaultOption: String?): Boolean =
+    defaultOption != null || visibleOptions.isNotEmpty()
