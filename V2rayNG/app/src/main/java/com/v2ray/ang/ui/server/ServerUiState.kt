@@ -251,6 +251,31 @@ class ServerUiState(
     val shownTargetStrategy: String
         get() = targetStrategy.ifBlank { defaultTargetStrategy }
 
+    /**
+     * PattNG: the Hysteria2 obfs the screen shows, by the rule the outbound and the link go by
+     * (ProfileItem.isGeckoObfs): packet sizes make it gecko, whatever obfs names.
+     */
+    val shownHysteria2Obfs: String
+        get() = when {
+            obfs.equals("none", ignoreCase = true) -> "none"
+            obfs.equals("gecko", ignoreCase = true) || minPacketSize.isNotBlank() || maxPacketSize.isNotBlank() -> "gecko"
+            obfs.equals("salamander", ignoreCase = true) || obfsPassword.isNotBlank() -> "salamander"
+            else -> "none"
+        }
+
+    /**
+     * PattNG: picks the Hysteria2 obfs. Any pick but gecko drops gecko's packet sizes, which would keep the profile
+     * gecko (see [shownHysteria2Obfs]); none drops the password too.
+     */
+    fun chooseHysteria2Obfs(type: String) {
+        obfs = if (type == "none") "" else type
+        if (type != "gecko") {
+            minPacketSize = ""
+            maxPacketSize = ""
+        }
+        if (type == "none") obfsPassword = ""
+    }
+
     var isRemarksError by mutableStateOf(false)
     var isAddressError by mutableStateOf(false)
     var isPortError by mutableStateOf(false)

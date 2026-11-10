@@ -14,6 +14,7 @@ import com.v2ray.ang.enums.AetherTransport
 import com.v2ray.ang.enums.EConfigType
 import com.v2ray.ang.fmt.AetherFmt
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -492,5 +493,51 @@ class ServerUiStateTest {
         val saved = state.toProfileItem(ProfileItem.create(EConfigType.AETHER), keepCommand = true)
         assertEquals(built, saved.aetherCommand)
         assertEquals(built, ServerUiState.from(saved).aetherCommand)
+    }
+
+    @Test
+    fun theHysteria2ObfsShownIsTheOneTheOutboundUses() {
+        // PattNG: packet sizes make a profile gecko (ProfileItem.isGeckoObfs), so the screen shows gecko for them.
+        fun shown(fields: ProfileItem.() -> Unit) =
+            ServerUiState.from(ProfileItem.create(EConfigType.HYSTERIA2).apply(fields)).shownHysteria2Obfs
+
+        assertEquals("none", shown { })
+        assertEquals("salamander", shown { obfsPassword = "secret" })
+        assertEquals("salamander", shown { obfs = "salamander"; obfsPassword = "secret" })
+        assertEquals("gecko", shown { obfs = "gecko"; obfsPassword = "secret" })
+        assertEquals("gecko", shown { obfs = "salamander"; obfsPassword = "secret"; minPacketSize = "600" })
+        assertEquals("gecko", shown { obfsPassword = "secret"; maxPacketSize = "1300" })
+        assertEquals("none", shown { obfs = "none"; obfsPassword = "secret" })
+    }
+
+    @Test
+    fun anotherHysteria2ObfsDropsWhatWouldKeepTheOldOne() {
+        // PattNG: as a gecko link is imported, with its default packet sizes.
+        val profile = ProfileItem.create(EConfigType.HYSTERIA2).apply {
+            obfs = "gecko"
+            obfsPassword = "secret"
+            minPacketSize = "512"
+            maxPacketSize = "1200"
+        }
+        val state = ServerUiState.from(profile)
+
+        state.chooseHysteria2Obfs("salamander")
+        assertEquals("salamander", state.shownHysteria2Obfs)
+        val salamander = state.toProfileItem(profile)
+        assertEquals("salamander", salamander.obfs)
+        assertEquals("secret", salamander.obfsPassword)
+        assertFalse(salamander.isGeckoObfs())
+
+        state.chooseHysteria2Obfs("gecko")
+        assertEquals("gecko", state.shownHysteria2Obfs)
+        assertTrue(state.toProfileItem(profile).isGeckoObfs())
+
+        state.chooseHysteria2Obfs("none")
+        assertEquals("none", state.shownHysteria2Obfs)
+        val none = state.toProfileItem(profile)
+        assertNull(none.obfs)
+        assertEquals("", none.obfsPassword)
+        assertNull(none.minPacketSize)
+        assertNull(none.maxPacketSize)
     }
 }
