@@ -85,6 +85,8 @@ open class FmtBase {
         config.fingerPrint = queryParam["fp"]
         config.alpn = queryParam["alpn"]
         config.cipherSuites = queryParam["cs"]
+        config.curvePreferences = queryParam["cp"]
+        config.enableSessionResumption = queryParam["esr"] == "1"
         config.echConfigList = queryParam["ech"]
         config.echOutbound = queryParam["echOutbound"]
         config.verifyPeerCertByName = queryParam["vcn"]
@@ -108,6 +110,9 @@ open class FmtBase {
         config.sni?.nullIfBlank()?.let { dicQuery["sni"] = it }
         config.alpn?.nullIfBlank()?.let { dicQuery["alpn"] = it }
         config.cipherSuites?.nullIfBlank()?.let { dicQuery["cs"] = it }
+        // PattNG: curvePreferences (cp), as the profile holds them, and enableSessionResumption (esr) when on
+        config.curvePreferences?.nullIfBlank()?.let { dicQuery["cp"] = it }
+        if (config.enableSessionResumption == true) dicQuery["esr"] = "1"
         config.echConfigList?.nullIfBlank()?.let { dicQuery["ech"] = it }
         config.echOutbound?.nullIfBlank()?.let { dicQuery["echOutbound"] = it }
         config.verifyPeerCertByName?.nullIfBlank()?.let { dicQuery["vcn"] = it }

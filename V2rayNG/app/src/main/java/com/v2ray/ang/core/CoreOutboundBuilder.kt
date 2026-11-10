@@ -741,6 +741,13 @@ object CoreOutboundBuilder {
         alpn?.split(",")?.map { it.trim() }?.filter { it.isNotEmpty() }.orEmpty()
 
     /**
+     * PattNG: the TLS curvePreferences [curvePreferences] names, comma-separated as alpn's are, each trimmed, as the TLS
+     * settings of an outbound offer them; null for none, so that none is written.
+     */
+    internal fun curvePreferenceNames(curvePreferences: String?): List<String>? =
+        curvePreferences?.split(",")?.map { it.trim() }?.filter { it.isNotEmpty() }?.takeIf { it.isNotEmpty() }
+
+    /**
      * Configures TLS or REALITY security settings for an outbound connection.
      *
      * Sets up security-related parameters like certificates, fingerprints, and SNI.
@@ -770,6 +777,9 @@ object CoreOutboundBuilder {
             fingerprint = profileItem.fingerPrint.nullIfBlank(),
             alpn = alpnProtocols(profileItem.alpn).takeIf { it.isNotEmpty() },
             cipherSuites = profileItem.cipherSuites.nullIfBlank(),
+            // PattNG: curvePreferences as a list, and enableSessionResumption only when it is on
+            curvePreferences = curvePreferenceNames(profileItem.curvePreferences),
+            enableSessionResumption = profileItem.enableSessionResumption.takeIf { it == true },
             echConfigList = profileItem.echConfigList.nullIfBlank(),
             verifyPeerCertByName = profileItem.verifyPeerCertByName.nullIfBlank(),
             pinnedPeerCertSha256 = profileItem.pinnedCA256.nullIfBlank(),

@@ -63,6 +63,32 @@ class ServerUiStateTest {
     }
 
     @Test
+    fun theCurvePreferencesAndSessionResumptionAreCarriedToTheProfile() {
+        // PattNG: the editor's curvePreferences dropdown and enableSessionResumption switch, after cipherSuites.
+        val profile = ProfileItem.create(EConfigType.VLESS).apply {
+            security = AppConfig.TLS
+            curvePreferences = "X25519MLKEM768,X25519"
+            enableSessionResumption = true
+        }
+
+        val state = ServerUiState.from(profile)
+        assertEquals("X25519MLKEM768,X25519", state.curvePreferences)
+        assertTrue(state.enableSessionResumption)
+        val built = state.toProfileItem(profile)
+        assertEquals("X25519MLKEM768,X25519", built.curvePreferences)
+        assertEquals(true, built.enableSessionResumption)
+
+        // A profile stored before they existed starts with none and off.
+        val older = ServerUiState.from(ProfileItem.create(EConfigType.VLESS))
+        assertEquals("", older.curvePreferences)
+        assertEquals(false, older.enableSessionResumption)
+        state.curvePreferences = ""
+        state.enableSessionResumption = false
+        assertEquals("", state.toProfileItem(profile).curvePreferences)
+        assertEquals(false, state.toProfileItem(profile).enableSessionResumption)
+    }
+
+    @Test
     fun theTargetStrategyDefaultsToAsIsAndIsStoredOnlyWhenChanged() {
         val profile = ProfileItem.create(EConfigType.VLESS)
 

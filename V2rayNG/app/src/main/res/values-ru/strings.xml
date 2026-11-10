@@ -85,7 +85,10 @@
     <string name="server_lab_stream_fingerprint">Отпечаток</string>
     <string name="server_lab_stream_alpn" translatable="false">ALPN</string>
     <string name="server_lab_cipher_suites">Наборы шифров (Cipher Suites)</string>
+    <string name="server_lab_curve_preferences">Предпочтения кривых (Curve Preferences)</string>
+    <string name="server_lab_enable_session_resumption">Возобновление сессии (Enable Session Resumption)</string>
     <string name="toast_cipher_suites_need_unsafe">cipherSuites применяются только с отпечатком unsafe. Выберите unsafe или очистите cipherSuites.</string>
+    <string name="toast_curve_preferences_need_unsafe">curvePreferences применяются только с отпечатком unsafe. Выберите unsafe или очистите curvePreferences.</string>
     <string name="toast_websocket_alpn_http1_only">WebSocket и HTTPUpgrade подключаются только с alpn http/1.1 или без alpn. Выберите http/1.1 или оставьте alpn пустым.</string>
     <string name="server_lab_allow_insecure">Не проверять сертификат (allowInsecure)</string>
     <string name="server_lab_sni" translatable="false">SNI</string>

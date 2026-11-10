@@ -85,7 +85,10 @@
     <string name="server_lab_stream_fingerprint">ফিঙ্গারপ্রিন্ট</string>
     <string name="server_lab_stream_alpn" translatable="false">ALPN</string>
     <string name="server_lab_cipher_suites">সাইফার স্যুট (Cipher Suites)</string>
+    <string name="server_lab_curve_preferences">কার্ভ অগ্রাধিকার (Curve Preferences)</string>
+    <string name="server_lab_enable_session_resumption">সেশন পুনরারম্ভ (Enable Session Resumption)</string>
     <string name="toast_cipher_suites_need_unsafe">cipherSuites শুধু unsafe fingerprint-এর সঙ্গে কাজ করে। unsafe বেছে নিন, অথবা cipherSuites খালি করুন।</string>
+    <string name="toast_curve_preferences_need_unsafe">curvePreferences শুধু unsafe fingerprint-এর সঙ্গে কাজ করে। unsafe বেছে নিন, অথবা curvePreferences খালি করুন।</string>
     <string name="toast_websocket_alpn_http1_only">WebSocket ও HTTPUpgrade শুধু alpn http/1.1 হলে বা alpn না থাকলে সংযুক্ত হয়। http/1.1 বেছে নিন, অথবা alpn খালি রাখুন।</string>
     <string name="server_lab_allow_insecure">সার্টিফিকেট যাচাই এড়িয়ে যান (allowInsecure)</string>
     <string name="server_lab_sni" translatable="false">SNI</string>

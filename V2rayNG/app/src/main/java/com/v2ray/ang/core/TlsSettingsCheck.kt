@@ -27,6 +27,12 @@ object TlsSettingsCheck {
         CIPHER_SUITES_NEED_UNSAFE,
 
         /**
+         * curvePreferences with a fingerprint other than unsafe, as for cipherSuites: the fork passes uTLS no curve
+         * preferences either, so the fingerprint's own groups go out.
+         */
+        CURVE_PREFERENCES_NEED_UNSAFE,
+
+        /**
          * An alpn other than http/1.1 alone for WebSocket or HTTPUpgrade, whatever the fingerprint. These transports
          * speak HTTP/1.1 after the handshake whatever it negotiated, and Cloudflare picks h2 whenever it is offered,
          * even after http/1.1; the unsafe fingerprint offers the alpn as written, the others offer h2,http/1.1 when it
@@ -36,7 +42,8 @@ object TlsSettingsCheck {
     }
 
     /**
-     * Whether the check applies to [profile], which is where the editor shows cipherSuites, alpn and the fingerprint:
+     * Whether the check applies to [profile], which is where the editor shows cipherSuites, curvePreferences, alpn and the
+     * fingerprint:
      * under TLS on VMess, VLESS, Shadowsocks and Trojan.
      */
     fun appliesTo(profile: ProfileItem): Boolean = when (profile.configType) {
@@ -51,6 +58,7 @@ object TlsSettingsCheck {
         // The fork lowercases the fingerprint before it looks it up.
         val unsafe = profile.fingerPrint?.lowercase(Locale.ROOT) == UNSAFE_FINGERPRINT
         if (!profile.cipherSuites.isNullOrBlank() && !unsafe) return Error.CIPHER_SUITES_NEED_UNSAFE
+        if (!profile.curvePreferences.isNullOrBlank() && !unsafe) return Error.CURVE_PREFERENCES_NEED_UNSAFE
         if (isUpgrade(profile) && !isHttp1OrNone(profile.alpn)) return Error.WEBSOCKET_ALPN_NOT_HTTP1
         return null
     }

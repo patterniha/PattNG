@@ -91,4 +91,35 @@ class VlessFmtTest {
         assertNotNull(reparsed)
         assertEquals("code-1", reparsed?.dialMode)
     }
+
+    // PattNG: "cp" carries curvePreferences as the profile holds them, the comma percent-encoded, and "esr=1"
+    // enableSessionResumption when it is on; neither is written when unset.
+    @Test
+    fun test_toUriAndParse_carryCurvePreferencesAndSessionResumption() {
+        val config = createConfig(null).apply {
+            security = "tls"
+            fingerPrint = "unsafe"
+            curvePreferences = "X25519MLKEM768,X25519"
+            enableSessionResumption = true
+        }
+
+        val uri = VlessFmt.toUri(config)
+        assertTrue(uri.contains("cp=X25519MLKEM768%2CX25519"), uri)
+        assertTrue(uri.contains("esr=1"), uri)
+        val reparsed = VlessFmt.parse("vless://$uri")
+
+        assertNotNull(reparsed)
+        assertEquals("X25519MLKEM768,X25519", reparsed?.curvePreferences)
+        assertEquals(true, reparsed?.enableSessionResumption)
+
+        config.curvePreferences = " "
+        config.enableSessionResumption = false
+        val plain = VlessFmt.toUri(config)
+        val keys = plain.substringAfter('?').substringBefore('#').split('&').map { it.substringBefore('=') }
+        assertFalse("cp" in keys, plain)
+        assertFalse("esr" in keys, plain)
+        val reparsedPlain = VlessFmt.parse("vless://$plain")
+        assertNull(reparsedPlain?.curvePreferences)
+        assertEquals(false, reparsedPlain?.enableSessionResumption)
+    }
 }

@@ -130,4 +130,30 @@ class VmessFmtTest {
         assertNotNull(reparsed)
         assertEquals("code-1", reparsed?.dialMode)
     }
+
+    // PattNG: the QR-code JSON carries them as its own "cp" and "esr" members, after "cs".
+    @Test
+    fun test_toUriAndParse_carryCurvePreferencesAndSessionResumptionInQrCodeJson() {
+        val config = createConfig(null).apply {
+            security = "tls"
+            fingerPrint = "unsafe"
+            curvePreferences = "X25519"
+            enableSessionResumption = true
+        }
+
+        val regenerated = VmessFmt.toUri(config)
+        val json = String(JavaBase64.getDecoder().decode(regenerated))
+        val vmessQRCode = JsonUtil.fromJson(json, VmessQRCode::class.java)
+        assertEquals("X25519", vmessQRCode?.cp)
+        assertEquals("1", vmessQRCode?.esr)
+        assertTrue(json.indexOf("\"cs\"") < json.indexOf("\"cp\"") && json.indexOf("\"cp\"") < json.indexOf("\"esr\""), json)
+
+        val reparsed = VmessFmt.parse("vmess://$regenerated")
+        assertEquals("X25519", reparsed?.curvePreferences)
+        assertEquals(true, reparsed?.enableSessionResumption)
+
+        config.enableSessionResumption = false
+        val off = VmessFmt.parse("vmess://${VmessFmt.toUri(config)}")
+        assertEquals(false, off?.enableSessionResumption)
+    }
 }

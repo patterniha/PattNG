@@ -27,6 +27,9 @@ data class V2rayNShareItem(
     val Alpn: String?,
     val Fingerprint: String?,
     val CipherSuites: String?,
+    // PattNG: PattN's curvePreferences and enableSessionResumption, after cipherSuites
+    val CurvePreferences: String?,
+    val EnableSessionResumption: Boolean?,
     val DialMode: String?,
     val PublicKey: String?,
     val ShortId: String?,
@@ -135,6 +138,8 @@ data class V2rayNShareItem(
             alpn = Alpn,
             fingerPrint = Fingerprint,
             cipherSuites = CipherSuites,
+            curvePreferences = CurvePreferences,
+            enableSessionResumption = EnableSessionResumption,
             dialMode = DialMode,
             insecure = AllowInsecure?.toBoolean(),
             echConfigList = EchConfigList,

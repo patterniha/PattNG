@@ -114,6 +114,7 @@ abstract class BaseServerActivity : BaseComponentActivity() {
             streamSecurityOptions = stringArrayResource(R.array.streamsecurityxs).toList(),
             uTlsOptions = stringArrayResource(R.array.streamsecurity_utls).toList(),
             alpnOptions = stringArrayResource(R.array.streamsecurity_alpn).toList(),
+            curvePreferencesOptions = stringArrayResource(R.array.curve_preferences).toList(),
             browserDialerOptions = stringArrayResource(R.array.browser_dialer_mode_value).toList()
         )
 
@@ -126,6 +127,7 @@ abstract class BaseServerActivity : BaseComponentActivity() {
         val streamSecurityOptions: List<String>,
         val uTlsOptions: List<String>,
         val alpnOptions: List<String>,
+        val curvePreferencesOptions: List<String>,
         val browserDialerOptions: List<String>
     )
 
@@ -348,6 +350,19 @@ abstract class BaseServerActivity : BaseComponentActivity() {
                     state.cipherSuites,
                     { state.cipherSuites = it }
                 )
+                // PattNG: curvePreferences, one of a few lists as alpn is one of a few, and enableSessionResumption,
+                // after cipherSuites
+                FormDropdownField(
+                    stringResource(R.string.server_lab_curve_preferences),
+                    state.curvePreferences,
+                    options.curvePreferencesOptions,
+                    { state.curvePreferences = it }
+                )
+                SettingsSwitchItem(
+                    title = stringResource(R.string.server_lab_enable_session_resumption),
+                    checked = state.enableSessionResumption,
+                    onCheckedChange = { state.enableSessionResumption = it }
+                )
                 FormTextField(
                     stringResource(R.string.server_lab_ech_config_list),
                     state.echConfigList,
@@ -498,6 +513,7 @@ abstract class BaseServerActivity : BaseComponentActivity() {
         val tlsError = when (TlsSettingsCheck.validate(config)) {
             null -> null
             TlsSettingsCheck.Error.CIPHER_SUITES_NEED_UNSAFE -> R.string.toast_cipher_suites_need_unsafe
+            TlsSettingsCheck.Error.CURVE_PREFERENCES_NEED_UNSAFE -> R.string.toast_curve_preferences_need_unsafe
             TlsSettingsCheck.Error.WEBSOCKET_ALPN_NOT_HTTP1 -> R.string.toast_websocket_alpn_http1_only
         }
         if (tlsError != null) {

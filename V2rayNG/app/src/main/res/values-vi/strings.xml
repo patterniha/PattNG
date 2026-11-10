@@ -85,7 +85,10 @@
     <string name="server_lab_stream_fingerprint">Fingerprint</string>
     <string name="server_lab_stream_alpn" translatable="false">ALPN</string>
     <string name="server_lab_cipher_suites">Cipher Suites</string>
+    <string name="server_lab_curve_preferences">Curve Preferences</string>
+    <string name="server_lab_enable_session_resumption">Enable Session Resumption</string>
     <string name="toast_cipher_suites_need_unsafe">cipherSuites chỉ có hiệu lực với fingerprint unsafe. Hãy chọn unsafe hoặc xóa cipherSuites.</string>
+    <string name="toast_curve_preferences_need_unsafe">curvePreferences chỉ có hiệu lực với fingerprint unsafe. Hãy chọn unsafe hoặc xóa curvePreferences.</string>
     <string name="toast_websocket_alpn_http1_only">WebSocket và HTTPUpgrade chỉ kết nối được với alpn http/1.1 hoặc không có alpn. Hãy chọn http/1.1 hoặc để trống alpn.</string>
     <string name="server_lab_allow_insecure">Bỏ qua xác minh chứng chỉ (allowInsecure)</string>
     <string name="server_lab_sni" translatable="false">SNI</string>

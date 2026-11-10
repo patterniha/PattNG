@@ -85,7 +85,10 @@
     <string name="server_lab_stream_fingerprint">Fingerprint</string>
     <string name="server_lab_stream_alpn" translatable="false">ALPN</string>
     <string name="server_lab_cipher_suites">Cipher Suites</string>
+    <string name="server_lab_curve_preferences">Curve Preferences</string>
+    <string name="server_lab_enable_session_resumption">Enable Session Resumption</string>
     <string name="toast_cipher_suites_need_unsafe">cipherSuites only apply with the unsafe fingerprint. Choose unsafe, or clear cipherSuites.</string>
+    <string name="toast_curve_preferences_need_unsafe">curvePreferences only apply with the unsafe fingerprint. Choose unsafe, or clear curvePreferences.</string>
     <string name="toast_websocket_alpn_http1_only">WebSocket and HTTPUpgrade connect only with alpn http/1.1 or none. Choose http/1.1, or leave alpn empty.</string>
     <string name="server_lab_allow_insecure">allowInsecure</string>
     <string name="server_lab_sni" translatable="false">SNI</string>

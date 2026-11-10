@@ -85,7 +85,10 @@
     <string name="server_lab_stream_fingerprint">اثرانگشت</string>
     <string name="server_lab_stream_alpn" translatable="false">ALPN</string>
     <string name="server_lab_cipher_suites">مجموعه رمزنگاری (Cipher Suites)</string>
+    <string name="server_lab_curve_preferences">منحنی‌های ترجیحی (Curve Preferences)</string>
+    <string name="server_lab_enable_session_resumption">ازسرگیری نشست (Enable Session Resumption)</string>
     <string name="toast_cipher_suites_need_unsafe">cipherSuites فقط با fingerprint از نوع unsafe اعمال می‌شود. unsafe را انتخاب کنید یا cipherSuites را خالی کنید.</string>
+    <string name="toast_curve_preferences_need_unsafe">curvePreferences فقط با fingerprint از نوع unsafe اعمال می‌شود. unsafe را انتخاب کنید یا curvePreferences را خالی کنید.</string>
     <string name="toast_websocket_alpn_http1_only">WebSocket و HTTPUpgrade فقط با alpn برابر http/1.1 یا بدون alpn وصل می‌شوند. http/1.1 را انتخاب کنید یا alpn را خالی بگذارید.</string>
     <string name="server_lab_allow_insecure">نادیده گرفتن تأیید گواهی (allowInsecure)</string>
     <string name="server_lab_sni" translatable="false">SNI</string>

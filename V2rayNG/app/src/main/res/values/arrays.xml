@@ -93,6 +93,15 @@
         <item>h2,http/1.1</item>
     </string-array>
 
+    <!-- PattNG: the curvePreferences the TLS settings offer, as a profile and a share link (cp) hold them, the names
+         joined by ',': none, which leaves the core its own, first (PattN Global.CurvePreferences). -->
+    <string-array name="curve_preferences" translatable="false">
+        <item />
+        <item>X25519MLKEM768</item>
+        <item>X25519</item>
+        <item>X25519MLKEM768,X25519</item>
+    </string-array>
+
     <string-array name="routing_domain_strategy" translatable="false">
         <item>AsIs</item>
         <item>IPIfNonMatch</item>

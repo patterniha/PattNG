@@ -42,6 +42,9 @@ data class ProfileItem(
     var alpn: String? = null,
     var fingerPrint: String? = null,
     var cipherSuites: String? = null,
+    // PattNG: TLS curvePreferences, the names joined by ',' as alpn's are, and enableSessionResumption, after cipherSuites
+    var curvePreferences: String? = null,
+    var enableSessionResumption: Boolean? = null,
     var insecure: Boolean? = null,
     var echConfigList: String? = null,
     var echOutbound: String? = null,

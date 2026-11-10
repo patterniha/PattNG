@@ -85,7 +85,10 @@
     <string name="server_lab_stream_fingerprint">جا کلک</string>
     <string name="server_lab_stream_alpn" translatable="false">ALPN</string>
     <string name="server_lab_cipher_suites">Cipher Suites</string>
+    <string name="server_lab_curve_preferences">Curve Preferences</string>
+    <string name="server_lab_enable_session_resumption">Enable Session Resumption</string>
     <string name="toast_cipher_suites_need_unsafe">cipherSuites فقط وا fingerprint unsafe اعمال ابۊ. unsafe نه انتخاب کنین یا cipherSuites نه خالی کنین.</string>
+    <string name="toast_curve_preferences_need_unsafe">curvePreferences فقط وا fingerprint unsafe اعمال ابۊ. unsafe نه انتخاب کنین یا curvePreferences نه خالی کنین.</string>
     <string name="toast_websocket_alpn_http1_only">WebSocket وو HTTPUpgrade فقط وا alpn http/1.1 یا بی alpn وصل ابۊن. http/1.1 نه انتخاب کنین یا alpn نه خالی بلین.</string>
     <string name="server_lab_allow_insecure">تئیڌ گوواهی ن نیڌه بگرین (allowInsecure)</string>
     <string name="server_lab_sni" translatable="false">SNI</string>

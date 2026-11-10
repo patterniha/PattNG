@@ -85,7 +85,10 @@
     <string name="server_lab_stream_fingerprint">Fingerprint</string>
     <string name="server_lab_stream_alpn" translatable="false">ALPN</string>
     <string name="server_lab_cipher_suites">加密套件 (Cipher Suites)</string>
+    <string name="server_lab_curve_preferences">曲線偏好 (Curve Preferences)</string>
+    <string name="server_lab_enable_session_resumption">工作階段恢復 (Enable Session Resumption)</string>
     <string name="toast_cipher_suites_need_unsafe">cipherSuites 僅在指紋為 unsafe 時生效。請選擇 unsafe，或清空 cipherSuites。</string>
+    <string name="toast_curve_preferences_need_unsafe">curvePreferences 僅在指紋為 unsafe 時生效。請選擇 unsafe，或清空 curvePreferences。</string>
     <string name="toast_websocket_alpn_http1_only">WebSocket 和 HTTPUpgrade 僅在 alpn 為 http/1.1 或為空時才能連線。請選擇 http/1.1，或留空 alpn。</string>
     <string name="server_lab_allow_insecure">跳過憑證驗證 (allowInsecure)</string>
     <string name="server_lab_sni" translatable="false">SNI</string>

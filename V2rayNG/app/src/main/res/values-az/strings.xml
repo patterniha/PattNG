@@ -85,7 +85,10 @@
     <string name="server_lab_stream_fingerprint">Barmaq izi</string>
     <string name="server_lab_stream_alpn" translatable="false">ALPN</string>
     <string name="server_lab_cipher_suites">Şifrləmə dəstləri (Cipher Suites)</string>
+    <string name="server_lab_curve_preferences">Əyri üstünlükləri (Curve Preferences)</string>
+    <string name="server_lab_enable_session_resumption">Sessiyanın bərpası (Enable Session Resumption)</string>
     <string name="toast_cipher_suites_need_unsafe">cipherSuites yalnız unsafe barmaq izi ilə tətbiq olunur. unsafe seçin və ya cipherSuites-i təmizləyin.</string>
+    <string name="toast_curve_preferences_need_unsafe">curvePreferences yalnız unsafe barmaq izi ilə tətbiq olunur. unsafe seçin və ya curvePreferences-i təmizləyin.</string>
     <string name="toast_websocket_alpn_http1_only">WebSocket və HTTPUpgrade yalnız alpn http/1.1 ilə və ya alpn olmadan qoşulur. http/1.1 seçin və ya alpn-i boş saxlayın.</string>
     <string name="server_lab_allow_insecure">allowInsecure</string>
     <string name="server_lab_sni" translatable="false">SNI</string>

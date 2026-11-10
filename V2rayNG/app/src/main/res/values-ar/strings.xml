@@ -85,7 +85,10 @@
     <string name="server_lab_stream_fingerprint">البصمة</string>
     <string name="server_lab_stream_alpn" translatable="false">ALPN</string>
     <string name="server_lab_cipher_suites">مجموعات التشفير (Cipher Suites)</string>
+    <string name="server_lab_curve_preferences">تفضيلات المنحنيات (Curve Preferences)</string>
+    <string name="server_lab_enable_session_resumption">استئناف الجلسة (Enable Session Resumption)</string>
     <string name="toast_cipher_suites_need_unsafe">لا تُطبَّق cipherSuites إلا مع بصمة unsafe. اختر unsafe أو أفرغ cipherSuites.</string>
+    <string name="toast_curve_preferences_need_unsafe">لا تُطبَّق curvePreferences إلا مع بصمة unsafe. اختر unsafe أو أفرغ curvePreferences.</string>
     <string name="toast_websocket_alpn_http1_only">لا يتصل WebSocket وHTTPUpgrade إلا مع alpn بقيمة http/1.1 أو بدونه. اختر http/1.1 أو اترك alpn فارغًا.</string>
     <string name="server_lab_allow_insecure">تخطي التحقق من الشهادة (allowInsecure)</string>
     <string name="server_lab_sni" translatable="false">SNI</string>

@@ -169,6 +169,12 @@ class FieldPresetsTest {
         values.forEachIndexed { index, value -> assertEquals(index, listed.indexOf(value)) }
     }
 
+    @Test
+    fun theCurvePreferencesFieldOffersNoneThenTheThreeLists() {
+        // PattNG: not a preset field but a dropdown of a few lists, as alpn's is; PattN's Global.CurvePreferences is the same.
+        assertEquals(listOf("", "X25519MLKEM768", "X25519", "X25519MLKEM768,X25519"), AppResources.stringArray("curve_preferences"))
+    }
+
     /**
      * [raw] as aapt reads a string resource put in quotes so that its spaces stay: the quotes go, and \n, \" and \\ are
      * undone. A quote left unescaped would end the string early, so it fails here.

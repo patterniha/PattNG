@@ -77,6 +77,8 @@ class ServerUiState(
     fingerPrint: String = "",
     alpn: String = "",
     cipherSuites: String = "",
+    curvePreferences: String = "",
+    enableSessionResumption: Boolean = false,
     publicKeyReality: String = "",
     shortId: String = "",
     spiderX: String = "",
@@ -161,6 +163,8 @@ class ServerUiState(
     var fingerPrint by mutableStateOf(fingerPrint)
     var alpn by mutableStateOf(alpn)
     var cipherSuites by mutableStateOf(cipherSuites)
+    var curvePreferences by mutableStateOf(curvePreferences)
+    var enableSessionResumption by mutableStateOf(enableSessionResumption)
     var publicKeyReality by mutableStateOf(publicKeyReality)
     var shortId by mutableStateOf(shortId)
     var spiderX by mutableStateOf(spiderX)
@@ -318,6 +322,8 @@ class ServerUiState(
             fingerPrint = fingerPrint,
             alpn = alpn,
             cipherSuites = cipherSuites,
+            curvePreferences = curvePreferences,
+            enableSessionResumption = enableSessionResumption,
             shortId = shortId,
             spiderX = spiderX,
             mldsa65Verify = mldsa65Verify,
@@ -421,6 +427,8 @@ class ServerUiState(
                 fingerPrint = initialConfig.fingerPrint ?: "",
                 alpn = initialConfig.alpn ?: "",
                 cipherSuites = initialConfig.cipherSuites ?: "",
+                curvePreferences = initialConfig.curvePreferences ?: "",
+                enableSessionResumption = initialConfig.enableSessionResumption == true,
                 publicKeyReality = initialConfig.publicKey ?: "",
                 shortId = initialConfig.shortId ?: "",
                 spiderX = initialConfig.spiderX ?: "",

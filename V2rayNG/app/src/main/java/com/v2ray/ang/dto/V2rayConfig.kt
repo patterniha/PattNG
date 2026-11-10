@@ -225,10 +225,12 @@ data class V2rayConfig(
                 val maxVersion: String? = null,
                 val preferServerCipherSuites: Boolean? = null,
                 val cipherSuites: String? = null,
+                // PattNG: curvePreferences and enableSessionResumption follow cipherSuites, as in the editor and the links
+                val curvePreferences: List<String>? = null,
+                val enableSessionResumption: Boolean? = null,
                 val fingerprint: String? = null,
                 val certificates: List<Any>? = null,
                 val disableSystemRoot: Boolean? = null,
-                val enableSessionResumption: Boolean? = null,
                 var echConfigList: String? = null,
                 var echSockopt: SockoptBean? = null,
                 // PattNG: the profile's ECH outbound as written, which EchOutbound.serialize checks, links and
