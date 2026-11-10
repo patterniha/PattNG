@@ -47,5 +47,11 @@ class ServerHttpActivity : BaseServerActivity() {
             state.password,
             { state.password = it }
         )
+
+        FinalMaskField(
+            stringResource(R.string.server_lab_final_mask),
+            state.finalMask,
+            { state.finalMask = it }
+        )
     }
 }

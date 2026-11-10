@@ -391,4 +391,29 @@ class CoreOutboundBuilderTest {
             "::g", "1:2:3:4:5:6:7:8::", "１.1.1.1",
         ).forEach { assertFalse(CoreOutboundBuilder.isNetipAddress(it), it) }
     }
+
+    /** A socks or http profile on an address, so its outbound is built without reading the settings store. */
+    private fun maskedOutbound(type: EConfigType, finalMask: String?): OutboundBean? {
+        val profile = ProfileItem.create(type).apply {
+            server = "1.2.3.4"
+            serverPort = "1080"
+            this.finalMask = finalMask
+        }
+        return if (type == EConfigType.SOCKS) CoreOutboundBuilder.toOutboundSocks(profile) else CoreOutboundBuilder.toOutboundHttp(profile)
+    }
+
+    @Test
+    fun aSocksOrHttpOutboundCarriesTheFinalMaskOfItsProfile() {
+        val mask = """{"tcp": [{"type": "fragment", "settings": {"packets": "tlshello", "length": "100-200"}}]}"""
+        for (type in listOf(EConfigType.SOCKS, EConfigType.HTTP)) {
+            val outbound = maskedOutbound(type, mask)
+            assertEquals(JsonUtil.parseString(mask), outbound?.streamSettings?.finalmask, type.name)
+            // The mask goes on the stream settings the outbound is created with; no transport comes in.
+            assertEquals(AppConfig.DEFAULT_NETWORK, outbound?.streamSettings?.network, type.name)
+            // No mask, or a blank one, sets none: a blank one is no JSON, so it is not handed on to be warned of.
+            for (none in listOf(null, "", "  ")) {
+                assertNull(maskedOutbound(type, none)?.streamSettings?.finalmask, "$type $none")
+            }
+        }
+    }
 }

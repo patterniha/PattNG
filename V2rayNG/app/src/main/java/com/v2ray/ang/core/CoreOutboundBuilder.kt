@@ -275,7 +275,13 @@ object CoreOutboundBuilder {
         return outboundBean
     }
 
-    private fun toOutboundSocks(profileItem: ProfileItem): OutboundBean? {
+    /**
+     * PattNG: internal for its unit test. The profile's finalMask goes on the stream settings the outbound is
+     * created with, as PattN sets it for every protocol: a socks outbound has no transport, so
+     * populateTransportSettings, which sets the mask of the other protocols, never runs for it. A blank mask is
+     * left out, as for a WireGuard outbound, as it is no JSON.
+     */
+    internal fun toOutboundSocks(profileItem: ProfileItem): OutboundBean? {
         val outboundBean = createInitOutbound(EConfigType.SOCKS)
 
         outboundBean?.settings?.let { settings ->
@@ -285,6 +291,10 @@ object CoreOutboundBuilder {
                 settings.user = profileItem.username.orEmpty()
                 settings.pass = profileItem.password.orEmpty()
             }
+        }
+
+        if (!profileItem.finalMask.isNullOrBlank()) {
+            outboundBean?.streamSettings?.let { updateOutboundFinalMask(it, profileItem) }
         }
 
         return outboundBean
@@ -305,7 +315,8 @@ object CoreOutboundBuilder {
         return outboundBean
     }
 
-    private fun toOutboundHttp(profileItem: ProfileItem): OutboundBean? {
+    /** PattNG: internal for its unit test; the profile's finalMask is set as on a socks outbound, see [toOutboundSocks]. */
+    internal fun toOutboundHttp(profileItem: ProfileItem): OutboundBean? {
         val outboundBean = createInitOutbound(EConfigType.HTTP)
 
         outboundBean?.settings?.let { settings ->
@@ -315,6 +326,10 @@ object CoreOutboundBuilder {
                 settings.user = profileItem.username.orEmpty()
                 settings.pass = profileItem.password.orEmpty()
             }
+        }
+
+        if (!profileItem.finalMask.isNullOrBlank()) {
+            outboundBean?.streamSettings?.let { updateOutboundFinalMask(it, profileItem) }
         }
 
         return outboundBean
