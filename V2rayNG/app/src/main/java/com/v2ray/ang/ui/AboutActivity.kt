@@ -110,11 +110,7 @@ fun AboutScreen(
                 title = stringResource(R.string.title_pref_feedback),
                 onClick = { Utils.openUri(context, AppConfig.APP_ISSUES_URL) }
             )
-            SettingsMenuItem(
-                icon = painterResource(R.drawable.ic_telegram_24dp),
-                title = stringResource(R.string.title_tg_channel),
-                onClick = { Utils.openUri(context, AppConfig.TG_CHANNEL_URL) }
-            )
+            // PattNG: the Telegram channel is in the main drawer, in the place of upstream's Promotion.
             SettingsMenuItem(
                 icon = painterResource(R.drawable.ic_privacy_24dp),
                 title = stringResource(R.string.title_privacy_policy),
