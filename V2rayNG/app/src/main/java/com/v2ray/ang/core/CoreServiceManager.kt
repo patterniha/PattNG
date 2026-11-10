@@ -686,14 +686,17 @@ object CoreServiceManager {
                 country = null,
                 ipAddress = null,
             )
-            withContext(Dispatchers.Main.immediate) {
+            // PattNG: a core that stopped meanwhile gets no IP lookup either; return@withContext alone went on to it.
+            val delivered = withContext(Dispatchers.Main.immediate) {
                 if (isRunning()) {
                     MessageHelper.sendMsg2UI(service, AppConfig.MSG_MEASURE_DELAY_RESULT, initialResult, requestId)
+                    true
                 } else {
                     MessageHelper.sendMsg2UI(service, AppConfig.MSG_MEASURE_DELAY_CANCEL, "", requestId)
-                    return@withContext
+                    false
                 }
             }
+            if (!delivered) return@launch
 
             if (time >= 0) {
                 val endpoint = SpeedtestManager.getRemoteIPInfo()

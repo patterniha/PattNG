@@ -4,6 +4,7 @@ import android.app.Application
 import android.graphics.Bitmap
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStore
+import com.v2ray.ang.dto.ConnectionTestResult
 import com.v2ray.ang.dto.SubscriptionUpdateResult
 import com.v2ray.ang.dto.TestServiceMessage
 import com.v2ray.ang.dto.entities.ProfileItem
@@ -28,6 +29,7 @@ import kotlinx.coroutines.test.setMain
 import kotlinx.coroutines.withTimeout
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.BeforeEach
@@ -61,6 +63,9 @@ class MainViewModelServersChangedTest {
 
         /** How many of the next moves the storage refuses. */
         val refusals = AtomicInteger(0)
+
+        /** The request ids of the current-server tests asked for, in order. */
+        val currentTests: MutableList<String> = Collections.synchronizedList(mutableListOf())
 
         private val asked = AtomicInteger(0)
         private val held = ConcurrentHashMap<Int, CountDownLatch>()
@@ -159,7 +164,9 @@ class MainViewModelServersChangedTest {
         override fun queryServiceState() = Unit
         override fun sendMsg2TestService(msg: TestServiceMessage, requestId: String?) = Unit
         override fun cancelAllPing() = Unit
-        override fun testCurrentServerRealPing(requestId: String) = Unit
+        override fun testCurrentServerRealPing(requestId: String) {
+            currentTests += requestId
+        }
         override fun syncSubscriptions() = Unit
         override fun initAssets() = Unit
         override fun close() = Unit
@@ -188,6 +195,43 @@ class MainViewModelServersChangedTest {
         source.events.send(MainServiceEvent.ServersChanged)
 
         viewModel.awaitServers("a", "c", "d")
+    }
+
+    @Test
+    fun theCurrentServerTestTakesTheTwoRepliesOfItsOwnRequestOnly() = runBlocking {
+        // PattNG: the service answers the delay and then the IP lookup of one request. A cancel before the delay ends the
+        // test; a cancelled IP lookup keeps the delay shown; a reply to an older request changes nothing.
+        val source = FakeSource()
+        val viewModel = MainViewModel(mock<Application>(), source)
+        viewModel.awaitServers("a", "b")
+        source.events.send(MainServiceEvent.StateRunning)
+        viewModel.awaitStatus(MainStatus.Connected)
+
+        viewModel.testCurrentServerRealPing()
+        val cancelled = source.currentTests.last()
+        assertEquals(MainStatus.Testing, viewModel.uiState.value.status)
+        source.events.send(MainServiceEvent.MeasureDelayCancelled(cancelled))
+        viewModel.awaitStatus(MainStatus.Connected)
+        assertFalse(viewModel.uiState.value.isTesting)
+
+        viewModel.testCurrentServerRealPing()
+        val answered = source.currentTests.last()
+        assertNotEquals(cancelled, answered)
+        val measured = ConnectionTestResult(delayMillis = 120)
+        source.events.send(MainServiceEvent.MeasureDelayResult(measured, answered))
+        viewModel.awaitStatus(MainStatus.ConnectionTest(measured))
+        assertFalse(viewModel.uiState.value.isTesting)
+        val located = measured.copy(country = "DE", ipAddress = "203.0.113.7")
+        source.events.send(MainServiceEvent.MeasureDelayResult(located, answered))
+        viewModel.awaitStatus(MainStatus.ConnectionTest(located))
+
+        // Late: the cancelled request's reply and cancel, then this one's IP lookup cancelled.
+        source.events.send(MainServiceEvent.MeasureDelayResult(ConnectionTestResult(delayMillis = 999), cancelled))
+        source.events.send(MainServiceEvent.MeasureDelayCancelled(cancelled))
+        source.events.send(MainServiceEvent.MeasureDelayCancelled(answered))
+        delay(200)
+        assertEquals(MainStatus.ConnectionTest(located), viewModel.uiState.value.status)
+        assertFalse(viewModel.uiState.value.isTesting)
     }
 
     @Test
@@ -513,6 +557,10 @@ class MainViewModelServersChangedTest {
     }
 
     private fun MainViewModel.shownServers(groupId: String = SUB) = serverGroupState(groupId).value.servers.map(ServersCache::guid)
+
+    private suspend fun MainViewModel.awaitStatus(status: MainStatus) {
+        withTimeout(5_000) { uiState.first { it.status == status } }
+    }
 
     private suspend fun MainViewModel.awaitServers(vararg guids: String, groupId: String = SUB) {
         withTimeout(5_000) {

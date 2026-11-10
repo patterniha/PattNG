@@ -59,4 +59,35 @@ class MainTestRequestsTest {
         assertEquals(bulk, requests.completeBulk(bulk.id))
         assertFalse(requests.isTesting)
     }
+
+    // PattNG: the service answers a current request twice, the delay and then the IP lookup.
+
+    @Test
+    fun aCurrentRequestTakesItsSecondAnswerButNoOtherRequestsAnswer() {
+        val requests = MainTestRequests()
+        val older = requests.beginCurrent()
+        val current = requests.beginCurrent()
+        assertFalse(requests.answerCurrent(older))
+        assertTrue(requests.isTesting)
+        assertTrue(requests.answerCurrent(current))
+        assertFalse(requests.isTesting)
+        assertTrue(requests.answerCurrent(current))
+        assertFalse(requests.answerCurrent(older))
+        assertFalse(requests.answerCurrent(""))
+        // Its IP lookup cancelled afterwards: not a test that ended unanswered.
+        assertFalse(requests.completeCurrent(current))
+    }
+
+    @Test
+    fun aNewTestOrAStopEndsTheAnswersOfTheOldRequest() {
+        val requests = MainTestRequests()
+        val answered = requests.beginCurrent()
+        assertTrue(requests.answerCurrent(answered))
+        val next = requests.beginCurrent()
+        assertFalse(requests.answerCurrent(answered))
+        assertTrue(requests.answerCurrent(next))
+        requests.invalidateCurrent()
+        assertFalse(requests.answerCurrent(next))
+        assertFalse(requests.isTesting)
+    }
 }

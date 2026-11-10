@@ -197,8 +197,9 @@ class MainViewModel(
 
             MainServiceEvent.StateStopSuccess -> updateRunningState(false)
             is MainServiceEvent.MeasureDelayResult -> {
-                if (!uiState.value.isRunning) return
-                _uiState.update { it.copy(isTesting = false, status = MainStatus.ConnectionTest(event.result)) }
+                // PattNG: the delay, then the IP lookup, of this request only; a late reply to an older one changes nothing.
+                if (!uiState.value.isRunning || !testRequests.answerCurrent(event.requestId)) return
+                _uiState.update { it.copy(isTesting = testRequests.isTesting, status = MainStatus.ConnectionTest(event.result)) }
             }
 
             is MainServiceEvent.MeasureConfigSuccess -> {
@@ -224,7 +225,8 @@ class MainViewModel(
             }
 
             is MainServiceEvent.MeasureDelayCancelled -> {
-                //if (testRequests.completeCurrent(event.requestId)) resetTestStatus()
+                // PattNG: a test cancelled before its delay came in ends; a cancelled IP lookup leaves the delay shown.
+                if (testRequests.completeCurrent(event.requestId)) resetTestStatus()
             }
 
             is MainServiceEvent.MeasureConfigCancelled -> {
@@ -1061,8 +1063,9 @@ class MainViewModel(
 
     fun testCurrentServerRealPing() {
         if (!uiState.value.isRunning) return
+        val requestId = testRequests.beginCurrent()
         _uiState.update { it.copy(isTesting = true, status = MainStatus.Testing) }
-        dataSource.testCurrentServerRealPing("")
+        dataSource.testCurrentServerRealPing(requestId)
     }
 
     private fun onTestsFinished(requestId: String) {
