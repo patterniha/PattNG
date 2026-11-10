@@ -307,6 +307,7 @@
     <string name="title_oss_license">موجوزا کود بونچک</string>
     <string name="title_translators">ولرنی کارووݩ</string>
     <string name="title_tg_channel">تورگه تلگرام</string>
+    <string name="title_donate">هیاری مالی</string>
 
     <string name="title_pref_promotion">تبلیقات</string>
 
@@ -540,6 +541,7 @@
     <string name="acc_download_file">دانلود فایلا بونچک جوقرافیایی</string>
     <string name="acc_qr_code">کود QR</string>
     <string name="acc_copy_log">لف گیری گوزارش</string>
+    <string name="acc_copy_address">لف گیری نشۊوی %1$s</string>
     <string name="acc_clear_log">روفتن گوزارش</string>
     <string name="acc_add_rule">ٱووردن قانووݩ</string>
     <string name="acc_start">ره وستن سرویس</string>

@@ -307,6 +307,7 @@
     <string name="title_oss_license">Лицензии открытого исходного кода</string>
     <string name="title_translators">Переводчики</string>
     <string name="title_tg_channel">Telegram-канал</string>
+    <string name="title_donate">Пожертвовать</string>
 
     <string name="title_pref_promotion">Предложения</string>
 
@@ -544,6 +545,7 @@
     <string name="acc_download_file">Загрузить файлы ресурсов</string>
     <string name="acc_qr_code">QR-код</string>
     <string name="acc_copy_log">Копировать журнал</string>
+    <string name="acc_copy_address">Копировать адрес %1$s</string>
     <string name="acc_clear_log">Очистить журнал</string>
     <string name="acc_add_rule">Добавить правило маршрутизации</string>
     <string name="acc_start">Запустить службу</string>

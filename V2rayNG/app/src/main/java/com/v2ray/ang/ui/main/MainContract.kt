@@ -81,6 +81,9 @@ sealed interface MainAction {
     data object DismissQRCodeDialog : MainAction
     data class OpenSubscriptionLink(val url: String) : MainAction
 
+    /** PattNG: the Donate dialog's copy button of [address], one of AppConfig.DONATION_WALLETS. */
+    data class CopyDonationAddress(val address: String) : MainAction
+
     data class ImportBatchConfig(val configText: String) : MainAction
 
     data object LocateHandled : MainAction

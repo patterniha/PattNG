@@ -77,6 +77,7 @@ fun MainScreen(
     var showRemoveConfirm by rememberSaveable(stateSaver = ServerDeleteTarget.Saver) {
         mutableStateOf<ServerDeleteTarget?>(null)
     }
+    var showDonate by rememberSaveable { mutableStateOf(false) }
 
     var shareTarget by remember { mutableStateOf<Triple<String, ProfileItem, Boolean>?>(null) }
     val removeServer: (String, String) -> Unit = { guid, profileName ->
@@ -135,7 +136,10 @@ fun MainScreen(
         onConfirmDelInvalid = { showDelInvalidConfirm = false; onAction(MainAction.RemoveInvalidServers) },
         showRemoveConfirm = showRemoveConfirm,
         onDismissRemove = { showRemoveConfirm = null },
-        onConfirmRemove = { guid -> showRemoveConfirm = null; onAction(MainAction.RemoveServer(guid)) }
+        onConfirmRemove = { guid -> showRemoveConfirm = null; onAction(MainAction.RemoveServer(guid)) },
+        showDonate = showDonate,
+        onDismissDonate = { showDonate = false },
+        onCopyDonationAddress = { address -> onAction(MainAction.CopyDonationAddress(address)) }
     )
 
     if (shareTarget != null) {
@@ -183,6 +187,7 @@ fun MainScreen(
                     },
                     onSearchToggle = { show: Boolean -> showSearch = show },
                     onMenuClick = { scope.launch { drawerState.open() } },
+                    onDonateClick = { showDonate = true },
                     onAction = onAction,
                     onMoreMenuAction = { action ->
                         when (action) {

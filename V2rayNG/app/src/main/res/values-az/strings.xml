@@ -307,6 +307,7 @@
     <string name="title_oss_license">Açıq mənbə lisenziyaları</string>
     <string name="title_translators">Tərcüməçilər</string>
     <string name="title_tg_channel">Telegram kanalı</string>
+    <string name="title_donate">İanə et</string>
 
     <string name="title_pref_promotion">Təşviqat</string>
 
@@ -540,6 +541,7 @@
     <string name="acc_download_file">Resurs fayllarını endir</string>
     <string name="acc_qr_code">QR kod</string>
     <string name="acc_copy_log">Jurnalı kopyala</string>
+    <string name="acc_copy_address">%1$s ünvanını kopyala</string>
     <string name="acc_clear_log">Jurnalı təmizlə</string>
     <string name="acc_add_rule">Marşrutlaşdırma qaydası əlavə et</string>
     <string name="acc_start">Xidməti başlat</string>

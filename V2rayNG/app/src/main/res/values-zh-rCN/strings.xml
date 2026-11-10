@@ -307,6 +307,7 @@
     <string name="title_oss_license">开源许可证</string>
     <string name="title_translators">翻译贡献者</string>
     <string name="title_tg_channel">Telegram 频道</string>
+    <string name="title_donate">捐赠</string>
 
     <string name="title_pref_promotion">推广</string>
 
@@ -538,6 +539,7 @@
     <string name="acc_download_file">下载资源文件</string>
     <string name="acc_qr_code">二维码</string>
     <string name="acc_copy_log">复制日志</string>
+    <string name="acc_copy_address">复制 %1$s 地址</string>
     <string name="acc_clear_log">清除日志</string>
     <string name="acc_add_rule">添加路由规则</string>
     <string name="acc_start">启动服务</string>

@@ -307,6 +307,7 @@
     <string name="title_oss_license">مجوز های منبع باز</string>
     <string name="title_translators">مترجمان</string>
     <string name="title_tg_channel">کانال تلگرام</string>
+    <string name="title_donate">حمایت مالی</string>
 
     <string name="title_pref_promotion">تبلیغات</string>
 
@@ -540,6 +541,7 @@
     <string name="acc_download_file">دانلود فایل‌های منبع</string>
     <string name="acc_qr_code">کد QR</string>
     <string name="acc_copy_log">کپی گزارش</string>
+    <string name="acc_copy_address">کپی نشانی %1$s</string>
     <string name="acc_clear_log">پاک کردن گزارش</string>
     <string name="acc_add_rule">افزودن قانون مسیریابی</string>
     <string name="acc_start">شروع سرویس</string>

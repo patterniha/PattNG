@@ -307,6 +307,7 @@
     <string name="title_oss_license">ওপেন সোর্স লাইসেন্স</string>
     <string name="title_translators">অনুবাদকগণ</string>
     <string name="title_tg_channel">টেলিগ্রাম চ্যানেল</string>
+    <string name="title_donate">দান করুন</string>
 
     <string name="title_pref_promotion">প্রচার</string>
 
@@ -540,6 +541,7 @@
     <string name="acc_download_file">অ্যাসেট ফাইল ডাউনলোড করুন</string>
     <string name="acc_qr_code">QR কোড</string>
     <string name="acc_copy_log">লগ কপি করুন</string>
+    <string name="acc_copy_address">%1$s ঠিকানা কপি করুন</string>
     <string name="acc_clear_log">লগ মুছুন</string>
     <string name="acc_add_rule">রাউটিং নিয়ম যোগ করুন</string>
     <string name="acc_start">সার্ভিস শুরু করুন</string>

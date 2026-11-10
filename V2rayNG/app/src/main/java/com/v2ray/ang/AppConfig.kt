@@ -159,6 +159,15 @@ object AppConfig {
     const val APP_PRIVACY_POLICY = "$GITHUB_RAW_URL/2dust/v2rayNG/master/CR.md"
     const val APP_PROMOTION_URL = "aHR0cHM6Ly85LjIzNDQ1Ni54eXovYWJjLmh0bWw="
     const val TG_CHANNEL_URL = "https://t.me/patt_channel_x"
+
+    /** PattNG: the wallets the Donate dialog lists, network and address; an address is copied exactly as written here. */
+    val DONATION_WALLETS = listOf(
+        "USDT (BEP20)" to "0x76a768B53Ca77B43086946315f0BDF21156bF424",
+        "USDT (TRC20)" to "TU5gKvKqcXPn8itp1DouBCwcqGHMemBm8o",
+        "TON (TON)" to "UQAc-mZB3y7uxWHKiMmq0ORZEYgycWDWZ4V1k73HsXvTJx-i",
+        "BTC (BTC)" to "bc1q8cptsn497hlfay6ypaaladldlrjalvx2ah233g"
+    )
+
     const val DELAY_TEST_URL = "https://www.gstatic.com/generate_204"
     const val DELAY_TEST_URL2 = "https://www.google.com/generate_204"
     const val OBSERVATORY_LEAST_PING_INTERVAL = "3m"

@@ -36,6 +36,7 @@ fun MainTopBar(
     onSearchClose: () -> Unit,
     onSearchToggle: (Boolean) -> Unit,
     onMenuClick: () -> Unit,
+    onDonateClick: () -> Unit,
     onAction: (MainAction) -> Unit,
     onMoreMenuAction: (MainMoreMenuAction) -> Unit
 ) {
@@ -69,6 +70,10 @@ fun MainTopBar(
         },
         actions = {
             if (!showSearch) {
+                // PattNG: Donate stands between the title and the search button.
+                IconButton(onClick = onDonateClick) {
+                    Icon(painterResource(R.drawable.ic_donate_24dp), contentDescription = stringResource(R.string.title_donate))
+                }
                 IconButton(onClick = { onSearchToggle(true) }) {
                     Icon(painterResource(R.drawable.ic_search_24dp), contentDescription = stringResource(R.string.acc_search))
                 }
