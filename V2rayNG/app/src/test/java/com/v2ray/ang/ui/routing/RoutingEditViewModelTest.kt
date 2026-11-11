@@ -303,9 +303,9 @@ class RoutingEditViewModelTest {
         gate.complete(Unit)
 
         assertEquals(listOf(3 to "rule-id"), source.ruleReads)
-        // The names of the profiles, as the dialog lists them; the built-in outbounds are the field's own.
+        // The names of the profiles, but one named as a built-in outbound, which the field offers itself.
         assertEquals(
-            RuleOpening(RulesetItem(id = "rule-id", remarks = "rule"), listOf("exit", AppConfig.TAG_DIRECT), canUseProcess = true),
+            RuleOpening(RulesetItem(id = "rule-id", remarks = "rule"), listOf("exit"), canUseProcess = true),
             viewModel.opened.value,
         )
         assertEquals("rule-id", viewModel.ruleId)

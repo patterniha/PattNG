@@ -13,8 +13,8 @@ import java.util.UUID
 
 /**
  * PattNG: what the routing rule editor opens on: the [rule], null for a new one or one gone, the [outboundSuggestions]
- * it offers beside the built-in outbounds, the names of the profiles, and whether a rule can match the app a connection
- * comes from, [canUseProcess].
+ * it offers beside the built-in outbounds, the names of the profiles but one named as a built-in outbound, and whether
+ * a rule can match the app a connection comes from, [canUseProcess].
  */
 data class RuleOpening(val rule: RulesetItem?, val outboundSuggestions: List<String>, val canUseProcess: Boolean)
 
@@ -38,7 +38,8 @@ class RoutingEditViewModel(
     val opened: StateFlow<RuleOpening?> = openedWith {
         RuleOpening(
             rule = source.loadRule(position, reopenedId),
-            outboundSuggestions = source.profileNames(),
+            // A profile named as a built-in outbound is no target: the rule sends to that outbound, see save.
+            outboundSuggestions = source.profileNames().filter { it !in BUILTIN_OUTBOUND_TAGS },
             canUseProcess = source.canUseProcessRouting(),
         )
     }
