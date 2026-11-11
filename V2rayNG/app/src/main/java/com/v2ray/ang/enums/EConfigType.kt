@@ -15,12 +15,14 @@ enum class EConfigType(val value: Int, val protocolScheme: String) {
     HYSTERIA2(9, AppConfig.HYSTERIA2),
     HYSTERIA(900, AppConfig.HYSTERIA),
     HTTP(10, AppConfig.HTTP),
+    MASQUE(11, AppConfig.MASQUE),
 
     // Fork-only type. Its value stays clear of the ranges upstream v2rayNG assigns so that a
     // type added upstream later cannot collide with it on merge.
     AETHER(500, AppConfig.AETHER),
     POLICYGROUP(101, AppConfig.CUSTOM),
-    PROXYCHAIN(102, AppConfig.CUSTOM);
+    PROXYCHAIN(102, AppConfig.CUSTOM),
+    CUSTOM_OUTBOUND(103, AppConfig.CUSTOM);
 
     companion object {
         fun fromInt(value: Int) = entries.firstOrNull { it.value == value }

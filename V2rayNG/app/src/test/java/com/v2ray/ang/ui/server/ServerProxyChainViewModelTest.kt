@@ -289,6 +289,7 @@ class ServerProxyChainViewModelTest {
     @Test
     fun theChainAndTheNamesOfTheProfilesAreReadOffTheMainThreadBeforeTheScreenShowsThem() {
         source.names.add("custom", EConfigType.CUSTOM)
+        source.names.add("outbound", EConfigType.CUSTOM_OUTBOUND)
         source.names.add("group", EConfigType.POLICYGROUP)
         source.names.add("chain", EConfigType.PROXYCHAIN)
         source.stored["chain-id"] = ProfileItem.create(EConfigType.PROXYCHAIN).apply {
@@ -302,7 +303,8 @@ class ServerProxyChainViewModelTest {
         assertNull(viewModel.opened.value)
         gate.complete(Unit)
 
-        // Its members trimmed, a blank one left out; the profiles a chain can hold, neither custom ones nor groups nor chains.
+        // Its members trimmed, a blank one left out; the profiles a chain can hold, neither custom configurations nor
+        // custom outbounds nor groups nor chains.
         assertEquals(ProxyChainOpening("chain", listOf("entry", "a\\b,c"), listOf("entry", "exit")), viewModel.opened.value)
     }
 

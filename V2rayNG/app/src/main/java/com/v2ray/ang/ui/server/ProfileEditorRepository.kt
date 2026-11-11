@@ -5,6 +5,7 @@ import com.v2ray.ang.dto.ByName
 import com.v2ray.ang.dto.entities.ProfileItem
 import com.v2ray.ang.enums.EConfigType
 import com.v2ray.ang.fmt.CustomFmt
+import com.v2ray.ang.fmt.CustomOutboundFmt
 import com.v2ray.ang.handler.MmkvManager
 import com.v2ray.ang.handler.ProfileStorageException
 import com.v2ray.ang.handler.SettingsManager
@@ -69,6 +70,12 @@ interface ProfileEditorSource : ProfileNameSource {
      */
     suspend fun parseCustomConfig(guid: String, content: String): Result<ProfileItem>
 
+    /**
+     * The profile the custom outbound [content] describes, with the outbound as it is stored, tagged as the proxy, see
+     * [CustomOutboundFmt], read off the main thread, or the failure reading it ended with, logged for the profile [guid].
+     */
+    suspend fun parseCustomOutbound(guid: String, content: String): Result<Pair<ProfileItem, String>>
+
     /** A guid of its own for a new profile, which no profile has. */
     fun newGuid(): String
 
@@ -119,6 +126,16 @@ class ProfileEditorRepository : ProfileEditorSource {
                 Result.success(CustomFmt.parse(content))
             } catch (e: Exception) {
                 LogUtil.e(AppConfig.TAG, "Custom configuration editor: failed to parse the configuration of profile $guid", e)
+                Result.failure(e)
+            }
+        }
+
+    override suspend fun parseCustomOutbound(guid: String, content: String): Result<Pair<ProfileItem, String>> =
+        withContext(Dispatchers.Default) {
+            try {
+                Result.success(CustomOutboundFmt.parse(content))
+            } catch (e: Exception) {
+                LogUtil.e(AppConfig.TAG, "Custom configuration editor: failed to parse the outbound of profile $guid", e)
                 Result.failure(e)
             }
         }

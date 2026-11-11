@@ -233,6 +233,7 @@ class SubEditViewModelTest {
     @Test
     fun theSubscriptionAndTheNamesOfTheProfilesAreReadOffTheMainThreadBeforeTheScreenShowsThem() {
         source.names.add("custom", EConfigType.CUSTOM)
+        source.names.add("outbound", EConfigType.CUSTOM_OUTBOUND)
         source.names.add("group", EConfigType.POLICYGROUP)
         source.names.add("chain", EConfigType.PROXYCHAIN)
         val stored = SubscriptionItem(remarks = "old", prevProfile = "entry")
@@ -245,7 +246,8 @@ class SubEditViewModelTest {
         assertNull(viewModel.opened.value)
         gate.complete(Unit)
 
-        // The profiles a subscription can chain through, neither custom ones nor groups nor chains.
+        // The profiles a subscription can chain through, neither custom configurations nor custom outbounds nor groups nor
+        // chains.
         assertEquals(SubEditOpening(stored, listOf("entry"), confirmRemove = true), viewModel.opened.value)
     }
 

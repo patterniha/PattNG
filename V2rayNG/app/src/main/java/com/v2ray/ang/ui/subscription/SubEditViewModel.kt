@@ -32,7 +32,9 @@ class SubEditViewModel(
         openedWith {
             SubEditOpening(
                 subscription = source.loadSubscription(opening) ?: SubscriptionItem(),
-                profileNames = source.profileNames(setOf(EConfigType.CUSTOM, EConfigType.POLICYGROUP, EConfigType.PROXYCHAIN)),
+                profileNames = source.profileNames(
+                    setOf(EConfigType.CUSTOM, EConfigType.CUSTOM_OUTBOUND, EConfigType.POLICYGROUP, EConfigType.PROXYCHAIN)
+                ),
                 confirmRemove = source.confirmsRemove(),
             )
         }
@@ -42,8 +44,8 @@ class SubEditViewModel(
      * Saves the subscription with [edits], the edits of the screen read at the tap, made on the subscription as stored
      * when it is written. The previous and the next profile are found by their names, as the chain finds them when it
      * runs: a name no profile has, as after a rename or a delete, several have, one whose profile has no server address,
-     * or only a group, a chain or a custom configuration has, is told rather than saved, see [proxyChainProblem]. A save
-     * the storage refused is told, see [WRITE_REFUSED].
+     * or only a group, a chain, a custom configuration or a custom outbound has, is told rather than saved, see
+     * [proxyChainProblem]. A save the storage refused is told, see [WRITE_REFUSED].
      */
     fun save(edits: (SubscriptionItem) -> Unit) = launchSave {
         val edited = SubscriptionItem().also(edits)

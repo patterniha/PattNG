@@ -244,6 +244,7 @@ class ServerGroupViewModelTest {
         source.names.add("custom", EConfigType.CUSTOM)
         source.names.add("group", EConfigType.POLICYGROUP)
         source.names.add("chain", EConfigType.PROXYCHAIN)
+        source.names.add("outbound", EConfigType.CUSTOM_OUTBOUND)
         source.names.add(AppConfig.TAG_DIRECT)
         source.subscriptions = listOf("sub-a" to "A", "sub-b" to "B")
         source.stored["group-id"] = ProfileItem.create(EConfigType.POLICYGROUP).apply {
@@ -271,8 +272,9 @@ class ServerGroupViewModelTest {
                 // The subscription the group was stored with, not the one the screen was opened in.
                 pickedSubscription = "sub-b",
                 subscriptions = listOf("sub-a" to "A", "sub-b" to "B"),
-                // The built-in outbounds but the proxy, each once, then the profiles a group can fall back to.
-                fallbackSuggestions = listOf(AppConfig.TAG_DIRECT, AppConfig.TAG_BLOCKED, "exit", "chain"),
+                // The built-in outbounds but the proxy, each once, then the profiles a group can fall back to, a chain and a
+                // custom outbound as well.
+                fallbackSuggestions = listOf(AppConfig.TAG_DIRECT, AppConfig.TAG_BLOCKED, "exit", "chain", "outbound"),
             ),
             viewModel.opened.value,
         )

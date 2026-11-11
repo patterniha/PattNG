@@ -5,6 +5,7 @@ import com.v2ray.ang.R
 import com.v2ray.ang.dto.entities.ProfileItem
 import com.v2ray.ang.enums.EConfigType
 import com.v2ray.ang.fmt.CustomFmt
+import com.v2ray.ang.fmt.CustomOutboundFmt
 import com.v2ray.ang.handler.AngConfigManager
 import com.v2ray.ang.ui.base.EditorOutcome
 import kotlinx.coroutines.CompletableDeferred
@@ -83,6 +84,52 @@ class ServerCustomConfigViewModelTest {
         // A custom profile stays in the subscription it is in.
         assertEquals("own", stored.subscriptionId)
         assertEquals(CONTENT, source.raws[GUID])
+    }
+
+    @Test
+    fun aCustomOutboundIsStoredAsReadTaggedAsTheProxyAndStaysOne() {
+        source.stored[GUID] = ProfileItem.create(EConfigType.CUSTOM_OUTBOUND).apply { remarks = "old" }
+        source.parsed = Result.failure(IllegalStateException("read as a whole configuration"))
+        source.parsedOutbound = Result.success(ProfileItem.create(EConfigType.CUSTOM_OUTBOUND).apply {
+            server = "203.0.113.9"
+            serverPort = "443"
+        } to OUTBOUND)
+        val viewModel = viewModel()
+        assertEquals(CustomConfigOpening("old", "", EConfigType.CUSTOM_OUTBOUND), viewModel.opened.value)
+
+        viewModel.save("outbound", "{\"protocol\": \"vless\"}")
+
+        assertEquals(EditorOutcome.Saved(GUID), viewModel.outcome.value)
+        val stored = source.stored.getValue(GUID)
+        assertEquals(EConfigType.CUSTOM_OUTBOUND, stored.configType)
+        assertEquals("outbound", stored.remarks)
+        assertEquals("203.0.113.9", stored.server)
+        assertEquals("443", stored.serverPort)
+        // The outbound as read, not as written.
+        assertEquals(OUTBOUND, source.raws[GUID])
+    }
+
+    @Test
+    fun aCustomOutboundThatCannotBeReadIsToldAndNothingIsStored() {
+        source.stored[GUID] = ProfileItem.create(EConfigType.CUSTOM_OUTBOUND).apply { remarks = "old" }
+        source.parsedOutbound = Result.failure(IllegalStateException("outer", IllegalArgumentException("line 1")))
+        val viewModel = viewModel()
+
+        viewModel.save("outbound", "{")
+
+        assertEquals(EditorOutcome.Refused(R.string.toast_malformed_json_detail, listOf("line 1")), viewModel.outcome.value)
+        assertTrue(source.saves.isEmpty())
+        assertTrue(source.raws.isEmpty())
+    }
+
+    @Test
+    fun theReaderOfACustomOutboundTagsItAsTheProxy() {
+        // What the repository reads with, see ProfileEditorRepository.parseCustomOutbound.
+        val (profile, raw) = CustomOutboundFmt.parse("""{"tag": "mine", "protocol": "vless", "settings": {"address": "203.0.113.9", "port": 443}}""")
+        assertEquals(EConfigType.CUSTOM_OUTBOUND, profile.configType)
+        assertEquals("203.0.113.9", profile.server)
+        assertEquals("443", profile.serverPort)
+        assertTrue(raw.contains("\"tag\": \"proxy\""), raw)
     }
 
     @Test
@@ -166,6 +213,7 @@ class ServerCustomConfigViewModelTest {
     private companion object {
         const val GUID = "custom-guid"
         const val CONTENT = "{\"outbounds\": []}"
+        const val OUTBOUND = "{\"tag\": \"proxy\", \"protocol\": \"vless\"}"
     }
 
     @Test

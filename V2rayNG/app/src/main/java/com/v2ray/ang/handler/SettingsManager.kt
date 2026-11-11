@@ -14,6 +14,7 @@ import com.v2ray.ang.core.AetherCoreManager
 import com.v2ray.ang.core.PsiphonServerList
 import com.v2ray.ang.dto.ByName
 import com.v2ray.ang.dto.V2rayConfig
+import com.v2ray.ang.dto.entities.ProfileEntry
 import com.v2ray.ang.dto.entities.ProfileItem
 import com.v2ray.ang.dto.entities.RulesetItem
 import com.v2ray.ang.dto.entities.SubscriptionItem
@@ -268,23 +269,30 @@ object SettingsManager {
      * @param remarks The remarks of the server.
      * @return The ProfileItem.
      */
-    fun getServerViaRemarks(remarks: String?): ProfileItem? {
+    fun getProfileEntryViaRemarks(remarks: String?): ProfileEntry? {
         if (remarks.isNullOrEmpty()) {
             return null
         }
         val serverList = decodeAllServerList()
         return serverList
-            .mapNotNull { guid -> decodeServerConfig(guid) }
-            .firstOrNull { it.remarks == remarks }
+            .mapNotNull { guid -> decodeServerConfig(guid)?.let { ProfileEntry(guid, it) } }
+            .firstOrNull { it.profile.remarks == remarks }
     }
 
     /**
-     * PattNG: what [remarks] finds among the profiles [takes] accepts, see [ByName]. Unlike [getServerViaRemarks],
-     * which takes the first profile of any kind, it tells a name no profile has from one several have, as the hops
-     * of a proxy chain and the exit-node of an Aether core are named.
+     * PattNG: what [remarks] finds among the profiles [takes] accepts, each with its guid, see [ByName]. Unlike
+     * [getProfileEntryViaRemarks], which takes the first profile of any kind, it tells a name no profile has from one
+     * several have, as the hops of a proxy chain and the exit-node of an Aether core are named.
      */
+    fun findProfileEntryViaRemarks(remarks: String?, takes: (ProfileItem) -> Boolean): ByName<ProfileEntry> =
+        ByName.find(
+            remarks,
+            decodeAllServerList().asSequence().mapNotNull { guid -> decodeServerConfig(guid)?.let { ProfileEntry(guid, it) } }.filter { takes(it.profile) }
+        ) { it.profile.remarks }
+
+    /** PattNG: what [remarks] finds among the profiles [takes] accepts, see [findProfileEntryViaRemarks]. */
     fun findServerViaRemarks(remarks: String?, takes: (ProfileItem) -> Boolean): ByName<ProfileItem> =
-        ByName.find(remarks, decodeAllServerList().asSequence().mapNotNull { decodeServerConfig(it) }.filter(takes)) { it.remarks }
+        findProfileEntryViaRemarks(remarks, takes).map { it.profile }
 
     /**
      * Collects non-empty profile remarks while excluding specific config types.

@@ -33,7 +33,7 @@ class CoreConfigContextBuilderTest {
         val same = aether("warp again", AetherProtocol.MASQUE)
         val other = aether("wg", AetherProtocol.WIREGUARD)
 
-        val (kept, leftOut) = CoreConfigContextBuilder.withOneAetherProfile(listOf(vless, first, other, same))
+        val (kept, leftOut) = CoreConfigContextBuilder.withOneAetherProfile(listOf(vless, first, other, same)) { it }
 
         assertEquals(listOf(vless, first, same), kept)
         assertEquals(listOf(other), leftOut)
@@ -45,7 +45,7 @@ class CoreConfigContextBuilderTest {
         val first = aether("warp", AetherProtocol.MASQUE)
         val elsewhere = aether("warp on 20808", AetherProtocol.MASQUE).apply { aetherListenPort = "20808" }
 
-        val (kept, leftOut) = CoreConfigContextBuilder.withOneAetherProfile(listOf(first, elsewhere))
+        val (kept, leftOut) = CoreConfigContextBuilder.withOneAetherProfile(listOf(first, elsewhere)) { it }
 
         assertEquals(listOf(first, elsewhere), kept)
         assertEquals(emptyList<ProfileItem>(), leftOut)
@@ -53,8 +53,8 @@ class CoreConfigContextBuilderTest {
 
     @Test
     fun aGroupWithoutAetherIsUnchanged() {
-        assertEquals(listOf(vless) to emptyList<ProfileItem>(), CoreConfigContextBuilder.withOneAetherProfile(listOf(vless)))
-        assertEquals(emptyList<ProfileItem>() to emptyList<ProfileItem>(), CoreConfigContextBuilder.withOneAetherProfile(emptyList()))
+        assertEquals(listOf(vless) to emptyList<ProfileItem>(), CoreConfigContextBuilder.withOneAetherProfile(listOf(vless)) { it })
+        assertEquals(emptyList<ProfileItem>() to emptyList<ProfileItem>(), CoreConfigContextBuilder.withOneAetherProfile(emptyList<ProfileItem>()) { it })
     }
 
     @Test
@@ -108,6 +108,7 @@ class CoreConfigContextBuilderTest {
             profile("group", EConfigType.POLICYGROUP),
             profile("chain", EConfigType.PROXYCHAIN),
             profile("custom", EConfigType.CUSTOM),
+            profile("outbound", EConfigType.CUSTOM_OUTBOUND),
             profile("shared", EConfigType.POLICYGROUP),
             shared,
         )
@@ -120,6 +121,8 @@ class CoreConfigContextBuilderTest {
         // A chain or a custom configuration cannot be a hop either, and is told by what it is.
         assertEquals(CoreConfigContext.UnresolvedName("chain", CHAIN_AS_HOP), hops("chain").second)
         assertEquals(CoreConfigContext.UnresolvedName("custom", CUSTOM_AS_HOP), hops("custom").second)
+        // A custom outbound, as upstream leaves it out of chains, is told as a custom configuration.
+        assertEquals(CoreConfigContext.UnresolvedName("outbound", CUSTOM_AS_HOP), hops("outbound").second)
         // A name no profile has is told as before.
         assertEquals(CoreConfigContext.UnresolvedName("gone", NOT_FOUND), hops("gone").second)
         // A group of the name stands aside for the one profile of it that can be a hop.
@@ -224,8 +227,8 @@ class CoreConfigContextBuilderTest {
             ProfileItem.create(EConfigType.POLICYGROUP).apply { remarks = "shared" },
         )
         val find = { name: String, takes: (ProfileItem) -> Boolean -> ByName.find(name, shared.asSequence().filter(takes)) { it.remarks } }
-        assertEquals(GROUP_AS_HOP, CoreConfigContextBuilder.reasonByType("shared", CoreConfigContextBuilder.HOP_REASONS, find))
-        assertNull(CoreConfigContextBuilder.reasonByType("gone", CoreConfigContextBuilder.HOP_REASONS, find))
+        assertEquals(GROUP_AS_HOP, CoreConfigContextBuilder.reasonByType("shared", CoreConfigContextBuilder.HOP_REASONS, find) { it })
+        assertNull(CoreConfigContextBuilder.reasonByType("gone", CoreConfigContextBuilder.HOP_REASONS, find) { it })
     }
 
     @Test

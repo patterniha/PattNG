@@ -4,6 +4,7 @@ import android.content.Context
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.dto.CoreConfigContext
 import com.v2ray.ang.dto.V2rayConfig
+import com.v2ray.ang.dto.entities.ProfileEntry
 import com.v2ray.ang.dto.entities.ProfileItem
 import com.v2ray.ang.enums.BalancerStrategyType
 import com.v2ray.ang.enums.CoreResolvedType
@@ -18,6 +19,9 @@ import org.mockito.kotlin.mock
 
 class CoreConfigManagerTest {
 
+    /** [profile] as it is stored, under its name. */
+    private fun stored(profile: ProfileItem) = ProfileEntry(profile.remarks, profile)
+
     private fun socks(address: String, port: Int) = V2rayConfig.OutboundBean(
         protocol = "socks",
         settings = V2rayConfig.OutboundBean.OutSettingsBean(address = address, port = port),
@@ -28,8 +32,8 @@ class CoreConfigManagerTest {
         val warp = ProfileItem.create(EConfigType.AETHER).apply { remarks = "warp"; aetherProtocol = "wg" }
         val named = ProfileItem.create(EConfigType.VLESS).apply { remarks = AppConfig.TAG_EXIT_NODE; server = "1.2.3.4"; serverPort = "443" }
         val outbounds = listOf(
-            CoreConfigContext.ResolvedOutbound(AppConfig.TAG_PROXY, warp, listOf(warp), CoreResolvedType.NORMAL),
-            CoreConfigContext.ResolvedOutbound(AppConfig.TAG_EXIT_NODE, named, listOf(named), CoreResolvedType.NORMAL),
+            CoreConfigContext.ResolvedOutbound(AppConfig.TAG_PROXY, stored(warp), listOf(stored(warp)), CoreResolvedType.NORMAL),
+            CoreConfigContext.ResolvedOutbound(AppConfig.TAG_EXIT_NODE, stored(named), listOf(stored(named)), CoreResolvedType.NORMAL),
         )
         assertTrue(CoreConfigManager.takesExitNodeName(AetherDependency.of(outbounds), outbounds))
         // Without an Aether core the name is nobody's.
@@ -334,16 +338,16 @@ class CoreConfigManagerTest {
         val member = ProfileItem.create(EConfigType.AETHER).apply { remarks = "member warp"; aetherProtocol = "wg" }
         val other = ProfileItem.create(EConfigType.AETHER).apply { remarks = "chain warp"; aetherProtocol = "masque" }
         val entry = ProfileItem.create(EConfigType.VLESS).apply { remarks = "entry"; server = "203.0.113.7"; serverPort = "443" }
-        val group = CoreConfigContext.ResolvedOutbound(AppConfig.TAG_PROXY, member, listOf(member), CoreResolvedType.POLICYGROUP)
+        val group = CoreConfigContext.ResolvedOutbound(AppConfig.TAG_PROXY, stored(member), listOf(stored(member)), CoreResolvedType.POLICYGROUP)
         // The fallback, a chain whose Aether hop dials out through entry: another core.
-        val fallback = CoreConfigContext.ResolvedOutbound("fallback", other, listOf(other, entry), CoreResolvedType.PROXYCHAIN)
+        val fallback = CoreConfigContext.ResolvedOutbound("fallback", stored(other), listOf(stored(other), stored(entry)), CoreResolvedType.PROXYCHAIN)
 
         assertEquals(AetherDependency.Conflicting, CoreConfigManager.speedtestCoresRefusal(listOf(group, fallback)))
         // The primary alone, or a fallback without a core of its own, or on the same core, is measured.
         assertNull(CoreConfigManager.speedtestCoresRefusal(listOf(group)))
-        val plain = CoreConfigContext.ResolvedOutbound("fallback", entry, listOf(entry), CoreResolvedType.NORMAL)
+        val plain = CoreConfigContext.ResolvedOutbound("fallback", stored(entry), listOf(stored(entry)), CoreResolvedType.NORMAL)
         assertNull(CoreConfigManager.speedtestCoresRefusal(listOf(group, plain)))
-        val same = CoreConfigContext.ResolvedOutbound("fallback", member, listOf(member), CoreResolvedType.NORMAL)
+        val same = CoreConfigContext.ResolvedOutbound("fallback", stored(member), listOf(stored(member)), CoreResolvedType.NORMAL)
         assertNull(CoreConfigManager.speedtestCoresRefusal(listOf(group, same)))
     }
 

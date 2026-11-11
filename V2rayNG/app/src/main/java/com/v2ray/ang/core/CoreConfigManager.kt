@@ -9,6 +9,7 @@ import com.v2ray.ang.R
 import com.v2ray.ang.dto.ConfigResult
 import com.v2ray.ang.dto.CoreConfigContext
 import com.v2ray.ang.dto.V2rayConfig
+import com.v2ray.ang.dto.entities.ProfileEntry
 import com.v2ray.ang.dto.entities.ProfileItem
 import com.v2ray.ang.dto.entities.RulesetItem
 import com.v2ray.ang.enums.BalancerStrategyType
@@ -265,7 +266,7 @@ object CoreConfigManager {
 
         val v2rayConfig = initV2rayConfig(configContext)
         v2rayConfig.log.loglevel = MmkvManager.decodeSettingsString(AppConfig.PREF_LOGLEVEL) ?: "warning"
-        v2rayConfig.remarks = primaryResolvedOutbound.profile.remarks
+        v2rayConfig.remarks = primaryResolvedOutbound.entry.profile.remarks
 
         configureInbounds(v2rayConfig)
 
@@ -374,11 +375,11 @@ object CoreConfigManager {
         existingTags: MutableSet<String>,
         v2rayConfig: V2rayConfig,
     ) {
-        val profile = resolvedOutbound.resolvedProfiles.firstOrNull() ?: run {
+        val p = resolvedOutbound.resolvedEntries.firstOrNull() ?: run {
             LogUtil.w(AppConfig.TAG, "NORMAL resolved outbound '${resolvedOutbound.tag}' has empty resolvedProfiles, skipping")
             return
         }
-        val outbound = convertProfile2Outbound(profile) ?: run {
+        val outbound = convertProfile2Outbound(p) ?: run {
             LogUtil.w(AppConfig.TAG, "Could not convert NORMAL resolved outbound '${resolvedOutbound.tag}' profile to outbound, skipping")
             return
         }
@@ -392,17 +393,17 @@ object CoreConfigManager {
     }
 
     /**
-     * PattNG: the hops of a proxy chain, [profiles] in order, each with its outbound as [convert] builds it; null when
+     * PattNG: the hops of a proxy chain, [hops] in order, each with its outbound as [convert] builds it; null when
      * there are none, or when a hop builds no outbound. A chain is built whole or not at all: without one of its hops it
      * would carry the traffic a shorter way than it names. Not built, a chain that is the main server is refused, see
      * [lacksMainOutbound], and so is the session for one that is a routing target, as for any target that cannot be
      * built, see [unbuiltRoutingTarget].
      */
-    internal fun chainHops(
-        profiles: List<ProfileItem>,
-        convert: (ProfileItem) -> V2rayConfig.OutboundBean?,
-    ): List<Pair<ProfileItem, V2rayConfig.OutboundBean>>? =
-        profiles.map { profile -> profile to (convert(profile) ?: return null) }.ifEmpty { null }
+    internal fun <T> chainHops(
+        hops: List<T>,
+        convert: (T) -> V2rayConfig.OutboundBean?,
+    ): List<Pair<T, V2rayConfig.OutboundBean>>? =
+        hops.map { hop -> hop to (convert(hop) ?: return null) }.ifEmpty { null }
 
     /**
      * Build and insert a multi-hop chain entry.
@@ -418,7 +419,8 @@ object CoreConfigManager {
         existingTags: MutableSet<String>,
         v2rayConfig: V2rayConfig,
     ) {
-        val chain = chainHops(resolvedOutbound.resolvedProfiles, ::convertProfile2Outbound) ?: run {
+        val chain = chainHops(resolvedOutbound.resolvedEntries, ::convertProfile2Outbound)
+            ?.map { (entry, outbound) -> entry.profile to outbound } ?: run {
             LogUtil.w(AppConfig.TAG, "PROXYCHAIN resolved outbound '${resolvedOutbound.tag}' has a hop that could not be built, skipping")
             return
         }
@@ -482,8 +484,8 @@ object CoreConfigManager {
         policyGroupBalancerTags: MutableMap<String, String>,
         balancerStrategies: MutableList<BalancerStrategy>,
     ) {
-        val memberPairs = resolvedOutbound.resolvedProfiles.mapNotNull { profile ->
-            convertProfile2Outbound(profile)?.let { ob -> ob to profile }
+        val memberPairs = resolvedOutbound.resolvedEntries.mapNotNull {
+            convertProfile2Outbound(it)?.let { ob -> ob to it.profile }
         }
         if (memberPairs.isEmpty()) {
             LogUtil.w(AppConfig.TAG, "POLICYGROUP resolved outbound '${resolvedOutbound.tag}' has no valid member outbounds, skipping")
@@ -521,8 +523,8 @@ object CoreConfigManager {
         } else {
             "${AppConfig.TAG_BALANCER_PRE}-${resolvedOutbound.tag}"
         }
-        val strategyType = BalancerStrategyType.from(resolvedOutbound.profile.policyGroupType)
-        val fallbackTag = resolvePolicyGroupFallbackTag(strategyType, resolvedOutbound.profile, membersToAdd.first().tag)
+        val strategyType = BalancerStrategyType.from(resolvedOutbound.entry.profile.policyGroupType)
+        val fallbackTag = resolvePolicyGroupFallbackTag(strategyType, resolvedOutbound.entry.profile, membersToAdd.first().tag)
         val strategy = buildBalancerStrategy(
             strategyType = strategyType,
             selector = listOf(memberTagPrefix),
@@ -1535,8 +1537,17 @@ object CoreConfigManager {
     /**
      * Convert one profile object into one outbound object.
      */
-    private fun convertProfile2Outbound(profileItem: ProfileItem): V2rayConfig.OutboundBean? {
-        return CoreOutboundBuilder.convert(profileItem)
+    private fun convertProfile2Outbound(
+        entry: ProfileEntry,
+    ): V2rayConfig.OutboundBean? {
+        if (entry.profile.configType == EConfigType.CUSTOM_OUTBOUND) {
+            MmkvManager.decodeServerRaw(entry.guid)?.let {
+                return JsonUtil.fromJsonSafe(it, V2rayConfig.OutboundBean::class.java)
+            }
+            return null
+
+        }
+        return CoreOutboundBuilder.convert(entry.profile)
     }
 
     //endregion

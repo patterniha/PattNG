@@ -6,6 +6,7 @@ import com.v2ray.ang.core.CoreConfigContextBuilder
 import com.v2ray.ang.core.CoreConfigManager
 import com.v2ray.ang.core.CoreNativeManager
 import com.v2ray.ang.dto.RealPingEvent
+import com.v2ray.ang.dto.entities.ProfileEntry
 import com.v2ray.ang.enums.EConfigType
 import com.v2ray.ang.extension.isComplexType
 import com.v2ray.ang.extension.isNotNullEmpty
@@ -120,7 +121,7 @@ class RealPingWorkerService(
         val config = MmkvManager.decodeServerConfig(guid) ?: return retFailure
         // An Aether profile is measured through its core alone, unless its subscription chains it with
         // other hops: then it is measured as the chain it runs in, as every chained profile is.
-        if (config.configType == EConfigType.AETHER && !CoreConfigContextBuilder.isChained(config)) {
+        if (config.configType == EConfigType.AETHER && !CoreConfigContextBuilder.isChained(ProfileEntry(guid, config))) {
             return AetherDelayTester.measure(context, guid, config, SettingsManager.getDelayTestUrl())
         }
 

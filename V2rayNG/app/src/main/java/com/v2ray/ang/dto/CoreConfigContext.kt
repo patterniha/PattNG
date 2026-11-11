@@ -3,7 +3,7 @@ package com.v2ray.ang.dto
 import android.content.Context
 import androidx.annotation.StringRes
 import com.v2ray.ang.R
-import com.v2ray.ang.dto.entities.ProfileItem
+import com.v2ray.ang.dto.entities.ProfileEntry
 import com.v2ray.ang.enums.CoreResolvedType
 
 data class CoreConfigContext(
@@ -20,8 +20,8 @@ data class CoreConfigContext(
 ) {
     data class ResolvedOutbound(
         val tag: String,
-        val profile: ProfileItem,
-        val resolvedProfiles: List<ProfileItem>,
+        val entry: ProfileEntry,
+        val resolvedEntries: List<ProfileEntry>,
         val resolvedType: CoreResolvedType,
         /**
          * PattNG: a hop the proxy chain, or the subscription around the profile, names that no profile has, several
@@ -55,7 +55,10 @@ data class CoreConfigContext(
             /** As a hop of a proxy chain, only a proxy chain has it, and a chain cannot go through another. */
             CHAIN_AS_HOP(R.string.toast_profile_chain_not_hop),
 
-            /** As a hop of a proxy chain, only a custom configuration has it, which a chain cannot go through. */
+            /**
+             * As a hop of a proxy chain, only a custom configuration has it, or a custom outbound, which a chain cannot go
+             * through.
+             */
             CUSTOM_AS_HOP(R.string.toast_profile_custom_not_hop),
         }
     }

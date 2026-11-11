@@ -84,7 +84,7 @@ sealed interface AetherDependency {
         fun of(outbounds: List<CoreConfigContext.ResolvedOutbound>): AetherDependency {
             var found: AetherCore? = null
             for (outbound in outbounds) {
-                val profiles = outbound.resolvedProfiles
+                val profiles = outbound.resolvedEntries.map { it.profile }
                 val chained = outbound.resolvedType == CoreResolvedType.PROXYCHAIN
                 if (chained && profiles.count { it.configType == EConfigType.AETHER } > 1) return TwoAetherHops(outbound.tag)
                 for ((index, profile) in profiles.withIndex()) {

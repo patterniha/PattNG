@@ -120,6 +120,14 @@ internal class FakeProfileEditorSource(val names: FakeProfileNames = FakeProfile
         return parsed
     }
 
+    /** What a custom outbound reads as: its profile, and the outbound as it is stored. */
+    var parsedOutbound: Result<Pair<ProfileItem, String>> = Result.success(ProfileItem.create(EConfigType.CUSTOM_OUTBOUND) to "{}")
+
+    override suspend fun parseCustomOutbound(guid: String, content: String): Result<Pair<ProfileItem, String>> {
+        parsedFor += guid
+        return parsedOutbound
+    }
+
     override fun newGuid(): String = "guid-${++newGuids}"
 
     /** When set, a look at the profile selected waits for it, as one off the main thread takes its time. */

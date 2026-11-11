@@ -3,6 +3,7 @@ package com.v2ray.ang.core
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.v2ray.ang.dto.CoreConfigContext
+import com.v2ray.ang.dto.entities.ProfileEntry
 import com.v2ray.ang.dto.entities.ProfileItem
 import com.v2ray.ang.enums.AetherProtocol
 import com.v2ray.ang.enums.CoreResolvedType
@@ -20,8 +21,9 @@ class AetherDependencyTest {
     private val vless = ProfileItem.create(EConfigType.VLESS).apply { remarks = "vless"; server = "1.2.3.4"; serverPort = "443" }
     private val trojan = ProfileItem.create(EConfigType.TROJAN).apply { remarks = "trojan"; server = "5.6.7.8"; serverPort = "443" }
 
+    /** The resolved outbound [tag] of [profiles], each stored under its name. */
     private fun outbound(tag: String, type: CoreResolvedType, vararg profiles: ProfileItem) =
-        CoreConfigContext.ResolvedOutbound(tag, profiles.first(), profiles.toList(), type)
+        profiles.map { ProfileEntry(it.remarks, it) }.let { CoreConfigContext.ResolvedOutbound(tag, it.first(), it, type) }
 
     /** The dependency on the core of [profile]. */
     private fun single(profile: ProfileItem) = AetherDependency.Single(AetherCore.of(profile))

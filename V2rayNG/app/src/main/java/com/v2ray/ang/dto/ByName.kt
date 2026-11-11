@@ -27,4 +27,11 @@ sealed interface ByName<out T> {
             return found ?: None
         }
     }
+
+    /** What this finds, with [transform] made on the one profile it finds. */
+    fun <R> map(transform: (T) -> R): ByName<R> = when (this) {
+        is One -> One(transform(value))
+        None -> None
+        Several -> Several
+    }
 }
