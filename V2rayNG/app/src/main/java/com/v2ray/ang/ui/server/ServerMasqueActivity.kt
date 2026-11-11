@@ -40,6 +40,8 @@ class ServerMasqueActivity : BaseServerActivity() {
         ) {
             CommonBasicFields(uiState)
             MasqueProtocolFields(uiState)
+            CommonDialModeField(uiState)
+            CommonTargetStrategyField(uiState)
             PreferenceGroupHeader(title = stringResource(R.string.server_lab_stream_security))
             CommonStreamSecurityFields(
                 state = uiState,
@@ -135,7 +137,7 @@ class ServerMasqueActivity : BaseServerActivity() {
             { state.publicKey = it }
         )
         // finalmask
-        FormTextField(
+        FinalMaskField(
             stringResource(R.string.server_lab_final_mask),
             state.finalMask,
             { state.finalMask = it }
