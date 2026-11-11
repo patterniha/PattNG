@@ -83,6 +83,8 @@ sealed interface MainAction {
 
     /** PattNG: the Donate dialog's copy button of [address], one of AppConfig.DONATION_WALLETS. */
     data class CopyDonationAddress(val address: String) : MainAction
+    /** PattNG: the Donate dialog's link of the author's ID, AppConfig.AUTHOR_TELEGRAM_URL. */
+    data object OpenAuthorTelegram : MainAction
 
     data class ImportBatchConfig(val configText: String) : MainAction
 

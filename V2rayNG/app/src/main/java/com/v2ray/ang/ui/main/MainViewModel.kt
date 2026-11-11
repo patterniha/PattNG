@@ -375,7 +375,8 @@ class MainViewModel(
             is MainAction.ShareClipboard,
             is MainAction.ShareFullContent,
             is MainAction.OpenSubscriptionLink,
-            is MainAction.CopyDonationAddress -> {
+            is MainAction.CopyDonationAddress,
+            MainAction.OpenAuthorTelegram -> {
                 // Handled by Activity via its onAction lambda
             }
         }

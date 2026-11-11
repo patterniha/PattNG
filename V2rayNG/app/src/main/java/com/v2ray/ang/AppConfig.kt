@@ -168,6 +168,10 @@ object AppConfig {
         "BTC (BTC)" to "bc1q8cptsn497hlfay6ypaaladldlrjalvx2ah233g"
     )
 
+    /** PattNG: the author's ID the Donate dialog shows below the wallets, a link to the author's Telegram. */
+    const val AUTHOR_ID = "@patterniha"
+    const val AUTHOR_TELEGRAM_URL = "https://t.me/patterniha"
+
     const val DELAY_TEST_URL = "https://www.gstatic.com/generate_204"
     const val DELAY_TEST_URL2 = "https://www.google.com/generate_204"
     const val OBSERVATORY_LEAST_PING_INTERVAL = "3m"

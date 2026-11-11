@@ -1,5 +1,6 @@
 package com.v2ray.ang.ui.main
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -18,7 +19,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.R
@@ -53,6 +56,7 @@ fun MainDialogs(
     showDonate: Boolean,
     onDismissDonate: () -> Unit,
     onCopyDonationAddress: (String) -> Unit,
+    onOpenAuthorTelegram: () -> Unit,
 ) {
     if (showDelAllConfirm) {
         DeleteConfirmDialog(
@@ -84,13 +88,16 @@ fun MainDialogs(
         )
     }
     if (showDonate) {
-        DonateDialog(onCopy = onCopyDonationAddress, onDismiss = onDismissDonate)
+        DonateDialog(onCopy = onCopyDonationAddress, onOpenAuthor = onOpenAuthorTelegram, onDismiss = onDismissDonate)
     }
 }
 
-/** PattNG: PattNG's donation wallets, each address selectable and copied whole by its button; OK closes it. */
+/**
+ * PattNG: PattNG's donation wallets, each address selectable and copied whole by its button, and below them the author's
+ * ID, a link to the author's Telegram; OK closes it.
+ */
 @Composable
-private fun DonateDialog(onCopy: (String) -> Unit, onDismiss: () -> Unit) {
+private fun DonateDialog(onCopy: (String) -> Unit, onOpenAuthor: () -> Unit, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.title_donate)) },
@@ -117,6 +124,26 @@ private fun DonateDialog(onCopy: (String) -> Unit, onDismiss: () -> Unit) {
                                 contentDescription = stringResource(R.string.acc_copy_address, network)
                             )
                         }
+                    }
+                }
+                // The author's ID below the wallets, a link to the author's Telegram
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(text = "ID", style = MaterialTheme.typography.titleSmall)
+                        Text(
+                            text = AppConfig.AUTHOR_ID,
+                            modifier = Modifier.clickable(role = Role.Button, onClick = onOpenAuthor),
+                            color = MaterialTheme.colorScheme.primary,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontFamily = FontFamily.Monospace,
+                            textDecoration = TextDecoration.Underline
+                        )
+                    }
+                    IconButton(onClick = onOpenAuthor) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_telegram_24dp),
+                            contentDescription = stringResource(R.string.title_tg_channel)
+                        )
                     }
                 }
             }

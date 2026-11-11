@@ -148,7 +148,8 @@ fun MainScreen(
         onConfirmRemove = { guid -> showRemoveConfirm = null; onAction(MainAction.RemoveServer(guid)) },
         showDonate = showDonate,
         onDismissDonate = { showDonate = false },
-        onCopyDonationAddress = { address -> onAction(MainAction.CopyDonationAddress(address)) }
+        onCopyDonationAddress = { address -> onAction(MainAction.CopyDonationAddress(address)) },
+        onOpenAuthorTelegram = { onAction(MainAction.OpenAuthorTelegram) }
     )
 
     if (shareTarget != null) {

@@ -126,6 +126,7 @@ class MainActivity : HelperBaseComponentActivity() {
                     is MainAction.ShareFullContent -> shareFullContentAsync(action.guid)
                     is MainAction.OpenSubscriptionLink -> openSubscriptionLink(action.url)
                     is MainAction.CopyDonationAddress -> copyDonationAddress(action.address)
+                    MainAction.OpenAuthorTelegram -> Utils.openUri(this, AppConfig.AUTHOR_TELEGRAM_URL)
                     else -> mainViewModel.onAction(action)
                 }
             },
