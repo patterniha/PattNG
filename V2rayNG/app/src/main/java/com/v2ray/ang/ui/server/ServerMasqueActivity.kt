@@ -59,7 +59,9 @@ class ServerMasqueActivity : BaseServerActivity() {
                 showSecuritySelector = false,
                 showFingerprint = uiState.alpn == ALPN_H2,
                 showAllowInsecure = false,
-                showEchConfigList = false
+                // PattNG: the fork core uses ECH over HTTP/3 and HTTP/2 alike, and cipherSuites over HTTP/2 alone, see
+                // CoreOutboundBuilder.toOutboundMasque
+                showCipherSuites = uiState.alpn == ALPN_H2
             )
         }
     }

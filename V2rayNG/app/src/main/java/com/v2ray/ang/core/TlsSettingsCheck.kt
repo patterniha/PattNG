@@ -8,8 +8,8 @@ import java.util.Locale
 
 /**
  * PattNG: TLS settings of a profile that the Xray-core fork would not apply, or with which it would not connect, so
- * that the editor does not save them. Read from the fork's transport/internet/tls and its WebSocket and HTTPUpgrade
- * dialers.
+ * that the editor does not save them. Read from the fork's transport/internet/tls and its WebSocket, HTTPUpgrade and
+ * MASQUE dialers.
  */
 object TlsSettingsCheck {
 
@@ -44,21 +44,24 @@ object TlsSettingsCheck {
     /**
      * Whether the check applies to [profile], which is where the editor shows cipherSuites, curvePreferences, alpn and the
      * fingerprint:
-     * under TLS on VMess, VLESS, Shadowsocks and Trojan.
+     * under TLS on VMess, VLESS, Shadowsocks and Trojan, and on MASQUE, which always runs over TLS.
      */
     fun appliesTo(profile: ProfileItem): Boolean = when (profile.configType) {
         EConfigType.VMESS, EConfigType.VLESS, EConfigType.SHADOWSOCKS, EConfigType.TROJAN ->
             profile.security == AppConfig.TLS
+        EConfigType.MASQUE -> true
         else -> false
     }
 
     /** @return null when the check does not apply to [profile] or its TLS settings are ones the fork applies. */
     fun validate(profile: ProfileItem): Error? {
         if (!appliesTo(profile)) return null
-        // The fork lowercases the fingerprint before it looks it up.
-        val unsafe = profile.fingerPrint?.lowercase(Locale.ROOT) == UNSAFE_FINGERPRINT
-        if (!profile.cipherSuites.isNullOrBlank() && !unsafe) return Error.CIPHER_SUITES_NEED_UNSAFE
-        if (!profile.curvePreferences.isNullOrBlank() && !unsafe) return Error.CURVE_PREFERENCES_NEED_UNSAFE
+        // The fork lowercases the fingerprint before it looks it up. MASQUE over HTTP/3 dials QUIC with Go's crypto/tls
+        // whatever the fingerprint: its curvePreferences apply, and its cipherSuites are not written, see
+        // CoreOutboundBuilder.toOutboundMasque.
+        val goTls = profile.fingerPrint?.lowercase(Locale.ROOT) == UNSAFE_FINGERPRINT || isMasqueOverHttp3(profile)
+        if (!profile.cipherSuites.isNullOrBlank() && !goTls) return Error.CIPHER_SUITES_NEED_UNSAFE
+        if (!profile.curvePreferences.isNullOrBlank() && !goTls) return Error.CURVE_PREFERENCES_NEED_UNSAFE
         if (isUpgrade(profile) && !isHttp1OrNone(profile.alpn)) return Error.WEBSOCKET_ALPN_NOT_HTTP1
         return null
     }
@@ -71,6 +74,10 @@ object TlsSettingsCheck {
     fun fixImportedAlpn(profile: ProfileItem) {
         if (appliesTo(profile) && isUpgrade(profile) && !isHttp1OrNone(profile.alpn)) profile.alpn = HTTP1
     }
+
+    /** Whether [profile] is MASQUE over HTTP/3, as it is unless its alpn is h2, see CoreOutboundBuilder.toOutboundMasque. */
+    private fun isMasqueOverHttp3(profile: ProfileItem): Boolean =
+        profile.configType == EConfigType.MASQUE && profile.alpn?.trim() != "h2"
 
     private fun isUpgrade(profile: ProfileItem): Boolean =
         profile.network == NetworkType.WS.type || profile.network == NetworkType.HTTP_UPGRADE.type

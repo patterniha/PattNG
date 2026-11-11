@@ -27,13 +27,14 @@ object EchOutbound {
 
     /**
      * Whether the ECH outbound of [profile] is used, which is where the editor shows it: under TLS on
-     * VMess, VLESS, Shadowsocks and Trojan, and on Hysteria2, whose blank security is saved as TLS.
-     * Anywhere else it is kept, but neither checked nor used.
+     * VMess, VLESS, Shadowsocks and Trojan, on Hysteria2, whose blank security is saved as TLS, and on
+     * MASQUE, which always runs over TLS. Anywhere else it is kept, but neither checked nor used.
      */
     fun appliesTo(profile: ProfileItem): Boolean = when (profile.configType) {
         EConfigType.VMESS, EConfigType.VLESS, EConfigType.SHADOWSOCKS, EConfigType.TROJAN ->
             profile.security == AppConfig.TLS
         EConfigType.HYSTERIA2 -> profile.security.isNullOrBlank() || profile.security == AppConfig.TLS
+        EConfigType.MASQUE -> true
         else -> false
     }
 

@@ -92,6 +92,24 @@ class TlsSettingsCheckTest {
     }
 
     @Test
+    fun aMasqueProfileIsCheckedOverHttp2AsTheOthersAreAndOverHttp3TakesCurvesWithoutCipherSuites() {
+        val curves = "X25519MLKEM768,X25519"
+        fun masque(alpn: String?, fingerprint: String?, cipherSuites: String? = null, curvePreferences: String? = null) =
+            profile(fingerprint, cipherSuites, network = "masque", alpn = alpn, type = EConfigType.MASQUE, security = null, curvePreferences = curvePreferences)
+
+        // Over HTTP/2 the fingerprint builds the ClientHello, uTLS but for unsafe; MASQUE always runs over TLS.
+        assertEquals(Error.CIPHER_SUITES_NEED_UNSAFE, TlsSettingsCheck.validate(masque("h2", "chrome", cipherSuites = suites)))
+        assertEquals(Error.CIPHER_SUITES_NEED_UNSAFE, TlsSettingsCheck.validate(masque("h2", null, cipherSuites = suites)))
+        assertEquals(Error.CURVE_PREFERENCES_NEED_UNSAFE, TlsSettingsCheck.validate(masque("h2", "chrome", curvePreferences = curves)))
+        assertNull(TlsSettingsCheck.validate(masque("h2", "unsafe", cipherSuites = suites, curvePreferences = curves)))
+        // Over HTTP/3, as for a blank alpn, Go's crypto/tls applies the curves whatever fingerprint is left, and no
+        // cipherSuites are written.
+        for (alpn in listOf("h3", null, "")) {
+            assertNull(TlsSettingsCheck.validate(masque(alpn, "chrome", cipherSuites = suites, curvePreferences = curves)), "$alpn")
+        }
+    }
+
+    @Test
     fun anImportedWebSocketOrHttpUpgradeLinkGetsHttp1InPlaceOfAnyOtherAlpn() {
         for (network in listOf("ws", "httpupgrade")) {
             for (fingerprint in listOf("chrome", "unsafe", null)) {

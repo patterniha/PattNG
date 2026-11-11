@@ -583,7 +583,14 @@ object CoreOutboundBuilder {
         }
 
         outboundBean.streamSettings?.let {
-            val tlsProfile = profileItem.copy(publicKey = null, fingerPrint = if (profileItem.alpn == "h2") profileItem.fingerPrint else null, echConfigList = null)
+            // PattNG: over HTTP/3 the fork core dials QUIC with Go's crypto/tls, which takes no fingerprint and, TLS 1.3
+            // alone, no cipherSuites; ECH it uses over HTTP/3 and HTTP/2 alike
+            val http2 = profileItem.alpn == "h2"
+            val tlsProfile = profileItem.copy(
+                publicKey = null,
+                fingerPrint = if (http2) profileItem.fingerPrint else null,
+                cipherSuites = if (http2) profileItem.cipherSuites else null,
+            )
             populateTlsSettings(it, tlsProfile, sni)
         }
 

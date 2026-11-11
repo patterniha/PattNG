@@ -123,6 +123,11 @@ class EchOutboundTest {
             EchOutbound.Error.INVALID_TAG,
             EchOutbound.validate(profile(invalid, configType = EConfigType.HYSTERIA2, security = null)),
         )
+        // MASQUE always runs over TLS, and the fork core uses ECH over HTTP/3 and HTTP/2 alike.
+        assertEquals(
+            EchOutbound.Error.INVALID_TAG,
+            EchOutbound.validate(profile(invalid, configType = EConfigType.MASQUE, security = null)),
+        )
     }
 
     @Test

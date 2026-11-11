@@ -310,7 +310,9 @@ abstract class BaseServerActivity : BaseComponentActivity() {
         showSecuritySelector: Boolean = true,
         showFingerprint: Boolean = true,
         showAllowInsecure: Boolean = true,
-        showEchConfigList: Boolean = true
+        showEchConfigList: Boolean = true,
+        // PattNG: cipherSuites, which MASQUE over HTTP/3 does not use, see CoreOutboundBuilder.toOutboundMasque
+        showCipherSuites: Boolean = true
     ) {
         val context = LocalContext.current
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -355,11 +357,13 @@ abstract class BaseServerActivity : BaseComponentActivity() {
                     options.alpnOptions,
                     { state.alpn = it }
                 )
-                CipherSuitesField(
-                    stringResource(R.string.server_lab_cipher_suites),
-                    state.cipherSuites,
-                    { state.cipherSuites = it }
-                )
+                if (showCipherSuites) {
+                    CipherSuitesField(
+                        stringResource(R.string.server_lab_cipher_suites),
+                        state.cipherSuites,
+                        { state.cipherSuites = it }
+                    )
+                }
                 // PattNG: curvePreferences, one of a few lists as alpn is one of a few, and enableSessionResumption,
                 // after cipherSuites
                 FormDropdownField(
