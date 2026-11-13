@@ -2,7 +2,6 @@ package com.v2ray.ang.ui.server
 
 import android.app.Application
 import com.v2ray.ang.R
-import com.v2ray.ang.dto.entities.ProfileItem
 import com.v2ray.ang.enums.EConfigType
 import com.v2ray.ang.ui.base.EditorOutcome
 import kotlinx.coroutines.flow.StateFlow
@@ -27,7 +26,7 @@ class ServerProxyChainViewModel(
         val config = guid.takeIf { it.isNotEmpty() }?.let { source.loadProfile(it) }
         ProxyChainOpening(
             remarks = config?.remarks ?: "",
-            members = config?.proxyChainProfiles?.let { text -> ProfileItem.proxyChainMembersOf(text).map { it.trim() }.filter { it.isNotEmpty() } }
+            members = config?.proxyChainMembers()?.takeIf { it.isNotEmpty() }?.map { it.trim() }?.filter { it.isNotEmpty() }
                 ?: listOf("", ""),
             profileNames = source.profileNames(
                 setOf(EConfigType.CUSTOM, EConfigType.CUSTOM_OUTBOUND, EConfigType.POLICYGROUP, EConfigType.PROXYCHAIN)
@@ -57,7 +56,7 @@ class ServerProxyChainViewModel(
 
         store(EConfigType.PROXYCHAIN) { config ->
             config.remarks = remarks.trim()
-            config.proxyChainProfiles = ProfileItem.proxyChainProfilesOf(chainMembers)
+            config.proxyChainProfileList = chainMembers
             config.description = chainMembers.joinToString(" -> ")
         }
     }

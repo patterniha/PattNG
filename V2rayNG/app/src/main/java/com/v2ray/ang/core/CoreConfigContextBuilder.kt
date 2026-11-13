@@ -212,8 +212,8 @@ object CoreConfigContextBuilder {
      * them: the configuration is refused for it, rather than run without that hop, or through one it may not mean.
      */
     private fun resolveProxyChainEntries(entry: ProfileEntry): Pair<List<ProfileEntry>, CoreConfigContext.UnresolvedName?> {
-        val chainRemarks = entry.profile.proxyChainProfileList
-        if (chainRemarks.isNullOrEmpty()) {
+        val chainRemarks = entry.profile.proxyChainMembers()
+        if (chainRemarks.none { it.isNotBlank() }) {
             return listOf(entry) to null
         }
 

@@ -129,21 +129,41 @@ class CoreConfigContextBuilderTest {
         assertEquals(listOf(shared) to null, hops("shared"))
     }
 
+    // PattNG: before upstream #6438 PattNG wrote the names of a chain into proxyChainProfiles, a comma or a backslash
+    // inside a name after a backslash; such a chain moves into proxyChainProfileList with its names whole.
     @Test
-    fun aChainKeepsACommaOrABackslashInsideTheNameOfAHop() {
+    @Suppress("DEPRECATION")
+    fun aChainStoredTheOldWayMovesIntoTheListWithItsNamesWhole() {
         val names = listOf("US, Dallas", "Exit", """back\slash""", """a\,b""", "")
-        assertEquals(names, ProfileItem.proxyChainMembersOf(ProfileItem.proxyChainProfilesOf(names)))
-        // A name with neither is written as before, and a chain written before reads as it did.
-        assertEquals("entry,warp,exit", ProfileItem.proxyChainProfilesOf(listOf("entry", "warp", "exit")))
+        val written = """US\, Dallas,Exit,back\\slash,a\\\,b,"""
+        assertEquals(names, ProfileItem.proxyChainMembersOf(written))
+        // A chain written before the escaping, whose names had no backslash, reads as it did, nothing trimmed.
         assertEquals(listOf("entry", " warp", "exit"), ProfileItem.proxyChainMembersOf("entry, warp,exit"))
         assertEquals(listOf("""a\b"""), ProfileItem.proxyChainMembersOf("""a\b"""))
         assertEquals(emptyList<String>(), ProfileItem.proxyChainMembersOf(null))
         assertEquals(emptyList<String>(), ProfileItem.proxyChainMembersOf(""))
+
+        val chain = ProfileItem.create(EConfigType.PROXYCHAIN).apply { proxyChainProfiles = written }
+        // Not moved yet, as after a backup of an older PattNG is restored: its names read all the same.
+        assertEquals(names, chain.proxyChainMembers())
+        assertTrue(chain.moveLegacyProxyChain())
+        assertEquals(names, chain.proxyChainProfileList)
+        assertNull(chain.proxyChainProfiles)
+        assertEquals(names, chain.proxyChainMembers())
+        // Moved once, it has nothing more to move; and a chain that has the list keeps it.
+        assertFalse(chain.moveLegacyProxyChain())
+        val listed = ProfileItem.create(EConfigType.PROXYCHAIN).apply {
+            proxyChainProfileList = listOf("entry", "exit")
+            proxyChainProfiles = "old,names"
+        }
+        assertFalse(listed.moveLegacyProxyChain())
+        assertEquals(listOf("entry", "exit"), listed.proxyChainMembers())
+        assertEquals(emptyList<String>(), ProfileItem.create(EConfigType.PROXYCHAIN).proxyChainMembers())
+
         // The hops of such a chain are found by their whole names.
         val dallas = vless.copy(remarks = "US, Dallas")
         val profiles = listOf(vless, dallas).associateBy { it.remarks }
-        val stored = ProfileItem.proxyChainProfilesOf(listOf("US, Dallas", "vless"))
-        assertEquals(listOf(dallas, vless) to null, CoreConfigContextBuilder.proxyChainHops(ProfileItem.proxyChainMembersOf(stored)) { name, _ ->
+        assertEquals(listOf(dallas, vless) to null, CoreConfigContextBuilder.proxyChainHops(listOf("US, Dallas", "vless")) { name, _ ->
             profiles[name]?.let { ByName.One(it) } ?: ByName.None
         })
     }

@@ -674,15 +674,10 @@ object SettingsManager {
 
         for (guid in serverList) {
             val profile = decodeServerConfig(guid) ?: continue
-            if (profile.proxyChainProfiles.isNullOrEmpty() || !profile.proxyChainProfileList.isNullOrEmpty()) {
-                continue
+            // PattNG: read as PattNG wrote the names there, a comma inside a name escaped, see ProfileItem.moveLegacyProxyChain
+            if (profile.moveLegacyProxyChain()) {
+                MmkvManager.encodeServerConfig(guid, profile)
             }
-            profile.proxyChainProfileList = profile.proxyChainProfiles
-                ?.split(",")
-                ?.map { it.trim() }
-                ?.filter { it.isNotEmpty() }
-            profile.proxyChainProfiles = null
-            MmkvManager.encodeServerConfig(guid, profile)
         }
 
         MmkvManager.encodeSettings(migrationKey, true)

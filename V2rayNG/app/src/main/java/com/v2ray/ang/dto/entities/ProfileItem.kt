@@ -186,9 +186,10 @@ data class ProfileItem(
             ProfileItem(configType = configType)
 
         /**
-         * PattNG: the names of the members of a proxy chain, as [proxyChainProfilesOf] writes them into
-         * [proxyChainProfiles], in their order: separated by commas, a comma or a backslash that is part of a name
-         * written after a backslash. A chain written before, whose names had no backslash, reads as it did.
+         * PattNG: the names of the members of a proxy chain, as PattNG wrote them into [proxyChainProfiles] before
+         * [proxyChainProfileList] (upstream #6438), in their order: separated by commas, a comma or a backslash that is
+         * part of a name written after a backslash. A chain written before that, whose names had no backslash, reads as
+         * it did. See [moveLegacyProxyChain].
          */
         fun proxyChainMembersOf(text: String?): List<String> {
             if (text.isNullOrEmpty()) return emptyList()
@@ -216,10 +217,30 @@ data class ProfileItem(
             members += member.toString()
             return members
         }
+    }
 
-        /** PattNG: [members], the names of the members of a proxy chain in their order, as [proxyChainProfiles] holds them. */
-        fun proxyChainProfilesOf(members: List<String>): String =
-            members.joinToString(",") { it.replace("\\", "\\\\").replace(",", "\\,") }
+    /**
+     * PattNG: the names of the members of this proxy chain in their order: [proxyChainProfileList], or, for a chain still
+     * stored in [proxyChainProfiles] the way PattNG wrote it before the list (a backup of an older PattNG restored after
+     * the migration ran), those names, see [proxyChainMembersOf].
+     */
+    @Suppress("DEPRECATION") // Reads the field upstream #6438 deprecated; remove together with moveLegacyProxyChain.
+    fun proxyChainMembers(): List<String> =
+        proxyChainProfileList?.takeIf { it.isNotEmpty() } ?: proxyChainMembersOf(proxyChainProfiles)
+
+    /**
+     * PattNG: moves the members of a chain stored in [proxyChainProfiles] into [proxyChainProfileList] (upstream #6438),
+     * read as PattNG wrote them there, see [proxyChainMembersOf]: a comma or a backslash inside a name stays in it, and
+     * nothing is trimmed, where upstream's split on every comma would cut such a name in two. Clears the old field;
+     * false when there is nothing to move or the list is set already. Remove it, and the fallback of
+     * [proxyChainMembers], once no supported PattNG release or backup stores members in [proxyChainProfiles].
+     */
+    @Suppress("DEPRECATION") // Moves off the field upstream #6438 deprecated.
+    fun moveLegacyProxyChain(): Boolean {
+        if (proxyChainProfiles.isNullOrEmpty() || !proxyChainProfileList.isNullOrEmpty()) return false
+        proxyChainProfileList = proxyChainMembersOf(proxyChainProfiles)
+        proxyChainProfiles = null
+        return true
     }
 
     fun getServerAddressAndPort(): String {
