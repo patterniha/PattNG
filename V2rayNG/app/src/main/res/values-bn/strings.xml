@@ -154,6 +154,9 @@
     <string name="preset_default">ডিফল্ট</string>
     <string name="acc_choose_preset">একটি তৈরি %1$s বেছে নিন</string>
     <string name="server_lab_dial_mode" translatable="false">dialMode</string>
+    <string name="server_lab_tcp_user_timeout" translatable="false">tcpUserTimeout</string>
+    <string name="server_hint_tcp_user_timeout">মিলিসেকেন্ড (যেমন 10000)। খালি = সিস্টেমের ডিফল্ট।</string>
+    <string name="aether_lab_exit_tcp_user_timeout" translatable="false">exit-node tcpUserTimeout</string>
     <string name="server_lab_ech_config_list" translatable="false">echConfigList</string>
     <string name="server_lab_ech_outbound">echOutbound-এর কাঁচা JSON, ফরম্যাট: { OutboundObject }</string>
     <string name="toast_ech_outbound_needs_ech_config_list">echOutbound-এর জন্য echConfigList প্রয়োজন</string>
@@ -598,7 +601,7 @@
     <string name="aether_lab_exit_final_mask">exit-node-এর finalMask-এর কাঁচা JSON, ফরম্যাট: { FinalMaskObject }</string>
     <string name="aether_exit_node_freedom">freedom (ডিফল্ট)</string>
     <string name="label_numbered">%1$s (%2$d)</string>
-    <string name="aether_hint_exit_node">কোর এই প্রোফাইলের আউটবাউন্ডের মধ্য দিয়ে বাইরে সংযোগ করে, যেমন প্রক্সি চেইনের একটি হপের মধ্য দিয়ে; নিচের finalMask ও dialMode শুধু freedom-এর জন্য</string>
+    <string name="aether_hint_exit_node">কোর এই প্রোফাইলের আউটবাউন্ডের মধ্য দিয়ে বাইরে সংযোগ করে, যেমন প্রক্সি চেইনের একটি হপের মধ্য দিয়ে; নিচের finalMask, dialMode ও tcpUserTimeout শুধু freedom-এর জন্য</string>
     <string name="aether_exit_node_unusable">exit-node প্রোফাইল \"%1$s\" কোনো আউটবাউন্ড দেয় না; অন্য একটি, বা freedom বেছে নিন</string>
     <string name="aether_exit_node_ech_unusable">exit-node প্রোফাইল \"%1$s\"-এর echOutbound ব্যবহার করা যায় না; সেই প্রোফাইলে এটি ঠিক করুন, বা অন্য একটি, বা freedom বেছে নিন</string>
     <string name="toast_profile_name_not_found">\"%1$s\" নামে কোনো প্রোফাইল পাওয়া যায়নি</string>

@@ -122,4 +122,29 @@ class VlessFmtTest {
         assertNull(reparsedPlain?.curvePreferences)
         assertEquals(false, reparsedPlain?.enableSessionResumption)
     }
+
+    // PattNG: tcpUserTimeout, a sockopt option like dialMode, carried where the outbound connects over TCP
+    // (TcpUserTimeoutRule), and read back as a whole number above 0.
+    @Test
+    fun test_toUriAndParse_carryTcpUserTimeoutWhereItCounts() {
+        val config = createConfig("code-1").apply { tcpUserTimeout = 10000 }
+
+        val uri = VlessFmt.toUri(config)
+        assertTrue(uri.contains("tut=10000"), uri)
+        val reparsed = VlessFmt.parse("vless://$uri")
+        assertEquals(10000, reparsed?.tcpUserTimeout)
+        assertEquals("code-1", reparsed?.dialMode)
+
+        // Over mKCP the connection is UDP: the profile keeps its value, no link carries it.
+        config.network = "kcp"
+        val kcpUri = VlessFmt.toUri(config)
+        assertFalse("tut" in kcpUri.substringAfter('?').substringBefore('#').split('&').map { it.substringBefore('=') }, kcpUri)
+
+        assertNull(VlessFmt.parse("vless://uuid@example.com:443?encryption=none&type=tcp#Plain")?.tcpUserTimeout)
+        for (none in listOf("0", "-1", "2s", "")) {
+            val parsed = VlessFmt.parse("vless://uuid@example.com:443?encryption=none&type=tcp&tut=$none#None")
+            assertNotNull(parsed, none)
+            assertNull(parsed?.tcpUserTimeout, none)
+        }
+    }
 }

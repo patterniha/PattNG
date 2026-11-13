@@ -23,5 +23,7 @@ data class VmessQRCode(
     var insecure: String = "",
     var vcn: String = "",
     var pcs: String = "",
-    var dialMode: String = ""
+    var dialMode: String = "",
+    // PattNG: tcpUserTimeout in milliseconds, written where it counts (TcpUserTimeoutRule), blank otherwise
+    var tut: String = ""
 )

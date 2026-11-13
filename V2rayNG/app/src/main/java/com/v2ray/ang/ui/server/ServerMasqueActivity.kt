@@ -41,6 +41,8 @@ class ServerMasqueActivity : BaseServerActivity() {
             CommonBasicFields(uiState)
             MasqueProtocolFields(uiState)
             CommonDialModeField(uiState)
+            // PattNG: over HTTP/2 alone, which runs over TCP
+            CommonTcpUserTimeoutField(uiState)
             CommonTargetStrategyField(uiState)
             PreferenceGroupHeader(title = stringResource(R.string.server_lab_stream_security))
             CommonStreamSecurityFields(

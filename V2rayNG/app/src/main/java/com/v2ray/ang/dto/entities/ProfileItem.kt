@@ -88,6 +88,12 @@ data class ProfileItem(
     var dialMode: String? = null,
 
     /**
+     * PattNG: sockopt.tcpUserTimeout of the outbound, in milliseconds, after dialMode; null when unset. It counts only
+     * where the outbound connects over TCP, see TcpUserTimeoutRule; an Aether profile's is that of its freedom exit-node.
+     */
+    var tcpUserTimeout: Int? = null,
+
+    /**
      * Xray targetStrategy of the outbound built for this profile; null means the profile's default, see
      * CoreOutboundBuilder.defaultTargetStrategy.
      */

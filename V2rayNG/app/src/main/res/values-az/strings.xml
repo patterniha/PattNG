@@ -154,6 +154,9 @@
     <string name="preset_default">standart</string>
     <string name="acc_choose_preset">Hazır %1$s seçin</string>
     <string name="server_lab_dial_mode" translatable="false">dialMode</string>
+    <string name="server_lab_tcp_user_timeout" translatable="false">tcpUserTimeout</string>
+    <string name="server_hint_tcp_user_timeout">Millisaniyə (məsələn, 10000). Boş = sistemin standartı.</string>
+    <string name="aether_lab_exit_tcp_user_timeout" translatable="false">exit-node tcpUserTimeout</string>
     <string name="server_lab_ech_config_list" translatable="false">echConfigList</string>
     <string name="server_lab_ech_outbound">echOutbound xam JSON, format: { OutboundObject }</string>
     <string name="toast_ech_outbound_needs_ech_config_list">echOutbound üçün echConfigList tələb olunur</string>
@@ -598,7 +601,7 @@
     <string name="aether_lab_exit_final_mask">exit-node finalMask xam JSON, format: { FinalMaskObject }</string>
     <string name="aether_exit_node_freedom">freedom (standart)</string>
     <string name="label_numbered">%1$s (%2$d)</string>
-    <string name="aether_hint_exit_node">Nüvə bu profilin çıxışı vasitəsilə, proksi zəncirinin bir halqası kimi xaricə qoşulur; aşağıdakı finalMask və dialMode yalnız freedom üçündür</string>
+    <string name="aether_hint_exit_node">Nüvə bu profilin çıxışı vasitəsilə, proksi zəncirinin bir halqası kimi xaricə qoşulur; aşağıdakı finalMask, dialMode və tcpUserTimeout yalnız freedom üçündür</string>
     <string name="aether_exit_node_unusable">\"%1$s\" exit-node profili heç bir çıxış vermir; başqasını və ya freedom seçin</string>
     <string name="aether_exit_node_ech_unusable">\"%1$s\" exit-node profilinin echOutbound-u istifadə edilə bilmir; onu həmin profildə düzəldin, başqasını və ya freedom seçin</string>
     <string name="toast_profile_name_not_found">\"%1$s\" adlı profil tapılmadı</string>

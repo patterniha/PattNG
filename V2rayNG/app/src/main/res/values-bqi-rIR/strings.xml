@@ -154,6 +154,9 @@
     <string name="preset_default">پؽش فرز</string>
     <string name="acc_choose_preset">انتخاب یه %1$s آماده</string>
     <string name="server_lab_dial_mode" translatable="false">dialMode</string>
+    <string name="server_lab_tcp_user_timeout" translatable="false">tcpUserTimeout</string>
+    <string name="server_hint_tcp_user_timeout">میلی‌ثانیه (مثلا 10000). خالی = پؽش فرز سیستم.</string>
+    <string name="aether_lab_exit_tcp_user_timeout" translatable="false">exit-node tcpUserTimeout</string>
     <string name="server_lab_ech_config_list" translatable="false">echConfigList</string>
     <string name="server_lab_ech_outbound">echOutbound خام JSON، قالوو: { OutboundObject }</string>
     <string name="toast_ech_outbound_needs_ech_config_list">سی echOutbound، echConfigList لازم هڌ</string>
@@ -598,7 +601,7 @@
     <string name="aether_lab_exit_final_mask">finalMask خام JSON سی exit-node، قالوو: { FinalMaskObject }</string>
     <string name="aether_exit_node_freedom">freedom (پؽش فرز)</string>
     <string name="label_numbered">%1$s (%2$d)</string>
-    <string name="aether_hint_exit_node">هسته زه ری خروجی ای پروفایل وو بیرون وصل ابۊ، چی گامی زه زنجیره پروکسی؛ finalMask وو dialMode پایین فقط سی freedom ـن</string>
+    <string name="aether_hint_exit_node">هسته زه ری خروجی ای پروفایل وو بیرون وصل ابۊ، چی گامی زه زنجیره پروکسی؛ finalMask، dialMode وو tcpUserTimeout پایین فقط سی freedom ـن</string>
     <string name="aether_exit_node_unusable">خروجی پروفایل exit-node «%1$s» ساخته نبی؛ یه پروفایل دیه یا freedom انتخاب کنین</string>
     <string name="aether_exit_node_ech_unusable">echOutbound پروفایل exit-node «%1$s» قابل استفاده نی؛ من هموو پروفایل درسس کۊنین، یا یه پروفایل دیه یا freedom انتخاب کنین</string>
     <string name="toast_profile_name_not_found">هیچ پروفایلی وا نوم «%1$s» پیدا نبی</string>

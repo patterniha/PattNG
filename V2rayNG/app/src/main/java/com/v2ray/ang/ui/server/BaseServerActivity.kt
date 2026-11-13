@@ -269,6 +269,7 @@ abstract class BaseServerActivity : BaseComponentActivity() {
                 { state.finalMask = it }
             )
             CommonDialModeField(state)
+            CommonTcpUserTimeoutField(state)
             if (state.network == NetworkType.WS.type || state.network == NetworkType.XHTTP.type) {
                 FormDropdownField(
                     stringResource(R.string.server_lab_browser_dialer),
@@ -287,6 +288,23 @@ abstract class BaseServerActivity : BaseComponentActivity() {
             stringResource(R.string.server_lab_dial_mode),
             state.dialMode,
             { state.dialMode = it }
+        )
+    }
+
+    /**
+     * PattNG: tcpUserTimeout goes to streamSettings.sockopt like dialMode, after it, but Xray sets it on TCP sockets
+     * alone, so it shows only where the outbound connects over TCP ([ServerUiState.tcpUserTimeoutApplies]); a hidden value
+     * is kept, unused.
+     */
+    @Composable
+    protected fun CommonTcpUserTimeoutField(state: ServerUiState) {
+        if (!state.tcpUserTimeoutApplies) return
+        FormTextField(
+            stringResource(R.string.server_lab_tcp_user_timeout),
+            state.tcpUserTimeout,
+            { state.tcpUserTimeout = it },
+            keyboardType = KeyboardType.Number,
+            placeholder = stringResource(R.string.server_hint_tcp_user_timeout)
         )
     }
 

@@ -535,6 +535,18 @@ class ServerAetherActivity : BaseServerActivity() {
                         placeholder = stringResource(R.string.aether_hint_exit_loc)
                     )
                 }
+                // PattNG: the tcpUserTimeout of the freedom exit-node, as its dialMode, only where the core connects out
+                // over TCP, as its settings or the command written in their place say.
+                if (uiState.aetherConnectsOverTcp) {
+                    FormTextField(
+                        stringResource(R.string.aether_lab_exit_tcp_user_timeout),
+                        uiState.tcpUserTimeout,
+                        { uiState.tcpUserTimeout = it },
+                        enabled = freedom,
+                        keyboardType = KeyboardType.Number,
+                        placeholder = stringResource(R.string.server_hint_tcp_user_timeout)
+                    )
+                }
                 CommonTargetStrategyField(uiState)
             }
             // After every setting it runs on, the DNS and the exit rule of Other settings included.

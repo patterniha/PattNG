@@ -19,6 +19,7 @@ import com.v2ray.ang.AppConfig.WIREGUARD_LOCAL_REMOTE_DNS
 import com.v2ray.ang.core.AetherCore
 import com.v2ray.ang.core.AetherCoreManager
 import com.v2ray.ang.core.CoreOutboundBuilder
+import com.v2ray.ang.core.TcpUserTimeoutRule
 import com.v2ray.ang.dto.entities.ProfileItem
 import com.v2ray.ang.enums.AetherFingerprint
 import com.v2ray.ang.enums.AetherIpVersion
@@ -78,6 +79,7 @@ class ServerUiState(
     kcpTti: String = "",
     browserDialerMode: String = "",
     dialMode: String = "",
+    tcpUserTimeout: String = "",
     targetStrategy: String = "",
     streamSecurity: String = "",
     sni: String = "",
@@ -167,6 +169,11 @@ class ServerUiState(
     var kcpTti by mutableStateOf(kcpTti)
     var browserDialerMode by mutableStateOf(browserDialerMode)
     var dialMode by mutableStateOf(dialMode)
+    /**
+     * PattNG: the tcpUserTimeout as typed, in milliseconds; blank for none. It counts only where the outbound connects
+     * over TCP, see [tcpUserTimeoutApplies], and an Aether profile's where its core does, see [aetherConnectsOverTcp].
+     */
+    var tcpUserTimeout by mutableStateOf(tcpUserTimeout)
     /** The targetStrategy chosen; blank while the profile follows its default, see [shownTargetStrategy]. */
     var targetStrategy by mutableStateOf(targetStrategy)
     var streamSecurity by mutableStateOf(streamSecurity)
@@ -236,7 +243,31 @@ class ServerUiState(
     val hasOtherAetherSettings: Boolean
         get() = aetherDns.isNotBlank() ||
             aetherExitLoc.isNotBlank() ||
+            TcpUserTimeoutRule.parse(tcpUserTimeout) != null ||
             (targetStrategy.isNotBlank() && targetStrategy != defaultTargetStrategy)
+
+    /**
+     * PattNG: whether the outbound of the profile, as the screen sets it up now, connects over TCP, see
+     * [TcpUserTimeoutRule.applies]: only then does its tcpUserTimeout count, and the screen shows it.
+     */
+    val tcpUserTimeoutApplies: Boolean
+        get() = TcpUserTimeoutRule.applies(configType, network, streamSecurity, alpn)
+
+    /**
+     * PattNG: whether the core of the Aether profile, as the screen sets it up now, connects out over TCP, in its
+     * settings or in the command it carries in their place, see [AetherCore.connectsOverTcp]: only then does the
+     * tcpUserTimeout of its exit-node count, and the screen shows it.
+     */
+    val aetherConnectsOverTcp: Boolean
+        get() = AetherCore.connectsOverTcp(
+            ProfileItem.create(configType).also {
+                it.aetherProtocol = aetherProtocol
+                it.aetherTransport = aetherTransport
+                it.aetherTor = aetherTor
+                it.aetherPsiphon = aetherPsiphon
+                it.aetherCommand = aetherCommand.nullIfBlank()
+            }
+        )
 
     /**
      * PattNG: the targetStrategy of the profile as the screen sets it up now, while it stores none: an Aether
@@ -356,6 +387,8 @@ class ServerUiState(
                 null
             },
             dialMode = dialMode.nullIfBlank(),
+            // Kept where it does not count, as the dialMode is; the outbound and the link leave it out there.
+            tcpUserTimeout = TcpUserTimeoutRule.parse(tcpUserTimeout),
             // Set below, against the default of the profile as built here.
             targetStrategy = null,
             security = streamSecurity,
@@ -466,6 +499,7 @@ class ServerUiState(
                 kcpTti = initialConfig.kcpTti?.toString() ?: "",
                 browserDialerMode = initialConfig.browserDialerMode ?: "",
                 dialMode = initialConfig.dialMode ?: "",
+                tcpUserTimeout = initialConfig.tcpUserTimeout?.takeIf { it > 0 }?.toString() ?: "",
                 targetStrategy = initialConfig.targetStrategy.orEmpty(),
                 streamSecurity = initialConfig.security ?: "",
                 sni = initialConfig.sni ?: "",

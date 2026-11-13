@@ -10,6 +10,7 @@ import com.v2ray.ang.util.JsonUtil
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -129,6 +130,37 @@ class VmessFmtTest {
 
         assertNotNull(reparsed)
         assertEquals("code-1", reparsed?.dialMode)
+    }
+
+    // PattNG: tcpUserTimeout, the "tut" member of the QR-code JSON, as PattN writes it: the number where it counts
+    // (TcpUserTimeoutRule), blank otherwise.
+    @Test
+    fun test_toUriAndParse_carryTcpUserTimeoutInQrCodeJsonWhereItCounts() {
+        val config = createConfig("code-1").apply { tcpUserTimeout = 10000 }
+
+        val json = String(JavaBase64.getDecoder().decode(VmessFmt.toUri(config)))
+        assertEquals("10000", JsonUtil.fromJson(json, VmessQRCode::class.java)?.tut)
+        assertEquals(10000, VmessFmt.parse("vmess://${VmessFmt.toUri(config)}")?.tcpUserTimeout)
+
+        // Over mKCP the connection is UDP: the member stays blank.
+        config.network = "kcp"
+        val kcpJson = String(JavaBase64.getDecoder().decode(VmessFmt.toUri(config)))
+        assertEquals("", JsonUtil.fromJson(kcpJson, VmessQRCode::class.java)?.tut)
+    }
+
+    @Test
+    fun test_parse_readsTcpUserTimeoutFromQrCodeJsonAsAWholeNumberAboveZero() {
+        fun parsed(value: String) = VmessFmt.parse(
+            encodeQrCode(
+                """{"v":"2","ps":"Timeout","add":"example.com","port":"443","id":"uuid","aid":"0","scy":"auto","net":"tcp","type":"none","host":"","path":"","tls":"","tut":"$value"}"""
+            )
+        )
+
+        assertEquals(10000, parsed("10000")?.tcpUserTimeout)
+        for (none in listOf("", "0", "-1", "2s")) {
+            assertNotNull(parsed(none))
+            assertNull(parsed(none)?.tcpUserTimeout, none)
+        }
     }
 
     // PattNG: the QR-code JSON carries them as its own "cp" and "esr" members, after "cs".

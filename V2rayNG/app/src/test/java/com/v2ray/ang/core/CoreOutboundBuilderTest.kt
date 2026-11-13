@@ -462,4 +462,91 @@ class CoreOutboundBuilderTest {
             }
         }
     }
+
+    // PattNG: tcpUserTimeout, in sockopt beside the dialMode, where the outbound connects over TCP (TcpUserTimeoutRule).
+    @Test
+    fun test_applyTcpUserTimeout_setsItBesideTheDialModeAndKeepsTheOtherSockoptOptions() {
+        val outbound = OutboundBean(
+            protocol = "vless",
+            streamSettings = OutboundBean.StreamSettingsBean(
+                sockopt = OutboundBean.StreamSettingsBean.SockoptBean(dialerProxy = "hop-1", domainStrategy = "UseIP")
+            )
+        )
+
+        CoreOutboundBuilder.applyDialMode(outbound, createProfile("code-1"))
+        CoreOutboundBuilder.applyTcpUserTimeout(outbound, 10000)
+
+        val sockopt = outbound.streamSettings?.sockopt
+        assertEquals(10000, sockopt?.tcpUserTimeout)
+        assertEquals("code-1", sockopt?.dialMode)
+        assertEquals("hop-1", sockopt?.dialerProxy)
+        assertEquals("UseIP", sockopt?.domainStrategy)
+    }
+
+    @Test
+    fun test_applyTcpUserTimeout_ignoresNoneAndNumbersNotAboveZero() {
+        val outbound = OutboundBean(protocol = "vless", streamSettings = OutboundBean.StreamSettingsBean())
+
+        for (none in listOf(null, 0, -1)) {
+            CoreOutboundBuilder.applyTcpUserTimeout(outbound, none)
+        }
+
+        assertNull(outbound.streamSettings?.sockopt)
+    }
+
+    @Test
+    fun aTcpOutboundCarriesTheTcpUserTimeoutOfItsProfileAndAUdpOneLeavesItOut() {
+        val socks = ProfileItem.create(EConfigType.SOCKS).apply {
+            server = "1.2.3.4"
+            serverPort = "1080"
+            dialMode = "code-1"
+            tcpUserTimeout = 10000
+        }
+        val outbound = CoreOutboundBuilder.convert(socks)
+        assertEquals(10000, outbound?.streamSettings?.sockopt?.tcpUserTimeout)
+        assertEquals("code-1", outbound?.streamSettings?.sockopt?.dialMode)
+
+        // Over mKCP the connection is UDP: the profile keeps its value, and the outbound leaves it out.
+        val kcp = ProfileItem.create(EConfigType.VMESS).apply {
+            server = "1.2.3.4"
+            serverPort = "443"
+            password = "uuid"
+            method = "auto"
+            network = "kcp"
+            dialMode = "code-1"
+            tcpUserTimeout = 10000
+        }
+        val kcpOutbound = CoreOutboundBuilder.convert(kcp)
+        assertEquals("code-1", kcpOutbound?.streamSettings?.sockopt?.dialMode)
+        assertNull(kcpOutbound?.streamSettings?.sockopt?.tcpUserTimeout)
+        assertEquals(10000, kcp.tcpUserTimeout)
+        kcp.network = "tcp"
+        assertEquals(10000, CoreOutboundBuilder.convert(kcp)?.streamSettings?.sockopt?.tcpUserTimeout)
+    }
+
+    @Test
+    fun test_toOutboundAetherExit_carriesTheTcpUserTimeoutOfTheAetherProfile() {
+        val exit = CoreOutboundBuilder.toOutboundAetherExit(AetherExit(dialMode = "code-1", tcpUserTimeout = 10000))!!
+        assertEquals(10000, exit.streamSettings?.sockopt?.tcpUserTimeout)
+        assertEquals("code-1", exit.streamSettings?.sockopt?.dialMode)
+        assertNull(exit.streamSettings?.network)
+
+        // Alone it makes the stream settings of its own, with no transport to name.
+        val timeoutOnly = CoreOutboundBuilder.toOutboundAetherExit(AetherExit(tcpUserTimeout = 7000))!!
+        assertEquals(7000, timeoutOnly.streamSettings?.sockopt?.tcpUserTimeout)
+        assertNull(timeoutOnly.streamSettings?.sockopt?.dialMode)
+        assertNull(timeoutOnly.streamSettings?.network)
+        assertNull(CoreOutboundBuilder.toOutboundAetherExit(AetherExit.PLAIN)!!.streamSettings)
+    }
+
+    @Test
+    fun anAetherOutboundToItsCoreTakesNoTcpUserTimeout() {
+        // What it reaches is on the loopback address; the exit-node takes the profile's, see toOutboundAetherExit.
+        val aether = ProfileItem.create(EConfigType.AETHER).apply {
+            aetherProtocol = "masque"
+            aetherTransport = "h2"
+            tcpUserTimeout = 10000
+        }
+        assertNull(CoreOutboundBuilder.convert(aether)?.streamSettings?.sockopt?.tcpUserTimeout)
+    }
 }

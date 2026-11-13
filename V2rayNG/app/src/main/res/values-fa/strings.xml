@@ -154,6 +154,9 @@
     <string name="preset_default">پیش‌فرض</string>
     <string name="acc_choose_preset">انتخاب یک %1$s آماده</string>
     <string name="server_lab_dial_mode" translatable="false">dialMode</string>
+    <string name="server_lab_tcp_user_timeout" translatable="false">tcpUserTimeout</string>
+    <string name="server_hint_tcp_user_timeout">میلی‌ثانیه (مثلا 10000). خالی = پیش‌فرض سیستم.</string>
+    <string name="aether_lab_exit_tcp_user_timeout" translatable="false">exit-node tcpUserTimeout</string>
     <string name="server_lab_ech_config_list" translatable="false">echConfigList</string>
     <string name="server_lab_ech_outbound">JSON خام echOutbound، قالب: { OutboundObject }</string>
     <string name="toast_ech_outbound_needs_ech_config_list">echOutbound به echConfigList نیاز دارد</string>
@@ -598,7 +601,7 @@
     <string name="aether_lab_exit_final_mask">JSON خام finalMask برای exit-node، قالب: { FinalMaskObject }</string>
     <string name="aether_exit_node_freedom">freedom (پیش‌فرض)</string>
     <string name="label_numbered">%1$s (%2$d)</string>
-    <string name="aether_hint_exit_node">هسته از راه خروجی این پروفایل به بیرون وصل می‌شود، مانند گامی از زنجیرهٔ پروکسی؛ finalMask و dialMode پایین فقط برای freedom است</string>
+    <string name="aether_hint_exit_node">هسته از راه خروجی این پروفایل به بیرون وصل می‌شود، مانند گامی از زنجیرهٔ پروکسی؛ finalMask، dialMode و tcpUserTimeout پایین فقط برای freedom است</string>
     <string name="aether_exit_node_unusable">پروفایل exit-node «%1$s» خروجی نمی‌سازد؛ پروفایل دیگری یا freedom را انتخاب کنید</string>
     <string name="aether_exit_node_ech_unusable">echOutbound پروفایل exit-node «%1$s» قابل استفاده نیست؛ آن را در همان پروفایل درست کنید، یا پروفایل دیگری یا freedom را انتخاب کنید</string>
     <string name="toast_profile_name_not_found">هیچ پروفایلی با نام «%1$s» پیدا نشد</string>

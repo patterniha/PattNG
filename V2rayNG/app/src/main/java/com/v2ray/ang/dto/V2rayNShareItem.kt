@@ -31,6 +31,8 @@ data class V2rayNShareItem(
     val CurvePreferences: String?,
     val EnableSessionResumption: Boolean?,
     val DialMode: String?,
+    // PattNG: PattN's tcpUserTimeout, after dialMode
+    val TcpUserTimeout: Int?,
     val PublicKey: String?,
     val ShortId: String?,
     val SpiderX: String?,
@@ -141,6 +143,7 @@ data class V2rayNShareItem(
             curvePreferences = CurvePreferences,
             enableSessionResumption = EnableSessionResumption,
             dialMode = DialMode,
+            tcpUserTimeout = TcpUserTimeout?.takeIf { it > 0 },
             insecure = AllowInsecure?.toBoolean(),
             echConfigList = EchConfigList,
             echOutbound = EchOutbound,

@@ -10,6 +10,7 @@ import com.v2ray.ang.dto.entities.ProfileItem
 import com.v2ray.ang.enums.AetherProtocol
 import com.v2ray.ang.enums.AetherPsiphon
 import com.v2ray.ang.enums.AetherTor
+import com.v2ray.ang.enums.AetherTransport
 import com.v2ray.ang.enums.EConfigType
 import com.v2ray.ang.extension.nullIfBlank
 import com.v2ray.ang.handler.MmkvManager
@@ -241,6 +242,24 @@ data class AetherCore(val arguments: List<String>, val exit: AetherExit = Aether
             }
         }
 
+        /**
+         * PattNG: whether the core of [profile] connects out over TCP, see [AetherCoreManager.connectsOverTcp]: as the
+         * command line the profile carries says, or else, as for [of], as its settings say.
+         */
+        fun connectsOverTcp(profile: ProfileItem): Boolean {
+            val arguments = profile.aetherCommand?.takeIf { it.isNotBlank() }?.let(::readableArguments)
+            return if (arguments != null) {
+                AetherCoreManager.connectsOverTcp(arguments)
+            } else {
+                AetherCoreManager.connectsOverTcp(
+                    AetherProtocol.fromString(profile.aetherProtocol),
+                    AetherTransport.fromString(profile.aetherTransport),
+                    AetherTor.fromString(profile.aetherTor),
+                    AetherPsiphon.fromString(profile.aetherPsiphon),
+                )
+            }
+        }
+
         /** The arguments of [command]: its [words], without a program name in front. */
         internal fun argumentsOf(command: String): List<String> {
             val words = words(command)
@@ -284,10 +303,10 @@ data class AetherCore(val arguments: List<String>, val exit: AetherExit = Aether
 
 /**
  * PattNG: the exit-node of an Aether core, the outbound that what the core dials out through leaves
- * Xray by. As a rule it is a plain freedom outbound with the finalMask and the dialMode of the core's
- * Aether profile, as an ordinary profile sets them on its own outbound: an Aether profile's outbound
- * only reaches the core on the loopback address, where they would do nothing. See
- * [CoreOutboundBuilder.toOutboundAetherExit].
+ * Xray by. As a rule it is a plain freedom outbound with the finalMask, the dialMode and the
+ * tcpUserTimeout of the core's Aether profile, as an ordinary profile sets them on its own outbound:
+ * an Aether profile's outbound only reaches the core on the loopback address, where they would do
+ * nothing. See [CoreOutboundBuilder.toOutboundAetherExit].
  *
  * In a proxy chain where the Aether profile is not the entry hop, the one that dials the internet
  * itself, the core dials out through the hop on its entry side instead: that hop's outbound, as the
@@ -311,15 +330,24 @@ data class AetherExit(
      * update of its subscription may have changed. See [withNodeContent].
      */
     val nodeContent: String? = null,
+    /**
+     * The tcpUserTimeout of the freedom exit-node, in milliseconds: the profile's where its core connects out over TCP
+     * ([TcpUserTimeoutRule.valueOf]), else null. The WARP keys page sets none.
+     */
+    val tcpUserTimeout: Int? = null,
 ) {
 
     /**
      * What tells this exit-node from another in another process, without what it is made of: a digest
      * of it, which the session's core carries in its environment, see [AetherCoreManager.EXIT_ENV]. A
-     * node and its content join only where there are some, so that the key of any other exit-node stays what it was.
+     * node and its content join only where there are some, and so does a tcpUserTimeout, named, so that the key of any
+     * other exit-node stays what it was.
      */
     val key: String
-        get() = digest((listOf(finalMask, dialMode, hops) + listOfNotNull(node, nodeContent)).joinToString("\u0000") { it.orEmpty() })
+        get() = digest(
+            (listOf(finalMask, dialMode, hops) + listOfNotNull(node, nodeContent, tcpUserTimeout?.let { "tcpUserTimeout=$it" }))
+                .joinToString("\u0000") { it.orEmpty() }
+        )
 
     /**
      * This exit-node with the content of the profile its [node] names, as [find] finds it, see [nodeContent]: as it is
@@ -335,10 +363,13 @@ data class AetherExit(
         /** An exit-node with nothing set, as the core of a custom configuration dials out through. */
         val PLAIN = AetherExit()
 
-        /** The exit-node of the core of [profile]: the profile it names as its node, or else a plain one with its finalMask and dialMode. */
+        /**
+         * The exit-node of the core of [profile]: the profile it names as its node, or else a plain one with its finalMask
+         * and dialMode, and its tcpUserTimeout where the core connects out over TCP.
+         */
         fun of(profile: ProfileItem): AetherExit =
             profile.aetherExitNode.nullIfBlank()?.let { AetherExit(node = it.trim()) }
-                ?: AetherExit(profile.finalMask.nullIfBlank(), profile.dialMode.nullIfBlank())
+                ?: AetherExit(profile.finalMask.nullIfBlank(), profile.dialMode.nullIfBlank(), tcpUserTimeout = TcpUserTimeoutRule.valueOf(profile))
 
         /**
          * Whether [profile] can be an exit-node: a profile a proxy chain takes for a hop, and no Aether one, whose

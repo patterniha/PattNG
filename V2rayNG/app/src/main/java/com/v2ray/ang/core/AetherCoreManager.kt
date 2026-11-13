@@ -281,6 +281,33 @@ object AetherCoreManager {
     fun masqueOverHttp2(protocol: AetherProtocol, transport: AetherTransport, tor: AetherTor, psiphon: AetherPsiphon): Boolean =
         protocol.overMasque && (transport == AetherTransport.HTTP2 || tor == AetherTor.REVERSE || psiphon == AetherPsiphon.REVERSE)
 
+    /**
+     * PattNG: whether the core connects out over TCP, which is what it dials through the exit-node: Tor or Psiphon alone
+     * or around the tunnel, which carry TCP alone, or a tunnel over MASQUE that runs over HTTP/2 ([masqueOverHttp2]);
+     * not WireGuard, WARP-in-WARP or MASQUE over HTTP/3, which reach WARP over UDP. Where it does, the tcpUserTimeout of
+     * the profile counts, see [TcpUserTimeoutRule].
+     */
+    fun connectsOverTcp(protocol: AetherProtocol, transport: AetherTransport, tor: AetherTor, psiphon: AetherPsiphon): Boolean {
+        val warpUsed = psiphon != AetherPsiphon.ONLY && tor != AetherTor.ONLY
+        return !warpUsed || masqueOverHttp2(protocol, transport, tor, psiphon)
+    }
+
+    /** PattNG: [connectsOverTcp] for the tunnel [argv] runs. */
+    internal fun connectsOverTcp(argv: List<String>): Boolean =
+        connectsOverTcp(protocolOf(argv), masqueTransportOf(argv), torModeOf(argv), psiphonModeOf(argv))
+
+    /**
+     * PattNG: the MASQUE transport [argv] selects, read the way the core reads it: the last of --h2 and --http2, for
+     * HTTP/2, and --h3 and --quic, for HTTP/3, wins, and nothing at all is HTTP/3 (aether cli.rs).
+     */
+    internal fun masqueTransportOf(argv: List<String>): AetherTransport = argv.fold(AetherTransport.HTTP3) { transport, word ->
+        when (word) {
+            "--h2", "--http2" -> AetherTransport.HTTP2
+            "--h3", "--quic" -> AetherTransport.HTTP3
+            else -> transport
+        }
+    }
+
     /** True when a core on [arguments] reaches WARP through Tor or Psiphon, which then has to come up before anything else can. */
     fun reachesWarpThroughCarrier(arguments: List<String>): Boolean =
         torModeOf(arguments) == AetherTor.REVERSE || psiphonModeOf(arguments) == AetherPsiphon.REVERSE

@@ -154,6 +154,9 @@
     <string name="preset_default">الافتراضي</string>
     <string name="acc_choose_preset">اختيار %1$s جاهز</string>
     <string name="server_lab_dial_mode" translatable="false">dialMode</string>
+    <string name="server_lab_tcp_user_timeout" translatable="false">tcpUserTimeout</string>
+    <string name="server_hint_tcp_user_timeout">بالمللي ثانية (مثلًا 10000). فارغ = الافتراضي للنظام.</string>
+    <string name="aether_lab_exit_tcp_user_timeout" translatable="false">exit-node tcpUserTimeout</string>
     <string name="server_lab_ech_config_list" translatable="false">echConfigList</string>
     <string name="server_lab_ech_outbound">JSON خام لحقل echOutbound، بالتنسيق: { OutboundObject }</string>
     <string name="toast_ech_outbound_needs_ech_config_list">يتطلب echOutbound وجود echConfigList</string>
@@ -606,7 +609,7 @@
     <string name="aether_lab_exit_final_mask">JSON خام لحقل finalMask في exit-node، بالتنسيق: { FinalMaskObject }</string>
     <string name="aether_exit_node_freedom">freedom (الافتراضي)</string>
     <string name="label_numbered">%1$s (%2$d)</string>
-    <string name="aether_hint_exit_node">تتصل النواة بالخارج عبر الصادر الخاص بهذا الملف، كما عبر قفزة في سلسلة الوكيل؛ وحقلا finalMask وdialMode أدناه لـ freedom وحده</string>
+    <string name="aether_hint_exit_node">تتصل النواة بالخارج عبر الصادر الخاص بهذا الملف، كما عبر قفزة في سلسلة الوكيل؛ وحقول finalMask وdialMode وtcpUserTimeout أدناه لـ freedom وحده</string>
     <string name="aether_exit_node_unusable">ملف exit-node «%1$s» لا يعطي صادرًا؛ اختر ملفًا آخر، أو freedom</string>
     <string name="aether_exit_node_ech_unusable">لا يمكن استخدام echOutbound لملف exit-node «%1$s»؛ أصلحه في ذلك الملف، أو اختر ملفًا آخر، أو freedom</string>
     <string name="toast_profile_name_not_found">لم يُعثر على أي ملف باسم «%1$s»</string>

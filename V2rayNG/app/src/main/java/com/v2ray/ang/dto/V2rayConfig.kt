@@ -209,6 +209,8 @@ data class V2rayConfig(
                 var domainStrategy: String? = null,
                 var happyEyeballs: HappyEyeballsBean? = null,
                 var dialMode: String? = null,
+                // PattNG: milliseconds, after dialMode (TcpUserTimeoutRule)
+                var tcpUserTimeout: Int? = null,
             )
 
             data class HappyEyeballsBean(

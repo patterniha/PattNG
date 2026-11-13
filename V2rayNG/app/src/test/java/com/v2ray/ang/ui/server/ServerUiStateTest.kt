@@ -368,6 +368,85 @@ class ServerUiStateTest {
         assertEquals(false, state.hasOtherAetherSettings)
     }
 
+    // PattNG: the tcpUserTimeout, as typed, saved as a whole number above 0, kept where it does not count.
+    @Test
+    fun theTcpUserTimeoutOpensAsTheProfileHoldsItAndIsSavedAsAWholeNumberAboveZeroOrNone() {
+        val profile = ProfileItem.create(EConfigType.VLESS).apply { tcpUserTimeout = 10000 }
+        val state = ServerUiState.from(profile)
+        assertEquals("10000", state.tcpUserTimeout)
+        assertEquals(10000, state.toProfileItem(profile).tcpUserTimeout)
+        assertEquals("", ServerUiState.from(ProfileItem.create(EConfigType.VLESS).apply { tcpUserTimeout = 0 }).tcpUserTimeout)
+
+        state.tcpUserTimeout = " 2500 "
+        assertEquals(2500, state.toProfileItem(profile).tcpUserTimeout)
+        for (none in listOf("", " ", "0", "-1", "2s")) {
+            state.tcpUserTimeout = none
+            assertNull(state.toProfileItem(profile).tcpUserTimeout, none)
+        }
+        // Over mKCP it does not count, and it is kept, as the dialMode is.
+        state.tcpUserTimeout = "10000"
+        state.network = "kcp"
+        assertEquals(false, state.tcpUserTimeoutApplies)
+        assertEquals(10000, state.toProfileItem(profile).tcpUserTimeout)
+    }
+
+    @Test
+    fun theTcpUserTimeoutShowsOnlyWhereTheOutboundConnectsOverTcp() {
+        val vless = ServerUiState.from(ProfileItem.create(EConfigType.VLESS).apply { network = "tcp" })
+        assertEquals(true, vless.tcpUserTimeoutApplies)
+        vless.network = "xhttp"
+        vless.streamSecurity = AppConfig.TLS
+        vless.alpn = "h3"
+        assertEquals(false, vless.tcpUserTimeoutApplies)
+        vless.alpn = "h2"
+        assertEquals(true, vless.tcpUserTimeoutApplies)
+        vless.streamSecurity = AppConfig.REALITY
+        vless.alpn = "h3"
+        assertEquals(true, vless.tcpUserTimeoutApplies)
+
+        val masque = ServerUiState.from(ProfileItem.create(EConfigType.MASQUE).apply { alpn = "h3" })
+        assertEquals(false, masque.tcpUserTimeoutApplies)
+        masque.alpn = "h2"
+        assertEquals(true, masque.tcpUserTimeoutApplies)
+
+        for (type in listOf(EConfigType.WIREGUARD, EConfigType.HYSTERIA2)) {
+            assertEquals(false, ServerUiState.from(ProfileItem.create(type)).tcpUserTimeoutApplies, type.name)
+        }
+        for (type in listOf(EConfigType.SOCKS, EConfigType.HTTP)) {
+            assertEquals(true, ServerUiState.from(ProfileItem.create(type)).tcpUserTimeoutApplies, type.name)
+        }
+    }
+
+    @Test
+    fun theExitNodesTcpUserTimeoutShowsOnlyWhereTheAetherCoreConnectsOutOverTcpAndIsInTheFold() {
+        val state = ServerUiState.from(ProfileItem.create(EConfigType.AETHER).apply { aetherProtocol = AetherProtocol.MASQUE.type })
+        // MASQUE over HTTP/3, the default, reaches WARP over UDP.
+        assertEquals(false, state.aetherConnectsOverTcp)
+        state.aetherTransport = AetherTransport.HTTP2.type
+        assertEquals(true, state.aetherConnectsOverTcp)
+        state.aetherProtocol = AetherProtocol.WIREGUARD.type
+        assertEquals(false, state.aetherConnectsOverTcp)
+        state.aetherTor = AetherTor.ONLY.type
+        assertEquals(true, state.aetherConnectsOverTcp)
+        state.aetherTor = AetherTor.OFF.type
+        state.aetherPsiphon = AetherPsiphon.REVERSE.type
+        state.aetherProtocol = AetherProtocol.MASQUE.type
+        state.aetherTransport = AetherTransport.HTTP3.type
+        assertEquals(true, state.aetherConnectsOverTcp)
+        state.aetherPsiphon = AetherPsiphon.OFF.type
+        assertEquals(false, state.aetherConnectsOverTcp)
+        // A command written by hand runs in place of the settings.
+        state.aetherCommand = "aether --protocol masque --h2"
+        assertEquals(true, state.aetherConnectsOverTcp)
+        state.aetherCommand = ""
+
+        assertEquals(false, state.hasOtherAetherSettings)
+        state.tcpUserTimeout = "10000"
+        assertEquals(true, state.hasOtherAetherSettings)
+        state.tcpUserTimeout = "0"
+        assertEquals(false, state.hasOtherAetherSettings)
+    }
+
     @Test
     fun theFingerprintStartsAsChromesAndIsStoredAsChosen() {
         val state = ServerUiState.from(ProfileItem.create(EConfigType.AETHER))

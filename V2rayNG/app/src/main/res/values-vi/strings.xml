@@ -154,6 +154,9 @@
     <string name="preset_default">mặc định</string>
     <string name="acc_choose_preset">Chọn một %1$s có sẵn</string>
     <string name="server_lab_dial_mode" translatable="false">dialMode</string>
+    <string name="server_lab_tcp_user_timeout" translatable="false">tcpUserTimeout</string>
+    <string name="server_hint_tcp_user_timeout">Mili giây (ví dụ 10000). Để trống = mặc định của hệ thống.</string>
+    <string name="aether_lab_exit_tcp_user_timeout" translatable="false">exit-node tcpUserTimeout</string>
     <string name="server_lab_ech_config_list" translatable="false">echConfigList</string>
     <string name="server_lab_ech_outbound">JSON thô của echOutbound, định dạng: { OutboundObject }</string>
     <string name="toast_ech_outbound_needs_ech_config_list">echOutbound cần có echConfigList</string>
@@ -596,7 +599,7 @@
     <string name="aether_lab_exit_final_mask">JSON thô của finalMask cho exit-node, định dạng: { FinalMaskObject }</string>
     <string name="aether_exit_node_freedom">freedom (mặc định)</string>
     <string name="label_numbered">%1$s (%2$d)</string>
-    <string name="aether_hint_exit_node">Lõi kết nối ra ngoài qua outbound của hồ sơ này, như qua một chặng của chuỗi proxy; finalMask và dialMode bên dưới chỉ dùng cho freedom</string>
+    <string name="aether_hint_exit_node">Lõi kết nối ra ngoài qua outbound của hồ sơ này, như qua một chặng của chuỗi proxy; finalMask, dialMode và tcpUserTimeout bên dưới chỉ dùng cho freedom</string>
     <string name="aether_exit_node_unusable">Hồ sơ exit-node \"%1$s\" không tạo được outbound; hãy chọn hồ sơ khác, hoặc freedom</string>
     <string name="aether_exit_node_ech_unusable">Không dùng được echOutbound của hồ sơ exit-node \"%1$s\"; hãy sửa nó trong hồ sơ đó, hoặc chọn hồ sơ khác, hoặc freedom</string>
     <string name="toast_profile_name_not_found">Không tìm thấy hồ sơ nào tên \"%1$s\"</string>

@@ -1,6 +1,7 @@
 package com.v2ray.ang.fmt
 
 import com.v2ray.ang.AppConfig
+import com.v2ray.ang.core.TcpUserTimeoutRule
 import com.v2ray.ang.dto.entities.ProfileItem
 import com.v2ray.ang.enums.NetworkType
 import com.v2ray.ang.extension.nullIfBlank
@@ -72,6 +73,7 @@ open class FmtBase {
         config.xhttpExtra = queryParam["extra"]
         config.finalMask = queryParam["fm"]
         config.dialMode = queryParam["dialMode"]
+        config.tcpUserTimeout = TcpUserTimeoutRule.parse(queryParam["tut"])
 
         config.security = queryParam["security"]
         if (config.security != AppConfig.TLS && config.security != AppConfig.REALITY) {
@@ -128,6 +130,8 @@ open class FmtBase {
         config.flow?.nullIfBlank()?.let { dicQuery["flow"] = it }
         config.finalMask?.nullIfBlank()?.let { dicQuery["fm"] = it }
         config.dialMode?.nullIfBlank()?.let { dicQuery["dialMode"] = it }
+        // PattNG: tcpUserTimeout (tut), only where the outbound connects over TCP
+        TcpUserTimeoutRule.valueOf(config)?.let { dicQuery["tut"] = it.toString() }
         config.kcpMtu?.let { dicQuery["mtu"] = it.toString() }
         config.kcpTti?.let { dicQuery["tti"] = it.toString() }
         // Add two keys for compatibility: "insecure" and "allowInsecure"

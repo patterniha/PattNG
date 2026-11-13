@@ -30,6 +30,7 @@ class ServerHttpActivity : BaseServerActivity() {
             CommonBasicFields(uiState)
             HttpProtocolFields(uiState)
             CommonDialModeField(uiState)
+            CommonTcpUserTimeoutField(uiState)
             CommonTargetStrategyField(uiState)
 
         }

@@ -38,9 +38,12 @@ object CoreOutboundBuilder {
         }
 
         outbound ?: return null
-        // PattNG: an Aether profile's outbound only reaches its core on the loopback address; its dialMode is
-        // that of the exit-node its traffic leaves Xray by, see toOutboundAetherExit.
-        if (profileItem.configType != EConfigType.AETHER) applyDialMode(outbound, profileItem)
+        // PattNG: an Aether profile's outbound only reaches its core on the loopback address; its dialMode and
+        // tcpUserTimeout are those of the exit-node its traffic leaves Xray by, see toOutboundAetherExit.
+        if (profileItem.configType != EConfigType.AETHER) {
+            applyDialMode(outbound, profileItem)
+            applyTcpUserTimeout(outbound, TcpUserTimeoutRule.valueOf(profileItem))
+        }
         applyTargetStrategy(outbound, profileItem)
         val ret = updateOutboundWithGlobalSettings(outbound)
         if (!ret) return null
@@ -65,6 +68,19 @@ object CoreOutboundBuilder {
             outbound.streamSettings = OutboundBean.StreamSettingsBean(network = null)
         }
         outbound.ensureSockopt().dialMode = dialMode
+    }
+
+    /**
+     * PattNG: puts [timeout], a tcpUserTimeout in milliseconds, in streamSettings.sockopt.tcpUserTimeout, as
+     * [applyDialMode] puts the dialMode, so that sockopt options set elsewhere are kept; null leaves the outbound as it
+     * is. Its callers pass the value where it counts, see [TcpUserTimeoutRule.valueOf].
+     */
+    internal fun applyTcpUserTimeout(outbound: OutboundBean, timeout: Int?) {
+        val value = timeout?.takeIf { it > 0 } ?: return
+        if (outbound.streamSettings == null) {
+            outbound.streamSettings = OutboundBean.StreamSettingsBean(network = null)
+        }
+        outbound.ensureSockopt().tcpUserTimeout = value
     }
 
     /**
@@ -947,8 +963,8 @@ object CoreOutboundBuilder {
      * builds its hop, changed in its tag, and passing every name the core sends on as it is, whatever its
      * profile sets: a name Xray looked up for it would be asked of the DNS that reaches out through the core
      * itself, which is not up yet when it needs the name, or, where the configuration has no DNS, of the
-     * phone's own resolver, outside the tunnel; or else a freedom outbound with the finalMask and the
-     * dialMode of [exit] set as an ordinary profile sets them on its own outbound. Null when the node gives
+     * phone's own resolver, outside the tunnel; or else a freedom outbound with the finalMask, the dialMode
+     * and the tcpUserTimeout of [exit] set as an ordinary profile sets them on its own outbound. Null when the node gives
      * none, see [ExitNodeOutbound.Problem]: the core would reach the internet without it. The session's
      * configuration carries it, and a core of its own dials out through it as well, see
      * [AetherCoreManager.withProcess].
@@ -967,6 +983,7 @@ object CoreOutboundBuilder {
             updateOutboundFinalMask(outbound.streamSettings!!, exit.finalMask)
         }
         applyDialMode(outbound, exit.dialMode)
+        applyTcpUserTimeout(outbound, exit.tcpUserTimeout)
         return outbound
     }
 

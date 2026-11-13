@@ -157,6 +157,8 @@
     <string name="preset_setting_cipher_suites" translatable="false">cipherSuites</string>
     <string name="preset_setting_dial_mode" translatable="false">dialMode</string>
     <string name="server_lab_dial_mode" translatable="false">dialMode</string>
+    <string name="server_lab_tcp_user_timeout" translatable="false">tcpUserTimeout</string>
+    <string name="server_hint_tcp_user_timeout">Milliseconds (e.g., 10000). Empty = system default.</string>
     <string name="server_lab_target_strategy" translatable="false">targetStrategy</string>
     <string name="server_lab_ech_config_list" translatable="false">echConfigList</string>
     <string name="server_lab_ech_outbound">echOutbound raw JSON, format: { OutboundObject }</string>
@@ -601,10 +603,11 @@
     <string name="aether_lab_ip_version">IP version</string>
     <string name="aether_lab_exit_final_mask">exit-node finalMask raw JSON, format: { FinalMaskObject }</string>
     <string name="aether_lab_exit_dial_mode" translatable="false">exit-node dialMode</string>
+    <string name="aether_lab_exit_tcp_user_timeout" translatable="false">exit-node tcpUserTimeout</string>
     <string name="aether_lab_exit_node" translatable="false">exit-node</string>
     <string name="aether_exit_node_freedom">freedom (default)</string>
     <string name="label_numbered">%1$s (%2$d)</string>
-    <string name="aether_hint_exit_node">The core dials out through this profile\'s outbound, as through a hop of a proxy chain; finalMask and dialMode below are for freedom only</string>
+    <string name="aether_hint_exit_node">The core dials out through this profile\'s outbound, as through a hop of a proxy chain; finalMask, dialMode and tcpUserTimeout below are for freedom only</string>
     <string name="aether_exit_node_unusable">The exit-node profile \"%1$s\" gives no outbound; choose another one, or freedom</string>
     <string name="aether_exit_node_ech_unusable">The echOutbound of the exit-node profile \"%1$s\" cannot be used; fix it in that profile, or choose another one, or freedom</string>
     <string name="toast_profile_name_not_found">No profile named \"%1$s\" was found</string>

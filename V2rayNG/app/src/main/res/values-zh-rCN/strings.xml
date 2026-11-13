@@ -154,6 +154,9 @@
     <string name="preset_default">默认</string>
     <string name="acc_choose_preset">选择现成的 %1$s</string>
     <string name="server_lab_dial_mode" translatable="false">dialMode</string>
+    <string name="server_lab_tcp_user_timeout" translatable="false">tcpUserTimeout</string>
+    <string name="server_hint_tcp_user_timeout">毫秒（例如 10000）。留空则使用系统默认值</string>
+    <string name="aether_lab_exit_tcp_user_timeout" translatable="false">exit-node tcpUserTimeout</string>
     <string name="server_lab_ech_config_list" translatable="false">echConfigList</string>
     <string name="server_lab_ech_outbound">echOutbound 原始 JSON 格式: { OutboundObject }</string>
     <string name="toast_ech_outbound_needs_ech_config_list">echOutbound 需要填写 echConfigList</string>
@@ -596,7 +599,7 @@
     <string name="aether_lab_exit_final_mask">exit-node 的 finalMask 原始 JSON 格式: { FinalMaskObject }</string>
     <string name="aether_exit_node_freedom">freedom（默认）</string>
     <string name="label_numbered">%1$s（%2$d）</string>
-    <string name="aether_hint_exit_node">内核经由此配置的出站向外连接，如同经由代理链的一跳；下方的 finalMask 和 dialMode 只用于 freedom</string>
+    <string name="aether_hint_exit_node">内核经由此配置的出站向外连接，如同经由代理链的一跳；下方的 finalMask、dialMode 和 tcpUserTimeout 只用于 freedom</string>
     <string name="aether_exit_node_unusable">exit-node 配置“%1$s”无法生成出站；请另选一个，或选择 freedom</string>
     <string name="aether_exit_node_ech_unusable">exit-node 配置“%1$s”的 echOutbound 无法使用；请在该配置中修正，或另选一个，或选择 freedom</string>
     <string name="toast_profile_name_not_found">找不到名为“%1$s”的配置</string>

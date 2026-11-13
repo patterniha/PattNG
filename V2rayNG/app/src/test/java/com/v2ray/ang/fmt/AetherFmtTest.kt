@@ -213,6 +213,25 @@ class AetherFmtTest {
         assertNull(bare?.dialMode)
     }
 
+    // PattNG: the exit-node's tcpUserTimeout, under the name of an ordinary link, only where the core of the link dials
+    // out over TCP (TcpUserTimeoutRule): MASQUE over HTTP/2 here, not over HTTP/3.
+    @Test
+    fun theExitNodesTcpUserTimeoutSurvivesTheRoundTripWhereTheCoreConnectsOverTcp() {
+        val overTcp = profile {
+            aetherTransport = AetherTransport.HTTP2.type
+            tcpUserTimeout = 10000
+        }
+        val uri = AetherFmt.toUri(overTcp)
+        assertTrue(uri.contains("tut=10000"), uri)
+        assertEquals(10000, AetherFmt.parse(link(overTcp))?.tcpUserTimeout)
+
+        val overUdp = profile { tcpUserTimeout = 10000 }
+        val udpUri = AetherFmt.toUri(overUdp)
+        assertFalse("tut" in udpUri.substringAfter('?').substringBefore('#').split('&').map { it.substringBefore('=') }, udpUri)
+        assertNull(AetherFmt.parse(link(overUdp))?.tcpUserTimeout)
+        assertNull(AetherFmt.parse(link(profile {}))?.tcpUserTimeout)
+    }
+
     @Test
     fun torSettingsAreNormalizedAndClearedWhenTorIsOff() {
         val own = profile {

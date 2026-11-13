@@ -154,6 +154,9 @@
     <string name="preset_default">по умолчанию</string>
     <string name="acc_choose_preset">Выбрать готовый %1$s</string>
     <string name="server_lab_dial_mode" translatable="false">dialMode</string>
+    <string name="server_lab_tcp_user_timeout" translatable="false">tcpUserTimeout</string>
+    <string name="server_hint_tcp_user_timeout">Миллисекунды (например, 10000). Пусто = системное значение</string>
+    <string name="aether_lab_exit_tcp_user_timeout" translatable="false">exit-node tcpUserTimeout</string>
     <string name="server_lab_ech_config_list" translatable="false">echConfigList</string>
     <string name="server_lab_ech_outbound">Необработанный JSON echOutbound, формат: { OutboundObject }</string>
     <string name="toast_ech_outbound_needs_ech_config_list">Для echOutbound требуется echConfigList</string>
@@ -602,7 +605,7 @@
     <string name="aether_lab_exit_final_mask">Необработанный JSON finalMask для exit-node, формат: { FinalMaskObject }</string>
     <string name="aether_exit_node_freedom">freedom (по умолчанию)</string>
     <string name="label_numbered">%1$s (%2$d)</string>
-    <string name="aether_hint_exit_node">Ядро выходит наружу через исходящее соединение этого профиля, как через звено цепочки прокси; finalMask и dialMode ниже относятся только к freedom</string>
+    <string name="aether_hint_exit_node">Ядро выходит наружу через исходящее соединение этого профиля, как через звено цепочки прокси; finalMask, dialMode и tcpUserTimeout ниже относятся только к freedom</string>
     <string name="aether_exit_node_unusable">Профиль exit-node «%1$s» не даёт исходящего соединения; выберите другой или freedom</string>
     <string name="aether_exit_node_ech_unusable">echOutbound профиля exit-node «%1$s» нельзя использовать; исправьте его в этом профиле, выберите другой или freedom</string>
     <string name="toast_profile_name_not_found">Профиль с именем «%1$s» не найден</string>

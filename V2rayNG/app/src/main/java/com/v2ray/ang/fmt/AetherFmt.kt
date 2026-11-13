@@ -4,6 +4,7 @@ import com.v2ray.ang.AppConfig
 import com.v2ray.ang.core.AetherCore
 import com.v2ray.ang.core.AetherCoreManager
 import com.v2ray.ang.core.CoreOutboundBuilder
+import com.v2ray.ang.core.TcpUserTimeoutRule
 import com.v2ray.ang.dto.AetherEndpoint
 import com.v2ray.ang.dto.AetherRange
 import com.v2ray.ang.dto.entities.ProfileItem
@@ -90,6 +91,7 @@ object AetherFmt : FmtBase() {
         // The exit-node's, under the names the link of an ordinary profile gives its own outbound's.
         config.finalMask = queryParam["fm"]
         config.dialMode = queryParam["dialMode"]
+        config.tcpUserTimeout = TcpUserTimeoutRule.parse(queryParam["tut"])
 
         if (protocol.twoHops) {
             val outer = AetherEndpoint.parse(queryParam["outer"])
@@ -173,6 +175,10 @@ object AetherFmt : FmtBase() {
         }
         config.finalMask?.takeIf { it.isNotBlank() }?.let { query["fm"] = it }
         config.dialMode?.takeIf { it.isNotBlank() }?.let { query["dialMode"] = it }
+        // tcpUserTimeout (tut), only where the core, as the link sets it up, connects out over TCP (TcpUserTimeoutRule).
+        config.tcpUserTimeout?.takeIf {
+            it > 0 && AetherCoreManager.connectsOverTcp(protocol, AetherTransport.fromString(config.aetherTransport), tor, psiphon)
+        }?.let { query["tut"] = it.toString() }
         val endpoint = AetherEndpoint.of(config.server, config.serverPort).takeUnless { protocol.twoHops }
 
         val queryText = query.entries.joinToString("&") { "${it.key}=${Utils.encodeURIComponent(it.value)}" }
