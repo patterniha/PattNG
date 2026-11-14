@@ -641,10 +641,11 @@ object CoreConfigManager {
      * through is the exit-node already, see [handleProxyChainResolvedOutbound]: the outbound of the
      * profile its exit names as its node, which [nodeOutbound] gives, or else a freedom outbound with its
      * profile's finalMask and dialMode; and a rule ahead of every other that sends what comes in on that
-     * inbound out by that outbound. Returns the core told to dial out through the inbound, or null, with
-     * nothing added, when an inbound of the configuration listens on [port] already, or when the node
-     * gives none, which [exitNodeProblem] tells first. A core that names an upstream of its own, as a
-     * profile's hand-written command may, is left as it is.
+     * inbound out by that outbound. The inbound asks for a password the core alone is told, unless the
+     * core takes none, see [AetherCore.newUpstreamPassword]. Returns the core told to dial out through the
+     * inbound, or null, with nothing added, when an inbound of the configuration listens on [port] already,
+     * or when the node gives none, which [exitNodeProblem] tells first. A core that names an upstream of
+     * its own, as a profile's hand-written command may, is left as it is.
      */
     internal fun routeAetherThroughXray(
         v2rayConfig: V2rayConfig,
@@ -659,13 +660,20 @@ object CoreConfigManager {
         } else {
             CoreOutboundBuilder.toOutboundAetherExit(core.exit, nodeOutbound) ?: return null
         }
+        val password = core.newUpstreamPassword()
         v2rayConfig.inbounds.add(
             V2rayConfig.InboundBean(
                 tag = AppConfig.TAG_SECONDARY_SOCKS,
                 port = port,
                 protocol = "mixed",
                 listen = AppConfig.LOOPBACK,
-                settings = V2rayConfig.InboundBean.InSettingsBean(udp = true),
+                settings = V2rayConfig.InboundBean.InSettingsBean(
+                    auth = password?.let { "password" },
+                    udp = true,
+                    accounts = password?.let {
+                        listOf(V2rayConfig.InboundBean.InSettingsBean.SocksAccountBean(user = AetherCoreManager.UPSTREAM_USER, pass = it))
+                    },
+                ),
             )
         )
         if (exitNode != null) v2rayConfig.outbounds.add(exitNode)
@@ -676,7 +684,7 @@ object CoreConfigManager {
                 outboundTag = AppConfig.TAG_EXIT_NODE,
             )
         )
-        return core.through(port)
+        return core.through(port, password)
     }
 
     /** PattNG: a configuration with an inbound of its own on the secondary-socks [port], as a failure whose message is meant for the screen. */

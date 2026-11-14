@@ -121,7 +121,8 @@ sealed interface AetherDependency {
          * Has what the Aether [core] of the custom configuration [config] sends out leave through
          * Xray, as the configuration of a profile does: the secondary-socks inbound on [port], three
          * above the Aether listen port for every Aether core, after the other inbounds, a freedom outbound
-         * after the other outbounds, and a rule ahead of every other that joins the two. Returns the
+         * after the other outbounds, and a rule ahead of every other that joins the two. The inbound asks
+         * for a password unless the core takes none, see [AetherCore.newUpstreamPassword]. Returns the
          * core told to dial out through that inbound, which is also written back as aetherCommand.
          * Nothing is added when an inbound of the configuration listens on [port] already, nor when a
          * balancer or an observatory would pick the freedom outbound among its own, since those pick
@@ -143,12 +144,24 @@ sealed interface AetherDependency {
             }
             if (taken.any { port in it }) return Routing.PortTaken
             exitNodeSelector(config, routing)?.let { return Routing.ExitNodeSelected(it) }
+            val password = core.newUpstreamPassword()
             inbounds.add(JsonObject().apply {
                 addProperty("tag", AppConfig.TAG_SECONDARY_SOCKS)
                 addProperty("port", port)
                 addProperty("listen", AppConfig.LOOPBACK)
                 addProperty("protocol", "mixed")
-                add("settings", JsonObject().apply { addProperty("udp", true) })
+                add("settings", JsonObject().apply {
+                    if (password != null) {
+                        addProperty("auth", "password")
+                        add("accounts", JsonArray().apply {
+                            add(JsonObject().apply {
+                                addProperty("user", AetherCoreManager.UPSTREAM_USER)
+                                addProperty("pass", password)
+                            })
+                        })
+                    }
+                    addProperty("udp", true)
+                })
             })
             outbounds.add(JsonObject().apply {
                 addProperty("tag", AppConfig.TAG_EXIT_NODE)
@@ -166,7 +179,7 @@ sealed interface AetherDependency {
             config.add("outbounds", outbounds)
             config.add("routing", routing)
 
-            val routed = core.through(port)
+            val routed = core.through(port, password)
             config.addProperty(COMMAND_KEY, routed.command)
             return Routing.Routed(routed)
         }

@@ -17,6 +17,7 @@ import com.v2ray.ang.handler.MmkvManager
 import com.v2ray.ang.handler.SettingsManager
 import com.v2ray.ang.util.JsonUtil
 import java.security.MessageDigest
+import java.util.UUID
 
 /**
  * The Aether core a configuration runs on, as the arguments its process is started with, the
@@ -158,10 +159,25 @@ data class AetherCore(val arguments: List<String>, val exit: AetherExit = Aether
 
     /**
      * This core dialling out through the SOCKS inbound on [port] of the loopback address, which Xray
-     * serves so that what the core sends leaves through Xray. A core told an upstream of its own keeps it.
+     * serves so that what the core sends leaves through Xray, signing in with [password] when it is
+     * given. A core told an upstream of its own keeps it.
      */
-    fun through(port: Int): AetherCore =
-        if (hasUpstream) this else copy(arguments = arguments + listOf(AetherCoreManager.UPSTREAM, "socks5://${AppConfig.LOOPBACK}:$port"))
+    fun through(port: Int, password: String? = null): AetherCore {
+        if (hasUpstream) return this
+        val account = password?.let { "${AetherCoreManager.UPSTREAM_USER}:$it@" }.orEmpty()
+        return copy(arguments = arguments + listOf(AetherCoreManager.UPSTREAM, "socks5://$account${AppConfig.LOOPBACK}:$port"))
+    }
+
+    /**
+     * PattNG: a new password for the inbound this core dials out through, see [through]. The app's own process is
+     * outside the VPN, so an inbound without one lets any app on the device leave past the VPN. Null when Tor dials
+     * out through the upstream itself, before WARP or alone: Tor takes a socks5 address without a password (aether
+     * tor.rs), so that inbound stays open until the core can hand Tor one.
+     */
+    fun newUpstreamPassword(): String? = when (AetherCoreManager.torModeOf(arguments)) {
+        AetherTor.REVERSE, AetherTor.ONLY -> null
+        else -> UUID.randomUUID().toString().replace("-", "")
+    }
 
     companion object {
 
