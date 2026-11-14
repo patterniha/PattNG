@@ -1,18 +1,26 @@
 package com.v2ray.ang.core
 
+import com.tencent.mmkv.MMKV
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.dto.V2rayConfig.OutboundBean
 import com.v2ray.ang.dto.entities.ProfileItem
 import com.v2ray.ang.enums.AetherPsiphon
 import com.v2ray.ang.enums.AetherTor
 import com.v2ray.ang.enums.EConfigType
+import com.v2ray.ang.handler.MmkvManager
 import com.v2ray.ang.util.JsonUtil
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
+import org.mockito.MockMakers
+import org.mockito.Mockito
+import org.mockito.Mockito.mockStatic
+import org.mockito.kotlin.any
+import org.mockito.kotlin.whenever
 
 /**
  * Unit tests for CoreOutboundBuilder.applyDialMode: dialMode must land in
@@ -548,5 +556,27 @@ class CoreOutboundBuilderTest {
             tcpUserTimeout = 10000
         }
         assertNull(CoreOutboundBuilder.convert(aether)?.streamSettings?.sockopt?.tcpUserTimeout)
+    }
+
+    companion object {
+        /**
+         * The settings storage as a subclass-mocked handle, as SubscriptionIndexTest makes one: MMKV's decode
+         * methods are native, which the default inline mock maker cannot stand in for, and MMKV.initialize
+         * never runs in unit tests. convert reads the global settings (mux) of the store as it finishes an
+         * outbound; the handle answers every read with the default passed to it, as an empty store does.
+         */
+        private val settings: MMKV = Mockito.mock(MMKV::class.java, Mockito.withSettings().mockMaker(MockMakers.SUBCLASS))
+
+        @BeforeAll
+        @JvmStatic
+        fun initializeSettingsStorage() {
+            // The storages of MmkvManager are lazy: the static mock must stand when the settings one is first read.
+            mockStatic(MMKV::class.java).use {
+                it.`when`<MMKV> { MMKV.mmkvWithID("SETTING", MMKV.MULTI_PROCESS_MODE) }.thenReturn(settings)
+                MmkvManager.decodeSettingsBool("test-initialize", false)
+            }
+            whenever(settings.decodeBool(any(), any())).thenAnswer { it.getArgument<Boolean>(1) }
+            whenever(settings.decodeString(any(), any<String>())).thenAnswer { it.getArgument<String?>(1) }
+        }
     }
 }
