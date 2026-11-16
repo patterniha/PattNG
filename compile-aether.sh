@@ -25,7 +25,7 @@ fi
 # i686-linux-android, so that target is unverified. The app hides the Aether
 # feature on an ABI that ships without the binary.
 ABIS="armeabi-v7a arm64-v8a x86_64"
-API_LEVEL=29
+API_LEVEL=28
 
 triple_for () {
   case "$1" in

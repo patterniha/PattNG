@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.net.ConnectivityManager
+import android.os.Build
 import android.os.ParcelFileDescriptor
 import android.system.OsConstants
 import androidx.core.content.ContextCompat
@@ -773,6 +774,8 @@ object CoreServiceManager {
         private val cm: ConnectivityManager? = context.getSystemService(ConnectivityManager::class.java)
 
         override fun findProcessByConnection(network: String, srcIP: String, srcPort: Long, destIP: String, destPort: Long): Long {
+            // Android 9 cannot query connection owners; preserve the unknown-UID fallback until minSdk reaches 29.
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return -1L
             if (cm == null) return -1L
             val proto = when (network) {
                 "tcp" -> OsConstants.IPPROTO_TCP

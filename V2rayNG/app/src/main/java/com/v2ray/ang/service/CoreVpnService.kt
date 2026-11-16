@@ -8,6 +8,7 @@ import android.content.pm.PackageManager
 import android.net.Network
 import android.net.ProxyInfo
 import android.net.VpnService
+import android.os.Build
 import android.os.ParcelFileDescriptor
 import android.os.StrictMode
 import com.v2ray.ang.AppConfig
@@ -283,6 +284,8 @@ class CoreVpnService : VpnService(), ServiceControl {
      * @param builder The VPN Builder to configure
      */
     private fun configurePlatformFeatures(builder: Builder) {
+        // Android 9 does not expose these VPN builder methods; remove when minSdk reaches 29.
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return
         builder.setMetered(false)
         if (SettingsManager.isAppendingHttpProxy()) {
             builder.setHttpProxy(ProxyInfo.buildDirectProxy(LOOPBACK, SettingsManager.getHttpPort()))

@@ -11,7 +11,8 @@ android {
 
     defaultConfig {
         applicationId = "com.patterniha.pattng"
-        minSdk = 29
+        // Galaxy A8+ 2018 is Android 9 (API 28). Newer VPN-only calls are guarded at their call sites.
+        minSdk = 28
         targetSdk = 37
         versionCode = 760
         versionName = (project.findProperty("pattngVersion") as? String)?.takeIf { it.isNotBlank() } ?: "2.4.0"
