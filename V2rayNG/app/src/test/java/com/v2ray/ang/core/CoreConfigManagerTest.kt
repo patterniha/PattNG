@@ -403,14 +403,44 @@ class CoreConfigManagerTest {
         val last = matching.indexOfFirst { it.finalQuery == true }
         assertTrue(last >= 0, "a geosite:cn domain must stop at the last domestic server")
         val asked = matching.take(last + 1)
-        // A Chinese IP from each domestic server first, then the remote server, then any answer from the domestic
-        // servers.
+        // A Chinese IP from each domestic server first, then any answer from the remote server (upstream PR 6483), then
+        // any answer from the domestic servers.
         assertEquals(domesticDns + remoteDns + domesticDns, asked.map { it.address })
-        assertEquals(listOf(listOf(AppConfig.GEOIP_CN), listOf(AppConfig.GEOIP_CN)), asked.take(2).map { it.expectIPs })
-        assertEquals(listOf(null, null), asked.takeLast(2).map { it.expectIPs })
+        assertEquals(listOf(listOf(AppConfig.GEOIP_CN), listOf(AppConfig.GEOIP_CN), null, null, null), asked.map { it.expectIPs })
         // The domestic servers query as domestic-dns, which goes direct; the remote one as the DNS module, through the
         // proxy.
         val domestic = AppConfig.TAG_DOMESTIC_DNS
         assertEquals(listOf(domestic, domestic, null, domestic, domestic), asked.map { it.tag })
+    }
+
+    @Test
+    fun everyDomainFakeDnsListsHasDnsServersOfItsOwn() {
+        fun context(vararg rules: CoreConfigContext.RoutingDomainRule) =
+            CoreConfigContext(context = mock<Context>(), guid = "guid", routingDomainRules = rules.toList())
+        // The domain rules of the Iran preset, where geosite:cn has no rule, and of the China preset, where it has one.
+        val iran = context(
+            CoreConfigContext.RoutingDomainRule(listOf("geosite:category-ads-all"), AppConfig.TAG_BLOCKED),
+            CoreConfigContext.RoutingDomainRule(listOf("geosite:private"), AppConfig.TAG_DIRECT),
+            CoreConfigContext.RoutingDomainRule(listOf("domain:ir", "geosite:category-ir"), AppConfig.TAG_DIRECT),
+        )
+        val china = context(
+            CoreConfigContext.RoutingDomainRule(listOf("geosite:google"), AppConfig.TAG_PROXY),
+            CoreConfigContext.RoutingDomainRule(listOf("geosite:private"), AppConfig.TAG_DIRECT),
+            CoreConfigContext.RoutingDomainRule(listOf(AppConfig.GEOSITE_CN), AppConfig.TAG_DIRECT),
+        )
+        for (configContext in listOf(iran, china)) {
+            val servers = ArrayList<Any>()
+            CoreConfigManager.buildDnsCnModeFromRoutingRules(configContext, servers, listOf("https://8.8.8.8/dns-query"), listOf("localhost"))
+            CoreConfigManager.buildDnsFromRoutingRules(configContext, servers, listOf("https://8.8.8.8/dns-query"), listOf("localhost"))
+            val listed = servers.filterIsInstance<V2rayConfig.DnsBean.ServersBean>().flatMap { it.domains.orEmpty() }
+            // With disableFallbackIfMatch the core asks only the servers whose domains match, and it skips fakedns when it
+            // looks a name up itself: a domain that fakedns alone lists would find no server.
+            for (domain in CoreConfigManager.fakeDnsDomains(configContext)) {
+                assertTrue(domain in listed, "$domain has no DNS server of its own")
+            }
+        }
+        // A blocked domain is left to the hosts, and geosite:cn without a rule to the remote servers.
+        assertEquals(listOf("geosite:private", "domain:ir", "geosite:category-ir"), CoreConfigManager.fakeDnsDomains(iran))
+        assertEquals(listOf("geosite:google", "geosite:private", AppConfig.GEOSITE_CN), CoreConfigManager.fakeDnsDomains(china))
     }
 }

@@ -1044,14 +1044,7 @@ object CoreConfigManager {
         }
 
         if (MmkvManager.decodeSettingsBool(AppConfig.PREF_FAKE_DNS_ENABLED, true)) {
-            val geositeCn = arrayListOf(AppConfig.GEOSITE_CN)
-            val routingDomains = configContext.routingDomainRules
-                .asSequence()
-                .filter { it.outboundTag != AppConfig.TAG_BLOCKED }
-                .flatMap { it.domain.asSequence() }
-                .toList()
-                .distinct()
-            val finalDomain = geositeCn + routingDomains
+            val finalDomain = fakeDnsDomains(configContext)
             // fakedns with all domains to make it always top priority
             // PattNG: no "fakedns" block, so Xray-core applies its default fake IP pools
             v2rayConfig.dns?.servers?.add(
@@ -1100,6 +1093,22 @@ object CoreConfigManager {
             )
         }
     }
+
+    /**
+     * PattNG: the domains the fakedns server lists: the routing domains alone, a blocked one aside, as each has DNS
+     * servers of its own, see [buildDnsFromRoutingRules]. Upstream lists geosite:cn too. With disableFallbackIfMatch,
+     * a geosite:cn domain that no rule names then matched fakedns alone, which the core skips when it looks a name up
+     * itself (a targetStrategy, as an Aether profile's ForceIPv4v6 through WARP, or IP rules), so that it found no
+     * server and such a profile dropped the connection. Unmatched, it goes to the remote servers, and an app still
+     * gets a fake IP first, as fakedns heads the servers.
+     */
+    internal fun fakeDnsDomains(configContext: CoreConfigContext): List<String> =
+        configContext.routingDomainRules
+            .asSequence()
+            .filter { it.outboundTag != AppConfig.TAG_BLOCKED }
+            .flatMap { it.domain.asSequence() }
+            .toList()
+            .distinct()
 
     /**
      * In the root mode the whole device's traffic (incl. raw DNS) is funneled
