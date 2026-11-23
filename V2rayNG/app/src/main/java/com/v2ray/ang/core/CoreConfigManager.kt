@@ -1298,7 +1298,7 @@ object CoreConfigManager {
     /**
      * Configure DNS servers, hosts, and DNS routing rules.
      */
-    private fun configureDns(
+    internal fun configureDns(
         configContext: CoreConfigContext,
         v2rayConfig: V2rayConfig,
         policyGroupBalancerTags: Map<String, String>,
