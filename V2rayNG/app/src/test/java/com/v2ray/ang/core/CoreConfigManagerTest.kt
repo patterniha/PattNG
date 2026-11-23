@@ -381,7 +381,7 @@ class CoreConfigManagerTest {
     }
 
     @Test
-    fun aChinaModeDomainGoesThroughEveryDomesticServerAndNeverReachesTheRemoteOne() {
+    fun aChinaModeDomainTriesTheDomesticServersForAChineseIpThenTheRemoteOne() {
         val configContext = CoreConfigContext(
             context = mock<Context>(),
             guid = "guid",
@@ -390,20 +390,27 @@ class CoreConfigManagerTest {
                 CoreConfigContext.RoutingDomainRule(listOf(AppConfig.GEOSITE_CN), AppConfig.TAG_DIRECT),
             ),
         )
+        val remoteDns = listOf("https://8.8.8.8/dns-query")
         val domesticDns = listOf("223.5.5.5", "119.29.29.29")
         val servers = ArrayList<Any>()
-        CoreConfigManager.buildDnsCnModeFromRoutingRules(configContext, servers, domesticDns)
-        CoreConfigManager.buildDnsFromRoutingRules(configContext, servers, listOf("https://8.8.8.8/dns-query"), domesticDns)
+        CoreConfigManager.buildDnsCnModeFromRoutingRules(configContext, servers, remoteDns, domesticDns)
+        CoreConfigManager.buildDnsFromRoutingRules(configContext, servers, remoteDns, domesticDns)
 
         // The servers the core asks for a geosite:cn domain: those whose domains match, in order, up to the first
         // with finalQuery.
         val matching = servers.filterIsInstance<V2rayConfig.DnsBean.ServersBean>()
             .filter { AppConfig.GEOSITE_CN in it.domains.orEmpty() }
         val last = matching.indexOfFirst { it.finalQuery == true }
-        assertTrue(last >= 0, "a geosite:cn domain must stop at a domestic server, before the remote one")
+        assertTrue(last >= 0, "a geosite:cn domain must stop at the last domestic server")
         val asked = matching.take(last + 1)
-        // A Chinese IP from each domestic server first, then any answer from them, and never the remote server.
-        assertEquals(domesticDns + domesticDns, asked.map { it.address })
-        assertEquals(listOf(listOf(AppConfig.GEOIP_CN), listOf(AppConfig.GEOIP_CN), null, null), asked.map { it.expectIPs })
+        // A Chinese IP from each domestic server first, then the remote server, then any answer from the domestic
+        // servers.
+        assertEquals(domesticDns + remoteDns + domesticDns, asked.map { it.address })
+        assertEquals(listOf(listOf(AppConfig.GEOIP_CN), listOf(AppConfig.GEOIP_CN)), asked.take(2).map { it.expectIPs })
+        assertEquals(listOf(null, null), asked.takeLast(2).map { it.expectIPs })
+        // The domestic servers query as domestic-dns, which goes direct; the remote one as the DNS module, through the
+        // proxy.
+        val domestic = AppConfig.TAG_DOMESTIC_DNS
+        assertEquals(listOf(domestic, domestic, null, domestic, domestic), asked.map { it.tag })
     }
 }

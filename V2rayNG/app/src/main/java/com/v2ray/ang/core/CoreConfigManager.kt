@@ -1299,14 +1299,18 @@ object CoreConfigManager {
         val domesticDns = SettingsManager.getDomesticDnsServers()
 
         val hosts = buildDnsHostsFromRoutingRules(configContext)
-        val cnDomesticDnsTags = buildDnsCnModeFromRoutingRules(configContext, servers, domesticDns)
-        val domesticDnsTags = buildDnsFromRoutingRules(
+        buildDnsCnModeFromRoutingRules(
             configContext = configContext,
             servers = servers,
             remoteDns = remoteDns,
             domesticDns = domesticDns
         )
-        domesticDnsTags.addAll(cnDomesticDnsTags)
+        buildDnsFromRoutingRules(
+            configContext = configContext,
+            servers = servers,
+            remoteDns = remoteDns,
+            domesticDns = domesticDns
+        )
 
         remoteDns.forEach { servers.add(it) }
 
@@ -1314,16 +1318,18 @@ object CoreConfigManager {
             servers = servers,
             hosts = hosts,
             tag = AppConfig.TAG_DNS,
-            enableParallelQuery = if ((domesticDns.size + remoteDns.size) > 2) true else null
+            disableFallbackIfMatch = true,
+            enableParallelQuery = if ((domesticDns.size + remoteDns.size) > 2) true else null,
         )
 
         // DNS routing, inserted at the top so user rules cannot hijack DNS module queries
         val dnsRouteRules = mutableListOf<V2rayConfig.RoutingBean.RulesBean>()
-        if (domesticDnsTags.isNotEmpty()) {
+        // PattNG: only when a server queries as domestic-dns, so that no rule names a tag that nothing has
+        if (servers.any { it is V2rayConfig.DnsBean.ServersBean && it.tag == AppConfig.TAG_DOMESTIC_DNS }) {
             dnsRouteRules.add(
                 V2rayConfig.RoutingBean.RulesBean(
                     outboundTag = AppConfig.TAG_DIRECT,
-                    inboundTag = ArrayList(domesticDnsTags),
+                    inboundTag = arrayListOf(AppConfig.TAG_DOMESTIC_DNS),
                     domain = null
                 )
             )
@@ -1395,7 +1401,12 @@ object CoreConfigManager {
         return hosts
     }
 
-    internal fun buildDnsCnModeFromRoutingRules(configContext: CoreConfigContext, servers: ArrayList<Any>, domesticDns: List<String>): List<String> {
+    internal fun buildDnsCnModeFromRoutingRules(
+        configContext: CoreConfigContext,
+        servers: ArrayList<Any>,
+        remoteDns: List<String>,
+        domesticDns: List<String>,
+    ) {
         val cnRegionFilter = { domain: String ->
             domain.startsWith("geosite:") && (domain.endsWith("-cn") || domain.endsWith("@cn"))
                     || domain == AppConfig.GEOSITE_CN
@@ -1407,7 +1418,7 @@ object CoreConfigManager {
             .any { it == AppConfig.GEOSITE_CN }
 
         if (!isCnRoutingMode) {
-            return emptyList()
+            return
         }
 
         val geoipCn = arrayListOf(AppConfig.GEOIP_CN)
@@ -1418,24 +1429,30 @@ object CoreConfigManager {
             .filter { cnRegionFilter(it) }
             .toList()
         if (cnDomains.isEmpty()) {
-            return emptyList()
+            return
         }
 
-        val cnDomesticDnsTags = mutableListOf<String>()
-        domesticDns.forEachIndexed { index, address ->
-            val cnDomesticDnsTag = "${AppConfig.TAG_DOMESTIC_DNS}_cn_expect_${index}"
+        domesticDns.forEach { address ->
             servers.add(
                 V2rayConfig.DnsBean.ServersBean(
                     address = address,
                     domains = cnDomains,
                     expectIPs = geoipCn,
                     skipFallback = true,
-                    tag = cnDomesticDnsTag
+                    tag = AppConfig.TAG_DOMESTIC_DNS
                 )
             )
-            cnDomesticDnsTags.add(cnDomesticDnsTag)
         }
-        return cnDomesticDnsTags
+        remoteDns.forEach { address ->
+            servers.add(
+                V2rayConfig.DnsBean.ServersBean(
+                    address = address,
+                    domains = cnDomains,
+                    expectIPs = geoipCn,
+                    skipFallback = true,
+                )
+            )
+        }
     }
 
     internal fun buildDnsFromRoutingRules(
@@ -1443,23 +1460,20 @@ object CoreConfigManager {
         servers: ArrayList<Any>,
         remoteDns: List<String>,
         domesticDns: List<String>,
-    ): MutableList<String> {
-        val domesticDnsTags = mutableListOf<String>()
-        configContext.routingDomainRules.forEachIndexed { ruleIndex, rule ->
+    ) {
+        configContext.routingDomainRules.forEach { rule ->
             when (rule.outboundTag) {
                 AppConfig.TAG_DIRECT -> {
                     domesticDns.forEachIndexed { dnsIndex, address ->
-                        val tag = "${AppConfig.TAG_DOMESTIC_DNS}_${ruleIndex}_$dnsIndex"
                         servers.add(
                             V2rayConfig.DnsBean.ServersBean(
                                 address = address,
                                 domains = rule.domain,
                                 skipFallback = true,
                                 finalQuery = if (dnsIndex == domesticDns.lastIndex) true else null,
-                                tag = tag
+                                tag = AppConfig.TAG_DOMESTIC_DNS
                             )
                         )
-                        domesticDnsTags.add(tag)
                     }
                 }
 
@@ -1477,7 +1491,6 @@ object CoreConfigManager {
                 }
             }
         }
-        return domesticDnsTags
     }
 
     //endregion
