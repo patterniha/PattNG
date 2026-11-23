@@ -1448,7 +1448,6 @@ object CoreConfigManager {
                 V2rayConfig.DnsBean.ServersBean(
                     address = address,
                     domains = cnDomains,
-                    expectIPs = geoipCn,
                     skipFallback = true,
                 )
             )
