@@ -446,6 +446,47 @@ class CoreOutboundBuilderTest {
         ).forEach { assertFalse(CoreOutboundBuilder.isNetipAddress(it), it) }
     }
 
+    @Test
+    fun aMasqueOutboundGetsOnlyAddressesAsRemoteDnsAsAWireGuardOneDoes() {
+        val none = emptyList<String>()
+        // Blank: the default servers of MASQUE, the IPv4 ones alone when IPv6 is off.
+        assertEquals(
+            listOf("1.1.1.1", "1.0.0.1", "2606:4700:4700::1111", "2606:4700:4700::1001") to none,
+            CoreOutboundBuilder.masqueRemoteDns(null, ipv6Enabled = true),
+        )
+        assertEquals(listOf("1.1.1.1", "1.0.0.1") to none, CoreOutboundBuilder.masqueRemoteDns(" , ", ipv6Enabled = false))
+        // An address with a port, a host name and a URL, for each of which the core refuses the whole configuration, are
+        // left out; an IPv6 address loses its brackets.
+        assertEquals(
+            listOf("2606:4700:4700::1111", "9.9.9.9") to listOf("1.1.1.1:53", "dns.google", "https://1.1.1.1/dns-query"),
+            CoreOutboundBuilder.masqueRemoteDns(
+                "1.1.1.1:53, [2606:4700:4700::1111], dns.google, https://1.1.1.1/dns-query, 9.9.9.9",
+                ipv6Enabled = true,
+            ),
+        )
+        // Nothing the core takes: the default ones; only IPv6 servers while IPv6 is off: the default IPv4 ones.
+        assertEquals(
+            listOf("1.1.1.1", "1.0.0.1", "2606:4700:4700::1111", "2606:4700:4700::1001") to listOf("dns.google"),
+            CoreOutboundBuilder.masqueRemoteDns("dns.google", ipv6Enabled = true),
+        )
+        assertEquals(
+            listOf("1.1.1.1", "1.0.0.1") to none,
+            CoreOutboundBuilder.masqueRemoteDns("[2606:4700:4700::1111]", ipv6Enabled = false),
+        )
+    }
+
+    @Test
+    fun aMasqueOutboundPassesTheCoreOnlyTheRemoteDnsServersItTakes() {
+        // "Enable IPv6" reads as on, as the empty store has it. No entry is left out here: that is logged, and
+        // android.util.Log has no stand-in in this class.
+        val masque = ProfileItem.create(EConfigType.MASQUE).apply {
+            server = "162.159.198.1"
+            serverPort = "443"
+            remoteDNS = "[2606:4700:4700::1111], 9.9.9.9"
+        }
+        assertEquals(listOf("2606:4700:4700::1111", "9.9.9.9"), CoreOutboundBuilder.convert(masque)?.settings?.remoteDNS)
+    }
+
     /** A socks or http profile on an address, so its outbound is built without reading the settings store. */
     private fun maskedOutbound(type: EConfigType, finalMask: String?): OutboundBean? {
         val profile = ProfileItem.create(type).apply {

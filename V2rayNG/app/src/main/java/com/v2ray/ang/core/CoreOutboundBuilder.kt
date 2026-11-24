@@ -362,7 +362,27 @@ object CoreOutboundBuilder {
      * IPv6 address without its brackets, the IPv4 ones alone when IPv6 is off, each its own entry; and when none is
      * left, the default ones, see [AppConfig.WIREGUARD_LOCAL_REMOTE_DNS], split as well.
      */
-    internal fun wireguardRemoteDns(remoteDNS: String?, ipv6Enabled: Boolean): Pair<List<String>, List<String>> {
+    internal fun wireguardRemoteDns(remoteDNS: String?, ipv6Enabled: Boolean): Pair<List<String>, List<String>> =
+        remoteDnsServers(remoteDNS, AppConfig.WIREGUARD_LOCAL_REMOTE_DNS, ipv6Enabled)
+
+    /**
+     * PattNG: the remote DNS servers of a MASQUE outbound, and the entries of [remoteDNS] left out, as for WireGuard,
+     * see [wireguardRemoteDns]: the core parses them as it parses WireGuard's, and refuses the whole configuration as
+     * well on anything netip.ParseAddr refuses. When none is left, the default ones of MASQUE, see
+     * [AppConfig.MASQUE_LOCAL_REMOTE_DNS].
+     */
+    internal fun masqueRemoteDns(remoteDNS: String?, ipv6Enabled: Boolean): Pair<List<String>, List<String>> =
+        remoteDnsServers(remoteDNS, AppConfig.MASQUE_LOCAL_REMOTE_DNS, ipv6Enabled)
+
+    /**
+     * The servers of [remoteDNS] the core takes, or else those of [defaults], and the entries left out, see
+     * [wireguardRemoteDns].
+     */
+    private fun remoteDnsServers(
+        remoteDNS: String?,
+        defaults: String,
+        ipv6Enabled: Boolean,
+    ): Pair<List<String>, List<String>> {
         fun entries(list: String?) = list?.split(",").orEmpty().map { it.trim() }.filter { it.isNotEmpty() }
         fun address(entry: String): String? {
             val bare = if (entry.startsWith("[") && entry.endsWith("]")) entry.substring(1, entry.length - 1) else entry
@@ -372,7 +392,7 @@ object CoreOutboundBuilder {
         val read = entries(remoteDNS).map { entry -> entry to address(entry) }
         val leftOut = read.filter { it.second == null }.map { it.first }
         val usable = read.mapNotNull { it.second }.filter { ipv6Enabled || !it.contains(":") }
-        val servers = usable.ifEmpty { entries(AppConfig.WIREGUARD_LOCAL_REMOTE_DNS).filter { ipv6Enabled || !it.contains(":") } }
+        val servers = usable.ifEmpty { entries(defaults).filter { ipv6Enabled || !it.contains(":") } }
         return servers to leftOut
     }
 
@@ -546,20 +566,17 @@ object CoreOutboundBuilder {
             ipv4Addresses.ifEmpty { listOf(AppConfig.MASQUE_LOCAL_ADDRESS_V4) }
         }
 
-        val defaultDns = AppConfig.MASQUE_LOCAL_REMOTE_DNS.split(",").map { it.trim() }
-
-        val rawDNS = profileItem.remoteDNS
-            ?.split(",")
-            ?.map { it.trim() }
-            ?.filter { it.isNotEmpty() }
-            ?.ifEmpty { null }
-            ?: defaultDns
-
-        val remotes = if (MmkvManager.decodeSettingsBool(AppConfig.PREF_IPV6_ENABLED, AppConfig.DEFAULT_IPV6_ENABLED)) {
-            rawDNS
-        } else {
-            rawDNS.filter { !it.contains(":") }
-                .ifEmpty { defaultDns.filter { !it.contains(":") } }
+        // PattNG: only what the core takes as a remote DNS server, see masqueRemoteDns
+        val (remotes, leftOut) = masqueRemoteDns(
+            profileItem.remoteDNS,
+            ipv6Enabled = MmkvManager.decodeSettingsBool(AppConfig.PREF_IPV6_ENABLED, AppConfig.DEFAULT_IPV6_ENABLED),
+        )
+        if (leftOut.isNotEmpty()) {
+            // The entries themselves stay out of the log: one may be a DNS URL with an account in it.
+            LogUtil.w(
+                AppConfig.TAG,
+                "CoreOutboundBuilder: MASQUE profile '${profileItem.remarks}': ${leftOut.size} remoteDNS entries left out, not IP addresses"
+            )
         }
 
         outboundBean.settings?.let { masque ->
