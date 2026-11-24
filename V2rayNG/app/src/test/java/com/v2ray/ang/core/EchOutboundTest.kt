@@ -8,6 +8,7 @@ import com.v2ray.ang.dto.V2rayConfig
 import com.v2ray.ang.dto.V2rayConfig.OutboundBean
 import com.v2ray.ang.dto.entities.ProfileItem
 import com.v2ray.ang.enums.EConfigType
+import com.v2ray.ang.fmt.CustomOutboundFmt
 import com.v2ray.ang.util.JsonUtil
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -243,6 +244,19 @@ class EchOutboundTest {
             assertEquals(taken, EchOutbound.takes(tlsOutbound(AppConfig.TAG_EXIT_NODE, ech), tags), ech)
         }
         assertFalse(EchOutbound.takes(tlsOutbound(AppConfig.TAG_EXIT_NODE, """{"tag": "ech", "protocol": "freedom"}""", echConfigList = null), tags))
+    }
+
+    @Test
+    fun serialize_putsACustomOutboundInAsWrittenWithWhatTheAppChanged() {
+        val written = """{"tag": "proxy", "protocol": "freedom",
+            "settings": {"fragment": {"packets": "tlshello", "length": "100-200"}},
+            "streamSettings": {"sockopt": {"tcpKeepAliveInterval": 15}}}"""
+        val custom = CustomOutboundFmt.toOutbound(written)!!.apply { tag = "proxy-custom" }
+        val tls = tlsOutbound("proxy", """{"tag": "ech", "protocol": "freedom"}""")
+        val outbounds = outboundsOf(EchOutbound.serialize(config(tls, custom)))
+        // In its place, before the outbounds appended, as written but for the tag the app gave it.
+        assertEquals(listOf("proxy", "proxy-custom", AppConfig.TAG_DIRECT, "ech"), tagsOf(outbounds))
+        assertEquals(json(written).apply { addProperty("tag", "proxy-custom") }, outbounds[1].asJsonObject)
     }
 
     private companion object {

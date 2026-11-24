@@ -16,6 +16,7 @@ import com.v2ray.ang.enums.BalancerStrategyType
 import com.v2ray.ang.enums.CoreResolvedType
 import com.v2ray.ang.enums.EConfigType
 import com.v2ray.ang.extension.isNotNullEmpty
+import com.v2ray.ang.fmt.CustomOutboundFmt
 import com.v2ray.ang.handler.MmkvManager
 import com.v2ray.ang.handler.SettingsManager
 import com.v2ray.ang.util.HttpUtil
@@ -1563,7 +1564,8 @@ object CoreConfigManager {
     ): V2rayConfig.OutboundBean? {
         if (entry.profile.configType == EConfigType.CUSTOM_OUTBOUND) {
             MmkvManager.decodeServerRaw(entry.guid)?.let {
-                return JsonUtil.fromJsonSafe(it, V2rayConfig.OutboundBean::class.java)
+                // PattNG: carrying the outbound as written, which goes into the configuration, see CustomOutboundFmt
+                return CustomOutboundFmt.toOutbound(it)
             }
             return null
 

@@ -8,6 +8,7 @@ import com.v2ray.ang.dto.V2rayConfig
 import com.v2ray.ang.dto.V2rayConfig.OutboundBean
 import com.v2ray.ang.dto.entities.ProfileItem
 import com.v2ray.ang.enums.EConfigType
+import com.v2ray.ang.fmt.CustomOutboundFmt
 import com.v2ray.ang.util.JsonUtil
 
 /**
@@ -64,6 +65,9 @@ object EchOutbound {
      * profiles in one configuration. A tag as written that another outbound already has is a conflict
      * rather than a redirect of the ECH config query, and an ECH outbound the editor never checked, as
      * an imported one may be, fails the configuration rather than letting the query go direct.
+     *
+     * An outbound read from a custom outbound goes in as its profile stores it, with what the app
+     * changed on it, see CustomOutboundFmt.asWritten.
      */
     fun serialize(config: V2rayConfig): Result {
         val usedTags = config.outbounds.map { it.tag }.toSet()
@@ -80,9 +84,14 @@ object EchOutbound {
         linked.firstOrNull { it.second in usedTags }?.let { return Result.TagConflict(it.second) }
 
         val content = JsonUtil.toJsonPretty(config).orEmpty()
-        if (linked.isEmpty()) return Result.Done(content)
+        val written = config.outbounds.withIndex()
+            .mapNotNull { (index, outbound) -> outbound.customOutbound?.let { index to it } }
+        if (linked.isEmpty() && written.isEmpty()) return Result.Done(content)
         val json = parse(content) ?: error("The generated configuration is not a JSON object")
         val outbounds = json.get("outbounds") as? JsonArray ?: JsonArray().also { json.add("outbounds", it) }
+        for ((index, raw) in written) {
+            outbounds.set(index, CustomOutboundFmt.asWritten(raw, outbounds.get(index).asJsonObject))
+        }
         for ((echOutbound, tag) in linked) {
             echOutbound.addProperty("tag", tag)
             outbounds.add(echOutbound)

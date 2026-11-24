@@ -365,6 +365,14 @@ data class V2rayConfig(
             var xudpProxyUDP443: String? = null,
         )
 
+        /**
+         * PattNG: the JSON of a custom outbound, as its profile stores it, that this outbound was read from. It goes
+         * into the configuration in place of this outbound's JSON, with what the app changed on this outbound, see
+         * CustomOutboundFmt.asWritten. Never serialized.
+         */
+        @Transient
+        var customOutbound: String? = null
+
         fun getServerAddress(): String? {
             return if (protocol.equals(EConfigType.WIREGUARD.name, true)) {
                 settings?.peers?.firstOrNull()?.endpoint?.substringBeforeLast(":")
