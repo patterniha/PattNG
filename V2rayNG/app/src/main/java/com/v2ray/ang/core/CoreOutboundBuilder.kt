@@ -538,7 +538,8 @@ object CoreOutboundBuilder {
             ?.ifEmpty { null }
             ?: listOf(AppConfig.MASQUE_LOCAL_ADDRESS_V4, AppConfig.MASQUE_LOCAL_ADDRESS_V6)
 
-        val addresses = if (MmkvManager.decodeSettingsBool(AppConfig.PREF_IPV6_ENABLED) == true) {
+        // PattNG: "Enable IPv6" is on while no value is stored, see AppConfig.DEFAULT_IPV6_ENABLED.
+        val addresses = if (MmkvManager.decodeSettingsBool(AppConfig.PREF_IPV6_ENABLED, AppConfig.DEFAULT_IPV6_ENABLED)) {
             rawAddresses
         } else {
             val ipv4Addresses = rawAddresses.filter { !it.contains(":") }
@@ -554,7 +555,7 @@ object CoreOutboundBuilder {
             ?.ifEmpty { null }
             ?: defaultDns
 
-        val remotes = if (MmkvManager.decodeSettingsBool(AppConfig.PREF_IPV6_ENABLED) == true) {
+        val remotes = if (MmkvManager.decodeSettingsBool(AppConfig.PREF_IPV6_ENABLED, AppConfig.DEFAULT_IPV6_ENABLED)) {
             rawDNS
         } else {
             rawDNS.filter { !it.contains(":") }

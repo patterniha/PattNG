@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import java.io.File
 import java.net.URI
 
 /**
@@ -32,6 +33,21 @@ class UtilsTest {
     fun ipv6IsOnByDefault() {
         // PattNG: "Enable IPv6" reads as this while no value is stored.
         assertTrue(AppConfig.DEFAULT_IPV6_ENABLED)
+    }
+
+    @Test
+    fun everyReadOfEnableIpv6TakesItsDefault() {
+        // PattNG: so that "Enable IPv6" reads as on everywhere while no value is stored. Upstream's default is off, and
+        // its code reads the setting without one: the MASQUE outbound did after the merge of 2026-11-11, and left out
+        // its IPv6 address and DNS servers while the VPN routed IPv6.
+        val sources = File("src/main/java")
+        assertTrue(sources.isDirectory, "${sources.absolutePath} is where the unit tests run from")
+        val read = Regex("""\b(?:decodeSettingsBool|rememberMmkvBool)\(\s*(?:AppConfig\.)?PREF_IPV6_ENABLED\b([^)]*)\)""")
+        val reads = sources.walk().filter { it.isFile && it.extension == "kt" }.flatMap { file ->
+            read.findAll(file.readText()).map { "${file.name}: ${it.value}" to it.groupValues[1] }
+        }.toList()
+        assertTrue(reads.isNotEmpty(), "no read of Enable IPv6 found under ${sources.absolutePath}")
+        assertEquals(emptyList<String>(), reads.filterNot { "DEFAULT_IPV6_ENABLED" in it.second }.map { it.first })
     }
 
     @Test
