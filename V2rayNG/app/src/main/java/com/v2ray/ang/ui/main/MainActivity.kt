@@ -339,7 +339,9 @@ abstract class BaseMainActivity : HelperBaseComponentActivity() {
 class MainActivity : BaseMainActivity() {
     override fun televisionDestination(): Intent? {
         val isTelevision = resources.configuration.uiMode and Configuration.UI_MODE_TYPE_MASK == Configuration.UI_MODE_TYPE_TELEVISION
-        return if (isTelevision) Intent(this, TvMainActivity::class.java) else null
+        // PattNG: with the extras of the intent, so that an import's refresh (EXTRA_REFRESH_AFTER_IMPORT) reaches an open
+        // TV screen too, as it does the phone one.
+        return if (isTelevision) Intent(this, TvMainActivity::class.java).putExtras(intent) else null
     }
 
     @Composable
