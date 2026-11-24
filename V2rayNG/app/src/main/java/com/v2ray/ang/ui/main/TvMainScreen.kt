@@ -24,6 +24,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -34,6 +35,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.tv.material3.DrawerValue as TvDrawerValue
 import androidx.tv.material3.rememberDrawerState as rememberTvDrawerState
 import com.v2ray.ang.R
+import com.v2ray.ang.extension.toastError
 import com.v2ray.ang.ui.compose.rememberDpadFocusTargets
 import com.v2ray.ang.ui.compose.rememberLazyDpadFocus
 import com.v2ray.ang.ui.compose.requestFocusWhenReady
@@ -84,6 +86,19 @@ internal fun TvMainScreen(
 ) {
     val uiState by mainViewModel.uiState.collectAsStateWithLifecycle()
     val isLoading by mainViewModel.isLoading.collectAsStateWithLifecycle()
+
+    // PattNG: a move of a profile the storage refused is told once, as on the phone, see MainScreen; the groups are shown
+    // anew, as stored.
+    val context = LocalContext.current
+    val failureText = stringResource(R.string.toast_failure)
+    val moveRefusal = uiState.moveRefusal
+    LaunchedEffect(moveRefusal) {
+        if (moveRefusal != null) {
+            context.toastError(failureText)
+            onAction(MainAction.MoveRefusalShown(moveRefusal))
+        }
+    }
+
     val groups = uiState.groups
     val groupIds = groups.map { it.id }
     val selectedGroupIndex = groups.indexOfFirst { it.id == uiState.selectedGroupId }.coerceAtLeast(0)
