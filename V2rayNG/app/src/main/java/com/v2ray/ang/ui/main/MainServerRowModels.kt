@@ -6,6 +6,7 @@ import com.v2ray.ang.dto.entities.ServersCache
 import com.v2ray.ang.enums.AetherProtocol
 import com.v2ray.ang.enums.EConfigType
 import com.v2ray.ang.extension.isComplexType
+import com.v2ray.ang.extension.moveItem
 import com.v2ray.ang.extension.nullIfBlank
 import com.v2ray.ang.handler.AngConfigManager
 
@@ -22,7 +23,22 @@ internal data class ServerRowUiModel(
 internal data class ServerGroupUiState(
     val servers: List<ServersCache> = emptyList(),
     val rows: List<ServerRowUiModel> = emptyList(),
-)
+    val isFiltered: Boolean = false,
+) {
+    fun canReorder(groupId: String, searchQuery: String): Boolean =
+        groupId.isNotEmpty() && searchQuery.isEmpty() && !isFiltered
+
+    fun moveServer(fromGuid: String, toGuid: String): ServerGroupUiState? {
+        if (isFiltered) return null
+        val from = servers.indexOfFirst { it.guid == fromGuid }
+        val to = servers.indexOfFirst { it.guid == toGuid }
+        if (from == to || from < 0 || to < 0) return null
+        return ServerGroupUiState(
+            servers = servers.toMutableList().apply { moveItem(from, to) },
+            rows = rows.toMutableList().apply { moveItem(from, to) }
+        )
+    }
+}
 
 internal fun buildServerRowUiModel(
     server: ServersCache,

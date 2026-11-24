@@ -23,7 +23,7 @@ class V2rayNShareItemTest {
             V2rayNShareItem::class.java,
         )
 
-        val profile = item.toProfileItem()
+        val profile = item.toProfileItem()!!
 
         assertEquals(EConfigType.VLESS, profile.configType)
         assertEquals("cloudflare-ech.com+https://1.1.1.1/dns-query", profile.echConfigList)
@@ -44,7 +44,7 @@ class V2rayNShareItemTest {
             V2rayNShareItem::class.java,
         )
 
-        val profile = item.toProfileItem()
+        val profile = item.toProfileItem()!!
 
         assertEquals("TLS_AES_128_GCM_SHA256", profile.cipherSuites)
         assertEquals("X25519MLKEM768,X25519", profile.curvePreferences)

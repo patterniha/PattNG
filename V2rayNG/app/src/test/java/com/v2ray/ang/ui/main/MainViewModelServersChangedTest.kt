@@ -2,8 +2,11 @@ package com.v2ray.ang.ui.main
 
 import android.app.Application
 import android.graphics.Bitmap
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStore
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import com.v2ray.ang.dto.ConnectionTestResult
 import com.v2ray.ang.dto.SubscriptionUpdateResult
 import com.v2ray.ang.dto.TestServiceMessage
@@ -187,7 +190,7 @@ class MainViewModelServersChangedTest {
     @Test
     fun serversChangedAwayFromTheScreenReloadTheirTab() = runBlocking {
         val source = FakeSource()
-        val viewModel = MainViewModel(mock<Application>(), source)
+        val viewModel = MainViewModel(mock<Application>(), source, SavedStateHandle())
         viewModel.awaitServers("a", "b")
 
         // An update on the subscription page or in the subscription service, or an import, replaced the configs
@@ -202,7 +205,7 @@ class MainViewModelServersChangedTest {
         // PattNG: the service answers the delay and then the IP lookup of one request. A cancel before the delay ends the
         // test; a cancelled IP lookup keeps the delay shown; a reply to an older request changes nothing.
         val source = FakeSource()
-        val viewModel = MainViewModel(mock<Application>(), source)
+        val viewModel = MainViewModel(mock<Application>(), source, SavedStateHandle())
         viewModel.awaitServers("a", "b")
         source.events.send(MainServiceEvent.StateRunning)
         viewModel.awaitStatus(MainStatus.Connected)
@@ -238,7 +241,7 @@ class MainViewModelServersChangedTest {
     fun aMoveIsShownAtOnceAndStoredByTheTwoGuids() = runBlocking {
         val source = FakeSource()
         source.serverGuids = listOf("a", "b", "c")
-        val viewModel = MainViewModel(mock<Application>(), source)
+        val viewModel = MainViewModel(mock<Application>(), source, SavedStateHandle())
         viewModel.awaitServers("a", "b", "c")
 
         viewModel.onAction(MainAction.MoveServer(SUB, "c", "a"))
@@ -255,7 +258,7 @@ class MainViewModelServersChangedTest {
     fun aMoveOfAProfileNotShownOrInTheListOfEveryGroupShowsAndStoresNothing() = runBlocking {
         val source = FakeSource()
         source.showAllGroup = true
-        val viewModel = MainViewModel(mock<Application>(), source)
+        val viewModel = MainViewModel(mock<Application>(), source, SavedStateHandle())
         viewModel.awaitServers("a", "b")
         viewModel.awaitServers("a", "b", groupId = "")
 
@@ -274,7 +277,7 @@ class MainViewModelServersChangedTest {
     fun aMoveWhileTheListIsFilteredKeepsTheProfilesFilteredOutInTheGroup() = runBlocking {
         val source = FakeSource()
         source.serverGuids = listOf("a", "b", "c")
-        val viewModel = MainViewModel(mock<Application>(), source)
+        val viewModel = MainViewModel(mock<Application>(), source, SavedStateHandle())
         viewModel.awaitServers("a", "b", "c")
         // As while a search ends: the list shown is still the filtered one.
         viewModel.filterConfig("^(a|c)$")
@@ -293,7 +296,11 @@ class MainViewModelServersChangedTest {
         val source = FakeSource()
         source.serverGuids = listOf("a", "b", "c")
         val owner = ViewModelStore()
-        val viewModel = ViewModelProvider(owner, MainViewModel.Factory(mock<Application>(), source))[MainViewModel::class.java]
+        // The activity's factory takes the SavedStateHandle from the extras of a SavedStateRegistryOwner, which a bare
+        // store has none of; the view model is made as there otherwise.
+        val viewModel = ViewModelProvider(owner, viewModelFactory {
+            initializer { MainViewModel(mock<Application>(), source, SavedStateHandle()) }
+        })[MainViewModel::class.java]
         viewModel.awaitServers("a", "b", "c")
         source.hold(0)
 
@@ -313,7 +320,7 @@ class MainViewModelServersChangedTest {
     fun aReloadWhileAMoveIsBeingStoredReadsTheGroupOnceTheMoveIsStored() = runBlocking {
         val source = FakeSource()
         source.serverGuids = listOf("a", "b", "c")
-        val viewModel = MainViewModel(mock<Application>(), source)
+        val viewModel = MainViewModel(mock<Application>(), source, SavedStateHandle())
         viewModel.awaitServers("a", "b", "c")
         source.hold(0)
 
@@ -336,7 +343,7 @@ class MainViewModelServersChangedTest {
     fun aMoveTheStorageRefusesIsToldAndTheGroupsShownAsStored() = runBlocking {
         val source = FakeSource()
         source.serverGuids = listOf("a", "b", "c")
-        val viewModel = MainViewModel(mock<Application>(), source)
+        val viewModel = MainViewModel(mock<Application>(), source, SavedStateHandle())
         viewModel.awaitServers("a", "b", "c")
         assertNull(viewModel.uiState.value.moveRefusal)
         source.refusals.set(1)
@@ -354,7 +361,7 @@ class MainViewModelServersChangedTest {
     fun aRefusalSetAgainRightAfterTheLastWasToldIsToldToo() = runBlocking {
         val source = FakeSource()
         source.serverGuids = listOf("a", "b", "c")
-        val viewModel = MainViewModel(mock<Application>(), source)
+        val viewModel = MainViewModel(mock<Application>(), source, SavedStateHandle())
         viewModel.awaitServers("a", "b", "c")
         source.refusals.set(2)
 
@@ -376,7 +383,7 @@ class MainViewModelServersChangedTest {
     fun aRefusedMoveIsToldOnceTheMovesQueuedBehindItAreStoredAndNotAgain() = runBlocking {
         val source = FakeSource()
         source.serverGuids = listOf("a", "b", "c")
-        val viewModel = MainViewModel(mock<Application>(), source)
+        val viewModel = MainViewModel(mock<Application>(), source, SavedStateHandle())
         viewModel.awaitServers("a", "b", "c")
         source.refusals.set(1)
         source.hold(0)
@@ -407,7 +414,7 @@ class MainViewModelServersChangedTest {
     fun aReadingTakenBeforeAMoveShownWasStoredIsHeldBackAndTheGroupShownAnewOnceItIs() = runBlocking {
         val source = FakeSource()
         source.serverGuids = listOf("a", "b", "c")
-        val viewModel = MainViewModel(mock<Application>(), source)
+        val viewModel = MainViewModel(mock<Application>(), source, SavedStateHandle())
         viewModel.awaitServers("a", "b", "c")
         val readGate = CountDownLatch(1)
         source.holdNextListRead = readGate
@@ -459,7 +466,7 @@ class MainViewModelServersChangedTest {
     fun aReadingFilteredBeforeTheSearchChangedIsTakenAnewForTheNewOne() = runBlocking {
         val source = FakeSource()
         source.showAllGroup = true
-        val viewModel = MainViewModel(mock<Application>(), source)
+        val viewModel = MainViewModel(mock<Application>(), source, SavedStateHandle())
         viewModel.awaitServers("a", "b", groupId = "")
         source.holdNextAllRowsRead = CountDownLatch(1)
         val gate = source.holdNextAllRowsRead!!
@@ -481,7 +488,7 @@ class MainViewModelServersChangedTest {
     fun aReadingOlderThanTheOneShownIsNotShownOverIt() = runBlocking {
         val source = FakeSource()
         source.showAllGroup = true
-        val viewModel = MainViewModel(mock<Application>(), source)
+        val viewModel = MainViewModel(mock<Application>(), source, SavedStateHandle())
         viewModel.awaitServers("a", "b", groupId = "")
         source.holdNextAllRowsRead = CountDownLatch(1)
         val gate = source.holdNextAllRowsRead!!
@@ -504,7 +511,7 @@ class MainViewModelServersChangedTest {
     fun aRefusalWithAReadingHeldBackIsToldAndTheGroupsShownAsStored() = runBlocking {
         val source = FakeSource()
         source.serverGuids = listOf("a", "b", "c")
-        val viewModel = MainViewModel(mock<Application>(), source)
+        val viewModel = MainViewModel(mock<Application>(), source, SavedStateHandle())
         viewModel.awaitServers("a", "b", "c")
         source.refusals.set(1)
         val readGate = CountDownLatch(1)
@@ -537,7 +544,7 @@ class MainViewModelServersChangedTest {
     fun theFilterShowingTheCachedListWhileAMoveIsBeingStoredIsHeldBackUntilItIs() = runBlocking {
         val source = FakeSource()
         source.serverGuids = listOf("a", "b", "c")
-        val viewModel = MainViewModel(mock<Application>(), source)
+        val viewModel = MainViewModel(mock<Application>(), source, SavedStateHandle())
         viewModel.awaitServers("a", "b", "c")
         source.hold(0)
 

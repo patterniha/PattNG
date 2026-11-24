@@ -68,7 +68,6 @@ import com.v2ray.ang.util.Utils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 
@@ -154,33 +153,13 @@ class RoutingSettingActivity : HelperBaseComponentActivity() {
             toastError(R.string.toast_failure)
             return
         }
-        lifecycleScope.launch(Dispatchers.IO) {
-            val result = SettingsManager.resetRoutingRulesets(clipboard)
-            withContext(Dispatchers.Main) {
-                if (result) {
-                    viewModel.reload()
-                    toastSuccess(R.string.toast_success)
-                } else {
-                    toastError(R.string.toast_failure)
-                }
-            }
-        }
+        viewModel.importRulesets(clipboard)
     }
 
     private fun importQRcode() {
         launchQRCodeScanner { scanResult ->
             if (scanResult != null) {
-                lifecycleScope.launch(Dispatchers.IO) {
-                    val result = SettingsManager.resetRoutingRulesets(scanResult)
-                    withContext(Dispatchers.Main) {
-                        if (result) {
-                            viewModel.reload()
-                            toastSuccess(R.string.toast_success)
-                        } else {
-                            toastError(R.string.toast_failure)
-                        }
-                    }
-                }
+                viewModel.importRulesets(scanResult)
             }
         }
     }
@@ -213,6 +192,7 @@ fun RoutingSettingScreen(
     onExportClipboard: () -> Unit
 ) {
     val rulesets by viewModel.rulesetsFlow.collectAsStateWithLifecycle()
+    val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val domainStrategy by domainStrategyState.collectAsState()
     var showMenu by remember { mutableStateOf(false) }
     var showPresetDialog by remember { mutableStateOf(false) }
@@ -231,6 +211,7 @@ fun RoutingSettingScreen(
             AppTopBar(
                 title = stringResource(R.string.routing_settings_title),
                 onBackClick = onBackClick,
+                isLoading = isLoading,
                 actions = {
                     IconButton(onClick = onAddRule) {
                         Icon(

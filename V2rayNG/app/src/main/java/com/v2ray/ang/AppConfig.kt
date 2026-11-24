@@ -122,6 +122,9 @@ object AppConfig {
     /** Messages for a running SubscriptionUpdateService, which a broadcast delivers without starting it. */
     const val BROADCAST_ACTION_SUBSCRIPTION = "$ANG_PACKAGE.action.subscription"
 
+    /** Intent extras. */
+    const val EXTRA_REFRESH_AFTER_IMPORT = "$ANG_PACKAGE.extra.REFRESH_AFTER_IMPORT"
+
     /** Tasker extras. */
     const val TASKER_EXTRA_BUNDLE = "com.twofortyfouram.locale.intent.extra.BUNDLE"
     const val TASKER_EXTRA_STRING_BLURB = "com.twofortyfouram.locale.intent.extra.BLURB"
@@ -308,6 +311,7 @@ object AppConfig {
     const val ROOT_IPTABLES_CHAIN = "CORE_FILTER"
     const val ROOT_FWMARK = 255            // defensive RETURN tag; hev's only upstream socket is loopback (already bypassed)
     const val ROOT_MARK_ROUTE = 1          // packets we want pushed into the tun device
+    const val ROOT_DNS_TETHER_UID = 1052   // AID_DNS_TETHER: netd forwards hotspot clients' DNS under this uid
     const val ROOT_ROUTE_TABLE = 2024
     const val ROOT_RULE_PRIORITY = 1000
     const val ROOT_TUN_NAME = "utun7788"

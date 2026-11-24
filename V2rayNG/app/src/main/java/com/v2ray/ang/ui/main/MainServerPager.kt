@@ -24,7 +24,9 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
@@ -77,8 +79,6 @@ fun GroupPagerPage(
     locateTarget: LocateTarget?,
     doubleColumnDisplay: Boolean,
     searchQuery: String,
-    lazyListStates: MutableMap<String, LazyListState>,
-    lazyGridStates: MutableMap<String, LazyGridState>,
     onSelectServer: (String) -> Unit,
     onEditServer: (String, ProfileItem) -> Unit,
     onShareServer: (String, ProfileItem) -> Unit,
@@ -93,7 +93,8 @@ fun GroupPagerPage(
         mainViewModel.serverGroupState(groupId)
     }
     val groupState by groupStateFlow.collectAsStateWithLifecycle()
-    val canReorder = groupId.isNotEmpty() && searchQuery.isEmpty()
+    val canReorder = groupState.canReorder(groupId, searchQuery)
+    val groupLocateTarget = locateTarget?.takeIf { it.groupId == groupId }
     val actions = remember(
         onSelectServer,
         onEditServer,
@@ -128,16 +129,13 @@ fun GroupPagerPage(
         ServerListPage(
             rows = groupState.rows,
             selectedGuid = selectedGuid,
-            locateTarget = locateTarget?.takeIf { it.groupId == groupId },
+            locateTarget = groupLocateTarget,
             canReorder = canReorder,
             doubleColumnDisplay = doubleColumnDisplay,
-            groupId = groupId,
-            lazyListStates = lazyListStates,
-            lazyGridStates = lazyGridStates,
             actions = actions,
-            onLocateHandled = { mainViewModel.onAction(MainAction.LocateHandled) },
-            onMoveServer = { fromGuid, toGuid ->
-                mainViewModel.onAction(MainAction.MoveServer(groupId, fromGuid, toGuid))
+            onLocateHandled = { groupLocateTarget?.let { mainViewModel.onAction(MainAction.LocateHandled(it)) } },
+            onMoveServer = { from, to ->
+                mainViewModel.onAction(MainAction.MoveServer(groupId, from, to))
             },
             contentPadding = listPadding
         )
@@ -170,22 +168,21 @@ private fun ServerListPage(
     locateTarget: LocateTarget?,
     canReorder: Boolean,
     doubleColumnDisplay: Boolean,
-    groupId: String,
-    lazyListStates: MutableMap<String, LazyListState>,
-    lazyGridStates: MutableMap<String, LazyGridState>,
     actions: ServerRowActions,
     onLocateHandled: () -> Unit,
-    onMoveServer: (fromGuid: String, toGuid: String) -> Unit,
+    onMoveServer: (String, String) -> Unit,
     contentPadding: PaddingValues
 ) {
+    fun move(from: Any?, to: Any?) {
+        if (from is String && to is String) onMoveServer(from, to)
+    }
+
+    val listState = rememberLazyListState()
+    val gridState = rememberLazyGridState()
     if (doubleColumnDisplay) {
-        val gridState = remember(groupId) {
-            lazyGridStates.getOrPut(groupId) { LazyGridState() }
-        }
         val reorderableGridState = if (canReorder) {
             rememberReorderableLazyGridState(gridState) { from, to ->
-                // PattNG: by the keys of the rows, their guids, not by their positions.
-                onMoveServer(from.key as? String ?: return@rememberReorderableLazyGridState, to.key as? String ?: return@rememberReorderableLazyGridState)
+                move(from.key, to.key)
             }
         } else null
 
@@ -224,13 +221,9 @@ private fun ServerListPage(
             }
         }
     } else {
-        val listState = remember(groupId) {
-            lazyListStates.getOrPut(groupId) { LazyListState() }
-        }
         val reorderableState = if (canReorder) {
             rememberReorderableLazyListState(listState) { from, to ->
-                // PattNG: by the keys of the rows, their guids, not by their positions.
-                onMoveServer(from.key as? String ?: return@rememberReorderableLazyListState, to.key as? String ?: return@rememberReorderableLazyListState)
+                move(from.key, to.key)
             }
         } else null
 
