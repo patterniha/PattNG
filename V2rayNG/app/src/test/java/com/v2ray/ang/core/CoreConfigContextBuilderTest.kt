@@ -1,5 +1,6 @@
 package com.v2ray.ang.core
 
+import com.v2ray.ang.AppConfig
 import com.v2ray.ang.R
 import com.v2ray.ang.dto.ByName
 import com.v2ray.ang.dto.CoreConfigContext
@@ -12,13 +13,16 @@ import com.v2ray.ang.dto.CoreConfigContext.UnresolvedName.Reason.NO_SERVER
 import com.v2ray.ang.dto.CoreConfigContext.UnresolvedName.Reason.NOT_FOUND
 import com.v2ray.ang.dto.CoreConfigContext.UnresolvedName.Reason.SEVERAL
 import com.v2ray.ang.dto.entities.ProfileItem
+import com.v2ray.ang.dto.entities.RulesetItem
 import com.v2ray.ang.enums.AetherProtocol
 import com.v2ray.ang.enums.EConfigType
+import com.v2ray.ang.util.JsonUtil
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import java.io.File
 
 class CoreConfigContextBuilderTest {
 
@@ -283,5 +287,43 @@ class CoreConfigContextBuilderTest {
         assertNull(CoreConfigContextBuilder.fallbackNameOf(group("   ")))
         assertNull(CoreConfigContextBuilder.fallbackNameOf(group("")))
         assertNull(CoreConfigContextBuilder.fallbackNameOf(group(null)))
+    }
+
+    @Test
+    fun theDnsRegionIsThatOfTheLastTwoRulesWhenEachHoldsItAlone() {
+        fun rule(ip: List<String>? = null, domain: List<String>? = null) =
+            RulesetItem(ip = ip, domain = domain, outboundTag = AppConfig.TAG_DIRECT)
+        fun regionOf(vararg rules: RulesetItem) = CoreConfigContextBuilder.calculateRoutingRegionForDns(rules.toList())
+        assertEquals(
+            "cn",
+            regionOf(rule(domain = listOf("geosite:private")), rule(ip = listOf("geoip:cn")), rule(domain = listOf("geosite:cn"))),
+        )
+        // Two regions, an IP or domain other than a region's, the rules the other way round: none.
+        assertNull(regionOf(rule(ip = listOf("geoip:cn")), rule(domain = listOf("geosite:ru"))))
+        assertNull(regionOf(rule(ip = listOf("10.0.0.0/8")), rule(domain = listOf("10.0.0.0/8"))))
+        assertNull(regionOf(rule(domain = listOf("geosite:cn")), rule(ip = listOf("geoip:cn"))))
+        // A rule with more than the region, or with an empty list, is none either. Upstream counted the first entry of
+        // a list of two, and threw on an empty one, which failed every configuration.
+        assertNull(
+            regionOf(rule(ip = listOf("geoip:cn", "geoip:private")), rule(domain = listOf("geosite:cn", "geosite:private")))
+        )
+        assertNull(regionOf(rule(ip = listOf("geoip:cn")), rule(domain = emptyList())))
+        assertNull(regionOf(rule(ip = emptyList()), rule(domain = listOf("geosite:cn"))))
+        // Fewer than two rules, or none stored.
+        assertNull(regionOf(rule(domain = listOf("geosite:cn"))))
+        assertNull(CoreConfigContextBuilder.calculateRoutingRegionForDns(null))
+    }
+
+    @Test
+    fun theChinaPresetAloneHasADnsRegion() {
+        fun regionOf(preset: String) = CoreConfigContextBuilder.calculateRoutingRegionForDns(
+            JsonUtil.fromJson(File("src/main/assets/$preset").readText(), Array<RulesetItem>::class.java)!!.toList()
+        )
+        assertEquals("cn", regionOf("custom_routing_white"))
+        // The Iran and Russia presets end with their domains, then their IPs.
+        val others = listOf("custom_routing_white_iran", "custom_routing_white_russia", "custom_routing_black", "custom_routing_global")
+        for (preset in others) {
+            assertNull(regionOf(preset), preset)
+        }
     }
 }

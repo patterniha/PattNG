@@ -6,6 +6,7 @@ import com.v2ray.ang.dto.ByName
 import com.v2ray.ang.dto.CoreConfigContext
 import com.v2ray.ang.dto.entities.ProfileEntry
 import com.v2ray.ang.dto.entities.ProfileItem
+import com.v2ray.ang.dto.entities.RulesetItem
 import com.v2ray.ang.enums.BalancerStrategyType
 import com.v2ray.ang.enums.CoreResolvedType
 import com.v2ray.ang.enums.EConfigType
@@ -386,8 +387,16 @@ object CoreConfigContextBuilder {
         return result
     }
 
-    private fun calculateRoutingRegionForDns(): String? {
-        val rulesetItems = MmkvManager.decodeRoutingRulesets() ?: return null
+    /**
+     * PattNG: [rulesets], the stored routing rulesets unless a test passes its own, give a region only when the
+     * second to last holds ip geoip:X alone and the last domain geosite:X alone. Upstream's checks were statements that
+     * nothing returned: a list of two counted by its first entry, and an empty one threw, which failed every
+     * configuration.
+     */
+    internal fun calculateRoutingRegionForDns(
+        rulesets: List<RulesetItem>? = MmkvManager.decodeRoutingRulesets(),
+    ): String? {
+        val rulesetItems = rulesets ?: return null
         if (rulesetItems.size < 2) {
             return null
         }
@@ -396,22 +405,18 @@ object CoreConfigContextBuilder {
             it.getOrNull(0) to it.getOrNull(1)
         }
         val secondLastValue = secondLast?.ip?.let {
-            if (it.size != 1) {
+            if (it.size != 1 || !it[0].startsWith("geoip:")) {
                 null
+            } else {
+                it[0].substringAfter("geoip:")
             }
-            if (!it[0].startsWith("geoip:")) {
-                null
-            }
-            it[0].substringAfter("geoip:")
         }
         val lastValue = last?.domain?.let {
-            if (it.size != 1) {
+            if (it.size != 1 || !it[0].startsWith("geosite:")) {
                 null
+            } else {
+                it[0].substringAfter("geosite:")
             }
-            if (!it[0].startsWith("geosite:")) {
-                null
-            }
-            it[0].substringAfter("geosite:")
         }
         val region = if (secondLastValue != null && lastValue != null) {
             if (secondLastValue == lastValue) {
