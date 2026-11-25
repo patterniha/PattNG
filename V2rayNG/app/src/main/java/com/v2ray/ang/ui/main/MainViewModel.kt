@@ -9,6 +9,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.R
+import com.v2ray.ang.handler.SpeedtestManager
 import com.v2ray.ang.dto.ConnectionTestResult
 import com.v2ray.ang.dto.GroupMapItem
 import com.v2ray.ang.dto.LocateTarget
@@ -37,6 +38,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -99,6 +101,32 @@ class MainViewModel(
         )
     )
     val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
+
+    /**
+     * The remark of the selected profile, read off the main thread, and read again when the groups change, as an edit
+     * of the profile does. Collected only while a screen shows it.
+     */
+    private val serverNameRefresh = MutableStateFlow(0)
+
+    /** Reads the remark again, for the screen to ask when it comes back from the editor of a profile. */
+    fun refreshSelectedServerName() {
+        serverNameRefresh.value += 1
+    }
+
+    val selectedServerName: StateFlow<String?> = kotlinx.coroutines.flow.combine(
+        _uiState.map { it.selectedGuid to it.groups }.distinctUntilChanged(),
+        serverNameRefresh,
+    ) { key, _ -> key }
+        .map { (guid, _) ->
+            if (guid.isNullOrEmpty()) null
+            else withContext(ioDispatcher) { dataSource.decodeServerConfig(guid)?.remarks }
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    /** Whether the user asked for the change of the service now under way, so that its stop is not a dropped one. */
+    @Volatile
+    private var userRequestedChange = false
+    private var startTimeoutJob: Job? = null
 
     // ---------- Keyword filtering ----------
     private var filterJob: Job? = null
@@ -170,6 +198,32 @@ class MainViewModel(
     init {
         collectServiceEvents()
         setupGroupTab()
+        refreshRealLocation()
+    }
+
+    private var realLocationJob: Job? = null
+    private var realLocationAtNanos = 0L
+
+    /**
+     * Where the user is seen from while no tunnel is up, for the map on the home screen. The answer is kept as a country
+     * code in memory only, never stored or logged, and asked at most once a minute. It waits a moment first so that a
+     * tunnel that is going down is gone and the answer is not the exit's.
+     */
+    private fun refreshRealLocation() {
+        val now = System.nanoTime()
+        if (realLocationJob?.isActive == true) return
+        if (realLocationAtNanos != 0L && now - realLocationAtNanos < 60_000_000_000L && _uiState.value.realCountryCode != null) return
+        realLocationJob = viewModelScope.launch {
+            kotlinx.coroutines.delay(1500)
+            if (_uiState.value.isRunning || _uiState.value.pendingStart) return@launch
+            val code = withContext(Dispatchers.IO) {
+                runCatching { SpeedtestManager.getDirectIPInfo()?.country }.getOrNull()
+            }
+            realLocationAtNanos = System.nanoTime()
+            // A tunnel that came up meanwhile may have answered for the exit: that is not the real place.
+            if (_uiState.value.isRunning || _uiState.value.pendingStart) return@launch
+            normalizeCountryCode(code)?.let { c -> _uiState.update { it.copy(realCountryCode = c) } }
+        }
     }
 
     private fun collectServiceEvents() {
@@ -183,9 +237,10 @@ class MainViewModel(
     private fun handleServiceEvent(event: MainServiceEvent) {
         when (event) {
             MainServiceEvent.StateRunning -> updateRunningState(true, clearTestingText = false)
-            MainServiceEvent.StateNotRunning -> updateRunningState(false, clearTestingText = false)
+            MainServiceEvent.StateNotRunning ->
+                updateRunningState(false, clearTestingText = false, signal = RunningSignal.NOT_RUNNING)
             MainServiceEvent.StateStartSuccess -> {
-                toastSuccess(R.string.toast_services_success)
+                // The home screen shows the connected state; a message on top of it would only repeat it.
                 updateRunningState(true)
             }
 
@@ -197,7 +252,7 @@ class MainViewModel(
                 } else {
                     toastError(R.string.toast_services_failure)
                 }
-                updateRunningState(false)
+                updateRunningState(false, signal = RunningSignal.START_FAILED)
             }
 
             is MainServiceEvent.StateConnecting -> {
@@ -206,11 +261,26 @@ class MainViewModel(
                 }
             }
 
-            MainServiceEvent.StateStopSuccess -> updateRunningState(false)
+            MainServiceEvent.StateStopSuccess -> updateRunningState(false, signal = RunningSignal.STOPPED)
             is MainServiceEvent.MeasureDelayResult -> {
-                // PattNG: the delay, then the IP lookup, of this request only; a late reply to an older one changes nothing.
                 if (!uiState.value.isRunning || !testRequests.answerCurrent(event.requestId)) return
-                _uiState.update { it.copy(isTesting = testRequests.isTesting, status = MainStatus.ConnectionTest(event.result)) }
+                _uiState.update {
+                    it.copy(
+                        isTesting = testRequests.isTesting,
+                        status = MainStatus.ConnectionTest(event.result),
+                        connectionPingMillis = event.result.delayMillis.takeIf { millis -> millis >= 0 }
+                            ?: it.connectionPingMillis,
+                        connectionIpAddress = event.result.ipAddress?.takeIf { ip -> ip.isNotBlank() }
+                            ?: it.connectionIpAddress,
+                        connectionCountryCode = normalizeCountryCode(event.result.country)
+                            ?: it.connectionCountryCode,
+                    )
+                }
+                uiState.value.let {
+                    ConnectionSession.saveFigures(
+                        ConnectionFigures(it.connectionPingMillis, it.connectionIpAddress, it.connectionCountryCode),
+                    )
+                }
             }
 
             is MainServiceEvent.MeasureConfigSuccess -> {
@@ -1071,7 +1141,16 @@ class MainViewModel(
         val requestId = testRequests.beginCurrent()
         _uiState.update { it.copy(isTesting = true, status = MainStatus.Testing) }
         dataSource.testCurrentServerRealPing(requestId)
+        // PattNG: a reply lost on its way (the service restarting, the receiver not yet registered) would leave
+        // "Testing" for good; the request ends here when nothing has answered it, and a late reply is then refused.
+        currentTestTimeoutJob?.cancel()
+        currentTestTimeoutJob = viewModelScope.launch {
+            kotlinx.coroutines.delay(CURRENT_TEST_TIMEOUT_MILLIS)
+            if (testRequests.completeCurrent(requestId)) resetTestStatus()
+        }
     }
+
+    private var currentTestTimeoutJob: Job? = null
 
     private fun onTestsFinished(requestId: String) {
         if (testRequests.completeBulk(requestId) == null) return
@@ -1105,14 +1184,69 @@ class MainViewModel(
     }
 
     // ---------- Running state ----------
-    private fun updateRunningState(running: Boolean, clearTestingText: Boolean = true) {
+    private fun updateRunningState(
+        running: Boolean,
+        clearTestingText: Boolean = true,
+        signal: RunningSignal = if (running) RunningSignal.RUNNING else RunningSignal.NOT_RUNNING,
+    ) {
         if (!running || clearTestingText) testRequests.invalidateCurrent()
+        val userRequested = userRequestedChange
+        val now = System.nanoTime()
+        // The duration and the figures outlive this ViewModel: a screen that comes back finds them where they were.
+        if (!running) {
+            ConnectionSession.clear()
+            refreshRealLocation()
+        }
+        val since = if (running) ConnectionSession.startedAtNanos(now) else null
+        val restored = if (running) ConnectionSession.restoreFigures() else null
         _uiState.update { state ->
             state.copy(
                 isRunning = running,
                 isTesting = testRequests.isTesting,
-                status = runningStatus(state.status, state.isRunning, running, clearTestingText)
+                status = runningStatus(state.status, state.isRunning, running, clearTestingText),
+                pendingStart = HomeConnection.pendingStartAfter(state.pendingStart, signal),
+                connectionIssue = HomeConnection.issueAfter(state.connectionIssue, state.isRunning, signal, userRequested),
+                connectionPingMillis = if (running) state.connectionPingMillis ?: restored?.pingMillis else null,
+                connectionIpAddress = if (running) state.connectionIpAddress ?: restored?.ipAddress else null,
+                connectionCountryCode = if (running) state.connectionCountryCode ?: restored?.countryCode else null,
+                connectedSinceNanos = if (running) state.connectedSinceNanos ?: since else null,
             )
+        }
+        if (signal == RunningSignal.RUNNING || signal == RunningSignal.START_FAILED || signal == RunningSignal.STOPPED) {
+            userRequestedChange = false
+            startTimeoutJob?.cancel()
+            startTimeoutJob = null
+        }
+    }
+
+    /**
+     * The user asked the service to start ([starting]) or to stop, or the app restarts it for the user: what follows is
+     * not a dropped connection, and a start not answered within [HomeConnection.START_TIMEOUT_MILLIS] is shown as
+     * failed. The user is never connected again by this; only the user starts the service.
+     */
+    fun onUserServiceRequest(starting: Boolean) {
+        userRequestedChange = true
+        startTimeoutJob?.cancel()
+        startTimeoutJob = null
+        if (starting) ConnectionSession.clear()
+        _uiState.update {
+            // A restart shows nothing of the old route: the duration and the figures begin again with the new one.
+            if (starting) {
+                it.copy(
+                    pendingStart = true, connectionIssue = null, connectionPingMillis = null,
+                    connectionIpAddress = null, connectionCountryCode = null, connectedSinceNanos = null,
+                )
+            } else {
+                it.copy(pendingStart = false, connectionIssue = null)
+            }
+        }
+        if (starting) {
+            startTimeoutJob = viewModelScope.launch {
+                kotlinx.coroutines.delay(HomeConnection.START_TIMEOUT_MILLIS)
+                if (uiState.value.pendingStart && !uiState.value.isRunning) {
+                    updateRunningState(false, signal = RunningSignal.START_FAILED)
+                }
+            }
         }
     }
 
@@ -1131,6 +1265,7 @@ class MainViewModel(
     internal enum class ReadingFate { SHOW, OVERTAKEN, HOLD_UNTIL_SETTLED, READ_AGAIN }
 
     companion object {
+        private const val CURRENT_TEST_TIMEOUT_MILLIS = 25_000L
         private const val SEARCH_QUERY_KEY = "main_search_query"
         private const val TEST_RESULT_FLUSH_INTERVAL_MS = 500L
 

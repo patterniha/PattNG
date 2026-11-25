@@ -16,6 +16,15 @@ sealed interface MainStatus {
     data class ConnectionTest(val result: ConnectionTestResult) : MainStatus
 }
 
+/** Why a stopped connection is not simply "disconnected" on the home card. */
+enum class ConnectionIssue {
+    /** A start the user asked for failed, or never answered. */
+    StartFailed,
+
+    /** The service was running and stopped without the user asking. */
+    Dropped,
+}
+
 /**
  * Main UI state
  */
@@ -26,6 +35,25 @@ data class MainUiState(
     val isRunning: Boolean = false,
     val isTesting: Boolean = false,
     val status: MainStatus = MainStatus.Disconnected,
+
+    /** A start the user asked for was sent and has not been answered yet. */
+    val pendingStart: Boolean = false,
+    val connectionIssue: ConnectionIssue? = null,
+
+    /** The last delay a test of the running connection measured; null until one did, and once it stops. */
+    val connectionPingMillis: Long? = null,
+
+    /** IP address returned by the latest successful test of the running connection. */
+    val connectionIpAddress: String? = null,
+
+    /** ISO 3166-1 alpha-2 code for the exit IP, when the IP lookup supplies one. */
+    val connectionCountryCode: String? = null,
+
+    /** The country the user is in when no tunnel is up, from a lookup made outside it; memory only, never stored. */
+    val realCountryCode: String? = null,
+
+    /** [System.nanoTime] when the running state began; null while not running. */
+    val connectedSinceNanos: Long? = null,
     val searchQuery: String = "",
     val locateTarget: LocateTarget? = null,
     val confirmRemove: Boolean = false,

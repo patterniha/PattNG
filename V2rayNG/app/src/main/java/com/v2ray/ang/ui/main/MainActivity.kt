@@ -86,7 +86,10 @@ abstract class BaseMainActivity : HelperBaseComponentActivity() {
             val selectedProfileSaved = action == ProfileEditorResult.ACTION_SAVED &&
                     data.getStringExtra(ProfileEditorResult.EXTRA_GUID) == mainViewModel.uiState.value.selectedGuid
             mainViewModel.onAction(MainAction.RefreshGroups)
-            if (restartService || selectedProfileSaved) LauncherManager.restartService(this)
+            if (restartService || selectedProfileSaved) {
+                noteUserRestart()
+                LauncherManager.restartService(this)
+            }
         }
 
     private val settingsActivityLauncher =
@@ -95,7 +98,10 @@ abstract class BaseMainActivity : HelperBaseComponentActivity() {
             val refreshGroups = SettingsChangeManager.consumeSetupGroupTab()
             mainViewModel.refreshUiSettings()
             if (refreshGroups) mainViewModel.onAction(MainAction.RefreshGroups)
-            if (restartService) LauncherManager.restartService(this)
+            if (restartService) {
+                noteUserRestart()
+                LauncherManager.restartService(this)
+            }
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -116,6 +122,8 @@ abstract class BaseMainActivity : HelperBaseComponentActivity() {
         super.onStart()
         // The service can have gone away while the screen was not shown, without a word if its process died.
         mainViewModel.onAction(MainAction.RefreshServiceState)
+        // A profile may have been renamed in its editor while this screen was away.
+        mainViewModel.refreshSelectedServerName()
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -147,7 +155,10 @@ abstract class BaseMainActivity : HelperBaseComponentActivity() {
             MainAction.ImportClipboard -> importClipboard()
             MainAction.ImportConfigLocal -> importConfigLocal()
             is MainAction.ImportManually -> importManually(action.type)
-            MainAction.RestartService -> LauncherManager.restartServiceOrStart(this, ::requestServiceStart)
+            MainAction.RestartService -> {
+                noteUserRestart()
+                LauncherManager.restartServiceOrStart(this, ::requestServiceStart)
+            }
             MainAction.LocateSelectedServer -> mainViewModel.triggerLocateSelectedServer()
             MainAction.Exit -> {
                 LauncherManager.stopService(this)
@@ -210,6 +221,7 @@ abstract class BaseMainActivity : HelperBaseComponentActivity() {
 
     private fun handleFabAction() {
         if (mainViewModel.uiState.value.isRunning) {
+            mainViewModel.onUserServiceRequest(starting = false)
             LauncherManager.stopService(this)
             // A service whose process died takes no stop and answers nothing; asking for its state right
             // after lets that silence show the screen as stopped instead of leaving it connected.
@@ -243,7 +255,13 @@ abstract class BaseMainActivity : HelperBaseComponentActivity() {
         ) {
             checkAndRequestPermission(PermissionType.ACCESS_LOCAL_NETWORK) {}
         }
+        mainViewModel.onUserServiceRequest(starting = true)
         LauncherManager.startService(this)
+    }
+
+    /** A restart the app does for the user: a running service stops and starts again, which is not a dropped one. */
+    private fun noteUserRestart() {
+        mainViewModel.onUserServiceRequest(starting = mainViewModel.uiState.value.isRunning)
     }
 
     private fun importManually(createConfigType: Int) {
@@ -329,6 +347,7 @@ abstract class BaseMainActivity : HelperBaseComponentActivity() {
         val selected = mainViewModel.uiState.value.selectedGuid
         if (guid != selected) {
             mainViewModel.updateSelectedGuid(guid)
+            noteUserRestart()
             LauncherManager.restartService(this)
         }
     }

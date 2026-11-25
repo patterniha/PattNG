@@ -125,7 +125,7 @@ class MainRepository(
         MmkvManager.decodeSettingsBool(AppConfig.PREF_DOUBLE_COLUMN_DISPLAY, false)
 
     override fun isGroupAllDisplayEnabled(): Boolean =
-        MmkvManager.decodeSettingsBool(AppConfig.PREF_GROUP_ALL_DISPLAY)
+        MmkvManager.decodeSettingsBool(AppConfig.PREF_GROUP_ALL_DISPLAY, true)
 
     override fun getString(resId: Int): String = localizedContext.getString(resId)
 

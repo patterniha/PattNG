@@ -346,6 +346,8 @@
     <string name="title_language">语言</string>
     <string name="title_ui_settings">用户界面设置</string>
     <string name="title_pref_ui_mode_night">深色模式</string>
+    <string name="title_pref_reduce_motion">减少动画</string>
+    <string name="summary_pref_reduce_motion">动画更少更轻；省电，适合旧手机。</string>
     <string name="title_pref_dynamic_color">开启莫奈取色</string>
     <string name="summary_pref_dynamic_color">仅在 Android 12+ 设备上工作</string>
     <string name="title_pref_use_hev_tunnel">启用 Hev TUN 功能</string>
@@ -814,6 +816,40 @@
     <string name="sub_info_open_page">打开订阅信息页面</string>
     <string name="sub_info_unlimited">无限制</string>
 
+    <!-- Home connection card -->
+    <string name="home_status_connected">已连接</string>
+    <string name="home_status_connecting">正在连接…</string>
+    <string name="home_status_error">连接失败</string>
+    <string name="home_status_unexpected">连接已断开</string>
+    <string name="home_empty_title">未选择服务器</string>
+    <string name="home_action_choose_server">选择服务器</string>
+    <string name="home_action_retry">重试</string>
+    <string name="home_action_reconnect">重新连接</string>
+    <string name="home_nav_home">首页</string>
+    <string name="home_details_ip">出口 IP</string>
+    <string name="home_details_test_ping">重新测试延迟</string>
+    <string name="home_quick_servers">服务器</string>
+    <string name="home_quick_subscriptions">订阅</string>
+    <string name="home_details_ping">延迟</string>
+    <string name="home_details_duration">时长</string>
+    <string name="home_details_download">下载</string>
+    <string name="home_details_upload">上传</string>
+    <string name="home_details_title">连接详情</string>
+    <string name="home_change_server">点按以更换服务器</string>
+
+    <string name="title_pref_color_palette">配色方案</string>
+    <string name="palette_default">默认</string>
+    <string name="palette_mocha">Mocha</string>
+    <string name="palette_canyon">Canyon</string>
+    <string name="title_pref_card_style">卡片样式</string>
+    <string name="card_style_classic">经典</string>
+    <string name="card_style_glass">玻璃</string>
+    <string name="palette_wheat">Wheat</string>
+    <string name="palette_cobalt">Cobalt</string>
+    <string name="title_pref_home_style">主屏幕样式</string>
+    <string name="home_style_dashboard">仪表盘</string>
+    <string name="home_slide_to_connect">滑动以连接</string>
+    <string name="home_slide_to_disconnect">滑动以断开</string>
     <string name="action_exit">退出</string>
     <string name="action_back">返回</string>
     <string name="action_more">更多</string>

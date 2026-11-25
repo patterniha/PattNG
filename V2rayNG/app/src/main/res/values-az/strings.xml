@@ -346,6 +346,8 @@
     <string name="title_language">Dil</string>
     <string name="title_ui_settings">İstifadəçi interfeysi tənzimləmələri</string>
     <string name="title_pref_ui_mode_night">İstifadəçi interfeysi rejim tənzimləmələri</string>
+    <string name="title_pref_reduce_motion">Animasiyaları azalt</string>
+    <string name="summary_pref_reduce_motion">Daha az və yüngül animasiyalar; batareyaya qənaət edir, köhnə telefonlara uyğundur.</string>
     <string name="title_pref_dynamic_color">Dinamik rəngi aktivləşdir</string>
     <string name="summary_pref_dynamic_color">Yalnız Android 12+ cihazlarında işləyir</string>
     <string name="title_pref_use_hev_tunnel">Hev TUN istifadə et</string>
@@ -817,6 +819,40 @@
     <string name="sub_info_traffic" translatable="false">%1$s / %2$s</string>
     <string name="sub_info_unlimited">Limitsiz</string>
 
+    <!-- Home connection card -->
+    <string name="home_status_connected">Qoşuldu</string>
+    <string name="home_status_connecting">Qoşulur…</string>
+    <string name="home_status_error">Qoşulma uğursuz oldu</string>
+    <string name="home_status_unexpected">Bağlantı kəsildi</string>
+    <string name="home_empty_title">Server seçilməyib</string>
+    <string name="home_action_choose_server">Server seçin</string>
+    <string name="home_action_retry">Yenidən cəhd edin</string>
+    <string name="home_action_reconnect">Yenidən qoşul</string>
+    <string name="home_nav_home">Əsas</string>
+    <string name="home_details_ip">Çıxış IP</string>
+    <string name="home_details_test_ping">Pingi yenidən yoxla</string>
+    <string name="home_quick_servers">Serverlər</string>
+    <string name="home_quick_subscriptions">Abunələr</string>
+    <string name="home_details_ping">Ping</string>
+    <string name="home_details_duration">Müddət</string>
+    <string name="home_details_download">Endirmə</string>
+    <string name="home_details_upload">Yükləmə</string>
+    <string name="home_details_title">Bağlantı təfərrüatları</string>
+    <string name="home_change_server">Serveri dəyişmək üçün toxunun</string>
+
+    <string name="title_pref_color_palette">Rəng palitrası</string>
+    <string name="palette_default">Susmaya görə</string>
+    <string name="palette_mocha">Mocha</string>
+    <string name="palette_canyon">Canyon</string>
+    <string name="title_pref_card_style">Kart üslubu</string>
+    <string name="card_style_classic">Klassik</string>
+    <string name="card_style_glass">Şüşə</string>
+    <string name="palette_wheat">Wheat</string>
+    <string name="palette_cobalt">Cobalt</string>
+    <string name="title_pref_home_style">Ana ekran üslubu</string>
+    <string name="home_style_dashboard">İdarə paneli</string>
+    <string name="home_slide_to_connect">Qoşulmaq üçün sürüşdürün</string>
+    <string name="home_slide_to_disconnect">Ayırmaq üçün sürüşdürün</string>
     <string name="action_exit">Çıxış</string>
     <string name="action_back">Geri</string>
     <string name="action_more">Daha çox</string>

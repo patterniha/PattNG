@@ -25,6 +25,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
+import com.v2ray.ang.ui.compose.LocalReduceMotion
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -37,6 +38,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.LineHeightStyle
@@ -74,6 +76,7 @@ fun MainBottomBar(
     modifier: Modifier = Modifier
 ) {
     val scope = rememberCoroutineScope()
+    val reduceMotion = LocalReduceMotion.current
     val rotationAnim = remember { Animatable(0f) }
     val textLayoutDirection = LocalLayoutDirection.current
 
@@ -112,10 +115,15 @@ fun MainBottomBar(
                 Box(
                     modifier = Modifier
                         .matchParentSize()
-                        .shadow(elevation = 3.dp, shape = CircleShape)
+                        // A shadow is an extra layer to draw; a weak phone goes without it.
+                        .shadow(elevation = if (LocalReduceMotion.current) 0.dp else 3.dp, shape = CircleShape)
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-                        .clickable(onClick = { onAction(MainAction.TestCurrentServer) })
+                        .clickable(
+                            onClickLabel = stringResource(R.string.connection_test_testing),
+                            role = Role.Button,
+                            onClick = { onAction(MainAction.TestCurrentServer) },
+                        )
                 )
                 CompositionLocalProvider(LocalLayoutDirection provides textLayoutDirection) {
                     Box(
@@ -153,7 +161,7 @@ fun MainBottomBar(
                 }
                 FloatingActionButton(
                     onClick = {
-                        if (!isRunning) {
+                        if (!isRunning && !reduceMotion) {
                             scope.launch {
                                 rotationAnim.animateTo(
                                     targetValue = 720f,
