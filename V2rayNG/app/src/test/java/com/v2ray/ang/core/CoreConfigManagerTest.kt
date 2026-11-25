@@ -393,6 +393,9 @@ class CoreConfigManagerTest {
         val configContext = CoreConfigContext(
             context = mock<Context>(),
             guid = "guid",
+            // The region of the China preset, whose last two rules are geoip:cn and geosite:cn, see
+            // CoreConfigContextBuilder.calculateRoutingRegionForDns.
+            routingRegion = "cn",
             routingDomainRules = listOf(
                 CoreConfigContext.RoutingDomainRule(listOf("geosite:google"), AppConfig.TAG_PROXY),
                 CoreConfigContext.RoutingDomainRule(listOf(AppConfig.GEOSITE_CN), AppConfig.TAG_DIRECT),
@@ -401,7 +404,7 @@ class CoreConfigManagerTest {
         val remoteDns = listOf("https://8.8.8.8/dns-query")
         val domesticDns = listOf("223.5.5.5", "119.29.29.29")
         val servers = ArrayList<Any>()
-        CoreConfigManager.buildDnsCnModeFromRoutingRules(configContext, servers, remoteDns, domesticDns)
+        CoreConfigManager.buildDnsValidateRegionFromRoutingRules(configContext, servers, remoteDns, domesticDns)
         CoreConfigManager.buildDnsFromRoutingRules(configContext, servers, remoteDns, domesticDns)
 
         // The servers the core asks for a geosite:cn domain: those whose domains match, in order, up to the first
@@ -423,18 +426,20 @@ class CoreConfigManagerTest {
 
     @Test
     fun fakeDnsListsExactlyTheDomainsTheOtherDnsServersList() {
-        fun context(vararg rules: CoreConfigContext.RoutingDomainRule) =
-            CoreConfigContext(context = mock<Context>(), guid = "guid", routingDomainRules = rules.toList())
+        fun context(vararg rules: CoreConfigContext.RoutingDomainRule, region: String? = null) =
+            CoreConfigContext(context = mock<Context>(), guid = "guid", routingRegion = region, routingDomainRules = rules.toList())
         // The domain rules of the Iran preset, where geosite:cn has no rule, and of the China preset, where it has one.
         val iran = context(
             CoreConfigContext.RoutingDomainRule(listOf("geosite:category-ads-all"), AppConfig.TAG_BLOCKED),
             CoreConfigContext.RoutingDomainRule(listOf("geosite:private"), AppConfig.TAG_DIRECT),
             CoreConfigContext.RoutingDomainRule(listOf("domain:ir", "geosite:category-ir"), AppConfig.TAG_DIRECT),
         )
+        // The China preset also has the region cn, whose servers configureDns adds when Validate Region is on.
         val china = context(
             CoreConfigContext.RoutingDomainRule(listOf("geosite:google"), AppConfig.TAG_PROXY),
             CoreConfigContext.RoutingDomainRule(listOf("geosite:private"), AppConfig.TAG_DIRECT),
             CoreConfigContext.RoutingDomainRule(listOf(AppConfig.GEOSITE_CN), AppConfig.TAG_DIRECT),
+            region = "cn",
         )
         for (configContext in listOf(iran, china)) {
             val v2rayConfig = V2rayConfig(
@@ -465,7 +470,9 @@ class CoreConfigManagerTest {
          * The settings storage as a subclass-mocked handle, as CoreOutboundBuilderTest makes one: MMKV's decode methods
          * are native, which the default inline mock maker cannot stand in for, and MMKV.initialize never runs in unit
          * tests. configureDns reads its DNS settings as strings, which this handle, and those of the other tests that
-         * bind the storage first, answer with null, so that their defaults apply.
+         * bind the storage first, answer with null, so that their defaults apply; and three switches, which this handle
+         * answers with their defaults and an unstubbed one of another test with false. A test here holds either way:
+         * with Validate Region off, the region servers are left out, whose domains the other servers list as well.
          */
         private val settings: MMKV = Mockito.mock(MMKV::class.java, Mockito.withSettings().mockMaker(MockMakers.SUBCLASS))
 

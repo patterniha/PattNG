@@ -1,5 +1,7 @@
 package com.v2ray.ang.ui.server
 
+import android.os.Bundle
+import android.view.WindowManager.LayoutParams
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -17,6 +19,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -50,8 +53,10 @@ import com.v2ray.ang.ui.compose.AppTopBar
 import com.v2ray.ang.ui.compose.DeleteConfirmDialog
 import com.v2ray.ang.ui.compose.FormDropdownField
 import com.v2ray.ang.ui.compose.FormTextField
+import com.v2ray.ang.ui.compose.LocalEditorFocus
 import com.v2ray.ang.ui.compose.NavigationBarsSpacer
 import com.v2ray.ang.ui.compose.SettingsSwitchItem
+import com.v2ray.ang.ui.compose.rememberEditorFocus
 import com.v2ray.ang.ui.compose.verticalScrollbar
 import com.v2ray.ang.util.JsonUtil
 import kotlinx.coroutines.CoroutineScope
@@ -72,6 +77,15 @@ abstract class BaseServerActivity : BaseComponentActivity() {
      */
     protected val initialConfig: ProfileItem
         get() = checkNotNull(editor.opened.value) { "the profile is read before the screen shows its form" }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        if (savedInstanceState != null) {
+            // The previous window's IME state is not valid until the new editor has focus.
+            val adjustment = window.attributes.softInputMode and LayoutParams.SOFT_INPUT_MASK_ADJUST
+            window.setSoftInputMode(adjustment or LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN)
+        }
+    }
 
     /** PattNG: the save and the delete, which outlive this activity when it is recreated, see [ServerEditorViewModel]. */
     private val editor: ServerEditorViewModel by viewModels {
@@ -450,7 +464,7 @@ abstract class BaseServerActivity : BaseComponentActivity() {
                         }
                     },
                     enabled = !state.isFetchingCert,
-                    modifier = Modifier.padding(start = 16.dp)
+                    modifier = Modifier.padding(start = 16.dp).then(LocalEditorFocus.current?.target() ?: Modifier)
                 ) {
                     Text(stringResource(R.string.pinned_ca256_action_fetch))
                 }
@@ -581,6 +595,7 @@ abstract class BaseServerActivity : BaseComponentActivity() {
     ) {
         var showDeleteDialog by rememberSaveable { mutableStateOf(false) }
         val scrollState = rememberScrollState()
+        val focus = rememberEditorFocus()
         // PattNG: read off the main thread, see ProfileEditorViewModel.isRunning; no delete is offered until it is known.
         val running by editor.isRunning.collectAsStateWithLifecycle()
         EditorOutcomeEffect(
@@ -602,16 +617,21 @@ abstract class BaseServerActivity : BaseComponentActivity() {
                 AppTopBar(
                     title = title,
                     onBackClick = { finish() },
+                    navigationIcon = {
+                        IconButton(onClick = ::finish, modifier = focus.target()) {
+                            Icon(painterResource(R.drawable.ic_arrow_back_24dp), stringResource(R.string.acc_back))
+                        }
+                    },
                     actions = {
                         if (editGuid.isNotEmpty() && running == false) {
-                            IconButton(onClick = { showDeleteDialog = true }) {
+                            IconButton(onClick = { showDeleteDialog = true }, modifier = focus.target()) {
                                 Icon(
                                     painterResource(R.drawable.ic_delete_24dp),
                                     stringResource(R.string.acc_delete)
                                 )
                             }
                         }
-                        IconButton(onClick = onSaveClick) {
+                        IconButton(onClick = onSaveClick, modifier = focus.target()) {
                             Icon(
                                 painterResource(R.drawable.ic_fab_check),
                                 stringResource(R.string.acc_save)
@@ -632,7 +652,7 @@ abstract class BaseServerActivity : BaseComponentActivity() {
                     .padding(bottom = 36.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                content()
+                CompositionLocalProvider(LocalEditorFocus provides focus) { content() }
                 NavigationBarsSpacer()
             }
         }

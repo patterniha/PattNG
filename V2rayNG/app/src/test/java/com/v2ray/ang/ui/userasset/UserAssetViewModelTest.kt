@@ -4,6 +4,7 @@ import android.app.Application
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.dto.entities.AssetUrlCache
 import com.v2ray.ang.dto.entities.AssetUrlItem
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -88,5 +89,25 @@ class UserAssetViewModelTest {
 
         assertEquals(mirror, rows.single { it.assetUrl.remarks == AppConfig.PSIPHON_SERVERS_DAT })
         assertEquals(3, rows.count { it.assetUrl.locked == true })
+    }
+
+    @Test
+    fun downloadGeoFilesUpdatesDownloadingItemStateAndResets() {
+        val dir = Files.createTempDirectory("v2rayng-asset-test-").toFile()
+        try {
+            val progressItems = mutableListOf<String>()
+            val downloadingStates = mutableListOf<String?>()
+            runBlocking {
+                viewModel.downloadGeoFiles(dir, 0) { remarks ->
+                    progressItems.add(remarks)
+                    downloadingStates.add(viewModel.uiState.value.downloadingItem)
+                }
+            }
+            assertEquals(viewModel.uiState.value.assets.map { it.assetUrl.remarks }, progressItems)
+            assertEquals(progressItems, downloadingStates)
+            assertEquals(null, viewModel.uiState.value.downloadingItem)
+        } finally {
+            dir.deleteRecursively()
+        }
     }
 }

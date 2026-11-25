@@ -1,5 +1,7 @@
 package com.v2ray.ang.ui.server
 
+import android.os.Bundle
+import android.view.WindowManager.LayoutParams
 import androidx.activity.viewModels
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.horizontalScroll
@@ -36,8 +38,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalDensity
@@ -79,6 +85,15 @@ class ServerCustomConfigActivity : BaseComponentActivity() {
             initializer {
                 ServerCustomConfigViewModel(application, ProfileEditorRepository(), editGuid, intent.getBooleanExtra("isRunning", false))
             }
+        }
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        if (savedInstanceState != null) {
+            // Do not leave the previous window's keyboard visible before a field regains focus.
+            val adjustment = window.attributes.softInputMode and LayoutParams.SOFT_INPUT_MASK_ADJUST
+            window.setSoftInputMode(adjustment or LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN)
         }
     }
 
@@ -138,6 +153,8 @@ private object EditorConstants {
     val SCROLL_PADDING = 60.dp
 }
 
+private enum class CustomEditorField { Remarks, Json }
+
 @Composable
 fun ServerCustomConfigScreen(
     editGuid: String,
@@ -151,8 +168,23 @@ fun ServerCustomConfigScreen(
     var remarks by rememberSaveable { mutableStateOf(initialRemarks) }
     var isRemarksError by rememberSaveable { mutableStateOf(false) }
     val textFieldState = rememberTextFieldState(initialText = initialContent)
-    var showDeleteConfirm by remember { mutableStateOf(false) }
+    var showDeleteConfirm by rememberSaveable { mutableStateOf(false) }
     val showDelete = editGuid.isNotEmpty() && !isRunning
+    var focusedField by rememberSaveable { mutableStateOf<CustomEditorField?>(null) }
+    val remarksFocus = remember { FocusRequester() }
+    val jsonFocus = remember { FocusRequester() }
+
+    LaunchedEffect(Unit) {
+        val target = focusedField
+        if (target != null && !showDeleteConfirm) {
+            // Scaffold must lay out the field before its requester is attached.
+            withFrameNanos { }
+            when (target) {
+                CustomEditorField.Remarks -> remarksFocus.requestFocus()
+                CustomEditorField.Json -> jsonFocus.requestFocus()
+            }
+        }
+    }
 
     val verticalScroll = rememberScrollState()
     val horizontalScroll = rememberScrollState()
@@ -297,6 +329,9 @@ fun ServerCustomConfigScreen(
                 label = stringResource(R.string.server_lab_remarks),
                 value = remarks,
                 onValueChange = { remarks = it },
+                modifier = Modifier.focusRequester(remarksFocus).onFocusChanged {
+                    if (it.hasFocus) focusedField = CustomEditorField.Remarks
+                },
                 isError = isRemarksError
             )
 
@@ -375,7 +410,11 @@ fun ServerCustomConfigScreen(
                                 .weight(1f)
                                 .horizontalScroll(horizontalScroll)
                                 .padding(end = 24.dp)
-                                .padding(bottom = 36.dp),
+                                .padding(bottom = 36.dp)
+                                .focusRequester(jsonFocus)
+                                .onFocusChanged {
+                                    if (it.isFocused) focusedField = CustomEditorField.Json
+                                },
                             textStyle = TextStyle(
                                 fontFamily = FontFamily.Monospace,
                                 fontSize = EditorConstants.FONT_SIZE,
@@ -435,7 +474,7 @@ fun ServerCustomConfigScreen(
         }
     }
 
-    if (showDeleteConfirm) {
+    if (showDelete && showDeleteConfirm) {
         DeleteConfirmDialog(
             message = stringResource(R.string.confirm_delete_profile),
             itemName = initialRemarks,
