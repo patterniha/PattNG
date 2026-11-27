@@ -1017,7 +1017,7 @@ object AetherCoreManager {
         session = next
         stoppedForEchKey = false
         stoppedChainEnd = null
-        lifecycle.execute { open(next, appContext, arguments, afterProbes, core.exit.key) }
+        lifecycle.execute { guarded("open") { open(next, appContext, arguments, afterProbes, core.exit.key) } }
     }
 
     /**
@@ -1087,11 +1087,23 @@ object AetherCoreManager {
      * start that follows queues behind it and comes up only once the old core and its helpers are
      * gone, with their listeners and Psiphon's datastore lock.
      */
+    /**
+     * The core's lifecycle work runs on its own thread, where an exception nobody catches ends the whole daemon process, and
+     * Android then refuses to start the service for minutes ("process is bad"). Here it is logged and the work ends.
+     */
+    private inline fun guarded(what: String, block: () -> Unit) {
+        try {
+            block()
+        } catch (e: Throwable) {
+            LogUtil.e(AppConfig.TAG, "AetherCore: $what failed", e)
+        }
+    }
+
     @Synchronized
     fun stop() {
         val current = session ?: return
         session = null
-        lifecycle.execute { current.process?.let { end(it, current.context) } }
+        lifecycle.execute { guarded("end") { current.process?.let { end(it, current.context) } } }
     }
 
     suspend fun awaitListening(timeoutMs: Long): Boolean =
@@ -1699,7 +1711,7 @@ object AetherCoreManager {
             return
         }
         target.process = process
-        thread(name = "aether-core-output", isDaemon = true) { watch(target, process) }
+        thread(name = "aether-core-output", isDaemon = true) { guarded("watch") { watch(target, process) } }
     }
 
     private fun forward(process: Process, source: String, onOutput: (String) -> Unit, output: Channel<String>) {

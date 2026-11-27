@@ -79,7 +79,7 @@ class QSTileService : TileService() {
      */
     override fun onClick() {
         super.onClick()
-        when (qsTile.state) {
+        when (qsTile?.state) {
             Tile.STATE_INACTIVE -> {
                 LauncherManager.startServiceFromToggle(this)
             }

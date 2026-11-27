@@ -23,17 +23,41 @@ import com.v2ray.ang.util.Utils
 
 object LauncherManager {
 
+    // PattNG: a start right behind a stop reaches a core and a tunnel that are still going down, and repeated quick
+    // toggles have left the daemon process marked bad by Android ("Unable to launch app ... for service"), so
+    // for some minutes nothing could start. A start waits until the stop has had this long to finish.
+    private const val START_AFTER_STOP_MILLIS = 1500L
+    @Volatile private var lastStopAtMillis = 0L
+    private val mainHandler by lazy { android.os.Handler(android.os.Looper.getMainLooper()) }
+    private var pendingStart: Runnable? = null
+
+    /** Runs [start] now, or once [START_AFTER_STOP_MILLIS] have passed since the last stop; a newer start replaces a waiting one. */
+    private fun startAfterStop(start: () -> Unit) {
+        val wait = lastStopAtMillis + START_AFTER_STOP_MILLIS - android.os.SystemClock.elapsedRealtime()
+        pendingStart?.let { mainHandler.removeCallbacks(it) }
+        pendingStart = null
+        if (wait <= 0) {
+            // The RESTART receiver calls from a worker thread, where a toast in the failure path would itself throw.
+            if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper()) start() else mainHandler.post(start)
+            return
+        }
+        val run = Runnable { pendingStart = null; start() }
+        pendingStart = run
+        mainHandler.postDelayed(run, wait)
+    }
+
     fun startServiceFromToggle(context: Context): Boolean {
         if (MmkvManager.getSelectServer().isNullOrEmpty()) {
             context.toast(R.string.app_tile_first_use)
             return false
         }
-        try {
-            startContextService(context)
-        } catch (e: Exception) {
-            LogUtil.e(AppConfig.TAG, "LauncherManager: ${e.message}", e)
-            context.toast(e.message ?: e.javaClass.simpleName)
-            return false
+        startAfterStop {
+            try {
+                startContextService(context)
+            } catch (e: Exception) {
+                LogUtil.e(AppConfig.TAG, "LauncherManager: ${e.message}", e)
+                context.toast(e.message ?: e.javaClass.simpleName)
+            }
         }
         return true
     }
@@ -45,16 +69,22 @@ object LauncherManager {
             MmkvManager.setSelectServer(guid)
         }
 
-        try {
-            startContextService(context)
-        } catch (e: Exception) {
-            LogUtil.e(AppConfig.TAG, "LauncherManager: ${e.message}", e)
-            context.toast(e.message ?: e.javaClass.simpleName)
+        startAfterStop {
+            try {
+                startContextService(context)
+            } catch (e: Exception) {
+                LogUtil.e(AppConfig.TAG, "LauncherManager: ${e.message}", e)
+                context.toast(e.message ?: e.javaClass.simpleName)
+            }
         }
     }
 
     fun stopService(context: Context) {
         //context.toast(R.string.toast_services_stop)
+        // A stop also ends a start that is still waiting behind the last stop.
+        pendingStart?.let { mainHandler.removeCallbacks(it) }
+        pendingStart = null
+        lastStopAtMillis = android.os.SystemClock.elapsedRealtime()
         MessageHelper.sendMsg2Service(context, AppConfig.MSG_STATE_STOP, "")
     }
 

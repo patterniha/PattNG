@@ -69,4 +69,11 @@ class ReloadOutcomeTest {
         assertTrue(ReloadOutcome.serviceRuns(coreRunning = true, reloading = false, stoppedMeanwhile = true))
         assertTrue(ReloadOutcome.serviceRuns(coreRunning = true, reloading = true, stoppedMeanwhile = true))
     }
+
+    @Test
+    fun aHandoverIsNeededOnlyWhenTheNetworkDiffersFromTheSettledOne() {
+        assertFalse(ReloadOutcome.networkChanged(settled = "wifi", current = "wifi"))
+        assertTrue(ReloadOutcome.networkChanged(settled = "wifi", current = "cell"))
+        assertFalse(ReloadOutcome.networkChanged(settled = "wifi", current = null))
+    }
 }
