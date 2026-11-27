@@ -43,7 +43,14 @@ import com.v2ray.ang.handler.SettingsChangeManager
 import com.v2ray.ang.root.RootManager
 import com.v2ray.ang.ui.base.BaseComponentActivity
 import com.v2ray.ang.ui.compose.AppTopBar
+import com.v2ray.ang.ui.compose.MotionPolicy
+import com.v2ray.ang.ui.compose.CollapsiblePreferenceGroupHeader
 import com.v2ray.ang.ui.compose.NavigationBarsSpacer
+import com.v2ray.ang.ui.compose.SettingsEditItem
+import com.v2ray.ang.ui.compose.SettingsListItem
+import com.v2ray.ang.ui.compose.SettingsMenuItem
+import com.v2ray.ang.ui.compose.SettingsSwitchItem
+import com.v2ray.ang.ui.compose.CardStyle
 import com.v2ray.ang.ui.compose.ThemeManager
 import com.v2ray.ang.ui.compose.verticalScrollbar
 import com.v2ray.ang.util.LogUtil
@@ -184,14 +191,20 @@ private fun SettingsForm(
     var speedEnabled by rememberMmkvBool(AppConfig.PREF_SPEED_ENABLED, false)
     var confirmRemove by rememberMmkvBool(AppConfig.PREF_CONFIRM_REMOVE, false)
     var doubleColumnDisplay by rememberMmkvBool(AppConfig.PREF_DOUBLE_COLUMN_DISPLAY, false)
-    var groupAllDisplay by rememberMmkvBool(AppConfig.PREF_GROUP_ALL_DISPLAY, false)
+    var groupAllDisplay by rememberMmkvBool(AppConfig.PREF_GROUP_ALL_DISPLAY, true)
     var language by remember {
         mutableStateOf(
             MmkvManager.decodeSettingsString(AppConfig.PREF_LANGUAGE, "auto") ?: "auto"
         )
     }
     var uiModeNight by rememberMmkvString(AppConfig.PREF_UI_MODE_NIGHT, "0")
-    var dynamicColor by rememberMmkvBool(AppConfig.PREF_DYNAMIC_COLOR, true)
+    var colorPalette by rememberMmkvString(AppConfig.PREF_COLOR_PALETTE, "0")
+    var cardStyle by rememberMmkvString(AppConfig.PREF_CARD_STYLE, CardStyle.Classic.key)
+    var homeStyle by rememberMmkvString(AppConfig.PREF_HOME_STYLE, "classic")
+    var dynamicColor by rememberMmkvBool(AppConfig.PREF_DYNAMIC_COLOR, false)
+    val settingsContext = androidx.compose.ui.platform.LocalContext.current
+    val settingsConfiguration = androidx.compose.ui.platform.LocalConfiguration.current
+    var reduceMotion by rememberMmkvBool(AppConfig.PREF_REDUCE_MOTION, MotionPolicy.defaultReduced(settingsContext))
 
     var ipv6Enabled by rememberMmkvBool(AppConfig.PREF_IPV6_ENABLED, AppConfig.DEFAULT_IPV6_ENABLED)
     var preferIpv6 by rememberMmkvBool(AppConfig.PREF_PREFER_IPV6, false)
@@ -226,26 +239,26 @@ private fun SettingsForm(
         }
     }
 
-    val languageEntries = stringArrayResource(R.array.language_select).toList()
-    val languageValues = stringArrayResource(R.array.language_select_value).toList()
-    val uiModeNightEntries = stringArrayResource(R.array.ui_mode_night).toList()
-    val uiModeNightValues = stringArrayResource(R.array.ui_mode_night_value).toList()
-    val bypassLanEntries = stringArrayResource(R.array.vpn_bypass_lan).toList()
-    val bypassLanValues = stringArrayResource(R.array.vpn_bypass_lan_value).toList()
-    val interfaceAddrEntries = stringArrayResource(R.array.vpn_interface_address).toList()
-    val interfaceAddrValues = stringArrayResource(R.array.vpn_interface_address_value).toList()
-    val hevLogEntries = stringArrayResource(R.array.hev_tunnel_loglevel).toList()
-    val hevLogValues = stringArrayResource(R.array.hev_tunnel_loglevel).toList()
-    val coreLogLevelEntries = stringArrayResource(R.array.core_loglevel).toList()
-    val coreLogLevelValues = stringArrayResource(R.array.core_loglevel).toList()
-    val outboundResolveEntries = stringArrayResource(R.array.outbound_domain_resolve_method).toList()
-    val outboundResolveValues = stringArrayResource(R.array.outbound_domain_resolve_method_value).toList()
-    val xudpQuicEntries = stringArrayResource(R.array.mux_xudp_quic_entries).toList()
-    val xudpQuicValues = stringArrayResource(R.array.mux_xudp_quic_value).toList()
-    val observatoryLeastLoadMethodEntries = stringArrayResource(R.array.observatory_least_load_method).toList()
-    val observatoryLeastLoadMethodValues = stringArrayResource(R.array.observatory_least_load_method).toList()
-    val modeEntries = stringArrayResource(R.array.mode_entries).toList()
-    val modeValues = stringArrayResource(R.array.mode_value).toList()
+    val languageEntries = remember(settingsConfiguration) { settingsContext.resources.getStringArray(R.array.language_select).toList() }
+    val languageValues = remember(settingsConfiguration) { settingsContext.resources.getStringArray(R.array.language_select_value).toList() }
+    val uiModeNightEntries = remember(settingsConfiguration) { settingsContext.resources.getStringArray(R.array.ui_mode_night).toList() }
+    val uiModeNightValues = remember(settingsConfiguration) { settingsContext.resources.getStringArray(R.array.ui_mode_night_value).toList() }
+    val bypassLanEntries = remember(settingsConfiguration) { settingsContext.resources.getStringArray(R.array.vpn_bypass_lan).toList() }
+    val bypassLanValues = remember(settingsConfiguration) { settingsContext.resources.getStringArray(R.array.vpn_bypass_lan_value).toList() }
+    val interfaceAddrEntries = remember(settingsConfiguration) { settingsContext.resources.getStringArray(R.array.vpn_interface_address).toList() }
+    val interfaceAddrValues = remember(settingsConfiguration) { settingsContext.resources.getStringArray(R.array.vpn_interface_address_value).toList() }
+    val hevLogEntries = remember(settingsConfiguration) { settingsContext.resources.getStringArray(R.array.hev_tunnel_loglevel).toList() }
+    val hevLogValues = remember(settingsConfiguration) { settingsContext.resources.getStringArray(R.array.hev_tunnel_loglevel).toList() }
+    val coreLogLevelEntries = remember(settingsConfiguration) { settingsContext.resources.getStringArray(R.array.core_loglevel).toList() }
+    val coreLogLevelValues = remember(settingsConfiguration) { settingsContext.resources.getStringArray(R.array.core_loglevel).toList() }
+    val outboundResolveEntries = remember(settingsConfiguration) { settingsContext.resources.getStringArray(R.array.outbound_domain_resolve_method).toList() }
+    val outboundResolveValues = remember(settingsConfiguration) { settingsContext.resources.getStringArray(R.array.outbound_domain_resolve_method_value).toList() }
+    val xudpQuicEntries = remember(settingsConfiguration) { settingsContext.resources.getStringArray(R.array.mux_xudp_quic_entries).toList() }
+    val xudpQuicValues = remember(settingsConfiguration) { settingsContext.resources.getStringArray(R.array.mux_xudp_quic_value).toList() }
+    val observatoryLeastLoadMethodEntries = remember(settingsConfiguration) { settingsContext.resources.getStringArray(R.array.observatory_least_load_method).toList() }
+    val observatoryLeastLoadMethodValues = remember(settingsConfiguration) { settingsContext.resources.getStringArray(R.array.observatory_least_load_method).toList() }
+    val modeEntries = remember(settingsConfiguration) { settingsContext.resources.getStringArray(R.array.mode_entries).toList() }
+    val modeValues = remember(settingsConfiguration) { settingsContext.resources.getStringArray(R.array.mode_value).toList() }
 
     with(rows) {
         Column(modifier = modifier) {
@@ -286,6 +299,12 @@ private fun SettingsForm(
                     }
                 )
                 SettingsSwitchItem(
+                    title = stringResource(R.string.title_pref_reduce_motion),
+                    summary = stringResource(R.string.summary_pref_reduce_motion),
+                    checked = reduceMotion,
+                    onCheckedChange = { reduceMotion = it }
+                )
+                SettingsSwitchItem(
                     title = stringResource(R.string.title_pref_dynamic_color),
                     summary = stringResource(R.string.summary_pref_dynamic_color),
                     checked = dynamicColor,
@@ -293,6 +312,48 @@ private fun SettingsForm(
                     onCheckedChange = {
                         dynamicColor = it
                         ThemeManager.setDynamicColorEnabled(it)
+                    }
+                )
+                SettingsListItem(
+                    title = stringResource(R.string.title_pref_color_palette),
+                    entries = listOf(
+                        stringResource(R.string.palette_default),
+                        stringResource(R.string.palette_mocha),
+                        stringResource(R.string.palette_canyon),
+                        stringResource(R.string.palette_wheat),
+                        stringResource(R.string.palette_cobalt),
+                    ),
+                    values = listOf("0", "1", "2", "3", "4"),
+                    selectedValue = colorPalette,
+                    onSelected = {
+                        colorPalette = it
+                        ThemeManager.setPalette(it)
+                    }
+                )
+                SettingsListItem(
+                    title = stringResource(R.string.title_pref_home_style),
+                    entries = listOf(
+                        stringResource(R.string.card_style_classic),
+                        stringResource(R.string.home_style_dashboard),
+                    ),
+                    values = listOf("classic", "dashboard"),
+                    selectedValue = homeStyle,
+                    onSelected = {
+                        homeStyle = it
+                        ThemeManager.setHomeStyle(it)
+                    }
+                )
+                SettingsListItem(
+                    title = stringResource(R.string.title_pref_card_style),
+                    entries = listOf(
+                        stringResource(R.string.card_style_classic),
+                        stringResource(R.string.card_style_glass),
+                    ),
+                    values = listOf(CardStyle.Classic.key, CardStyle.Glass.key),
+                    selectedValue = cardStyle,
+                    onSelected = {
+                        cardStyle = it
+                        ThemeManager.setCardStyle(CardStyle.of(it))
                     }
                 )
                 SettingsListItem(

@@ -346,6 +346,8 @@
     <string name="title_language">ভাষা</string>
     <string name="title_ui_settings">ইউআই সেটিংস</string>
     <string name="title_pref_ui_mode_night">ইউআই মোড সেটিংস</string>
+    <string name="title_pref_reduce_motion">অ্যানিমেশন কমান</string>
+    <string name="summary_pref_reduce_motion">কম ও হালকা অ্যানিমেশন; ব্যাটারি বাঁচায়, পুরনো ফোনে ভালো চলে।</string>
     <string name="title_pref_dynamic_color">ডায়নামিক রঙ চালু করুন</string>
     <string name="summary_pref_dynamic_color">শুধুমাত্র Android 12+ ডিভাইসে কাজ করে</string>
     <string name="title_pref_use_hev_tunnel">Hev TUN সুবিধা চালু করুন</string>
@@ -816,6 +818,40 @@
     <string name="sub_info_open_page">সাবস্ক্রিপশন তথ্যের পাতা খুলুন</string>
     <string name="sub_info_unlimited">সীমাহীন</string>
 
+    <!-- Home connection card -->
+    <string name="home_status_connected">সংযুক্ত</string>
+    <string name="home_status_connecting">সংযোগ হচ্ছে…</string>
+    <string name="home_status_error">সংযোগ ব্যর্থ হয়েছে</string>
+    <string name="home_status_unexpected">সংযোগ বিচ্ছিন্ন হয়েছে</string>
+    <string name="home_empty_title">কোনো সার্ভার নির্বাচিত নেই</string>
+    <string name="home_action_choose_server">সার্ভার নির্বাচন করুন</string>
+    <string name="home_action_retry">আবার চেষ্টা করুন</string>
+    <string name="home_action_reconnect">পুনরায় সংযোগ করুন</string>
+    <string name="home_nav_home">হোম</string>
+    <string name="home_details_ip">এক্সিট আইপি</string>
+    <string name="home_details_test_ping">আবার পিং পরীক্ষা</string>
+    <string name="home_quick_servers">সার্ভার</string>
+    <string name="home_quick_subscriptions">সাবস্ক্রিপশন</string>
+    <string name="home_details_ping">পিং</string>
+    <string name="home_details_duration">সময়কাল</string>
+    <string name="home_details_download">ডাউনলোড</string>
+    <string name="home_details_upload">আপলোড</string>
+    <string name="home_details_title">সংযোগের বিবরণ</string>
+    <string name="home_change_server">সার্ভার পরিবর্তন করতে ট্যাপ করুন</string>
+
+    <string name="title_pref_color_palette">রঙের প্যালেট</string>
+    <string name="palette_default">ডিফল্ট</string>
+    <string name="palette_mocha">Mocha</string>
+    <string name="palette_canyon">Canyon</string>
+    <string name="title_pref_card_style">কার্ডের ধরন</string>
+    <string name="card_style_classic">ক্লাসিক</string>
+    <string name="card_style_glass">গ্লাস</string>
+    <string name="palette_wheat">Wheat</string>
+    <string name="palette_cobalt">Cobalt</string>
+    <string name="title_pref_home_style">হোম স্ক্রিনের ধরন</string>
+    <string name="home_style_dashboard">ড্যাশবোর্ড</string>
+    <string name="home_slide_to_connect">সংযোগ করতে স্লাইড করুন</string>
+    <string name="home_slide_to_disconnect">বিচ্ছিন্ন করতে স্লাইড করুন</string>
     <string name="action_exit">প্রস্থান</string>
     <string name="action_back">ফিরে যান</string>
     <string name="action_more">আরও</string>

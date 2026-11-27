@@ -236,8 +236,8 @@
         <item>skip</item>
     </string-array>
 
-    <string name="title_pref_speed_enabled">Enable speed display</string>
-    <string name="summary_pref_speed_enabled">Show current speeds in the notification.\nThe icon indicates whether proxy or direct traffic is dominant.</string>
+    <string name="title_pref_speed_enabled">Show speed in notification</string>
+    <string name="summary_pref_speed_enabled">Shows the current speed in the notification.</string>
 
     <string name="title_pref_sniffing_enabled">Enable Sniffing</string>
     <string name="summary_pref_sniffing_enabled">Detect destination domains from traffic (enabled by default).</string>
@@ -309,18 +309,18 @@
     <string name="title_pref_local_dns_port">Local DNS port</string>
     <string name="summary_pref_local_dns_port">Local DNS port</string>
 
-    <string name="title_pref_confirm_remove">Delete config confirmation</string>
-    <string name="summary_pref_confirm_remove">Whether deleting a config requires a second confirmation by the user</string>
+    <string name="title_pref_confirm_remove">Ask before deleting</string>
+    <string name="summary_pref_confirm_remove">Asks you to confirm before a config is deleted.</string>
 
 
     <string name="title_pref_append_http_proxy">Add HTTP proxy to VPN</string>
     <string name="summary_pref_append_http_proxy">Allow browsers and supported apps to use the HTTP proxy directly instead of the virtual network interface (Android 10+).</string>
 
-    <string name="title_pref_double_column_display">Use two-column layout</string>
-    <string name="summary_pref_double_column_display">Display the profile list in two columns to fit more content on screen.</string>
+    <string name="title_pref_double_column_display">Two-column list</string>
+    <string name="summary_pref_double_column_display">Shows servers in two columns.</string>
 
-    <string name="title_pref_group_all_display">Show an "All" group tab</string>
-    <string name="summary_pref_group_all_display">Combine profiles from every subscription group in one tab.</string>
+    <string name="title_pref_group_all_display">“All” tab</string>
+    <string name="summary_pref_group_all_display">Adds a tab that shows every server together.</string>
 
     <!-- AboutActivity -->
     <string name="title_pref_feedback">Feedback</string>
@@ -348,9 +348,11 @@
     <string name="title_mode_help">Click me for more help</string>
     <string name="title_language">Language</string>
     <string name="title_ui_settings">UI settings</string>
-    <string name="title_pref_ui_mode_night">UI mode settings</string>
-    <string name="title_pref_dynamic_color">Enable dynamic color</string>
-    <string name="summary_pref_dynamic_color">Only works on Android 12+ devices</string>
+    <string name="title_pref_ui_mode_night">Theme (light / dark)</string>
+    <string name="title_pref_reduce_motion">Reduce animations</string>
+    <string name="summary_pref_reduce_motion">Fewer, lighter animations. Saves battery and helps older phones.</string>
+    <string name="title_pref_dynamic_color">Colors from wallpaper</string>
+    <string name="summary_pref_dynamic_color">Uses your wallpaper colors (Android 12+).</string>
     <string name="title_pref_use_hev_tunnel">Use Hev TUN</string>
     <string name="summary_pref_use_hev_tunnel">When enabled, TUN will use hev-socks5-tunnel; otherwise, it will use xray-core.</string>
     <string name="title_pref_hev_tunnel_loglevel">Hev TUN log level</string>
@@ -825,6 +827,41 @@
     <string name="sub_info_traffic" translatable="false">%1$s / %2$s</string>
     <string name="sub_info_unlimited">Unlimited</string>
 
+    <!-- Home connection card -->
+    <string name="home_status_connected">Connected</string>
+    <string name="home_status_connecting">Connecting…</string>
+    <string name="home_status_error">Connection failed</string>
+    <string name="home_status_unexpected">Connection lost</string>
+    <string name="home_empty_title">No server selected</string>
+    <string name="home_action_choose_server">Choose a server</string>
+    <string name="home_action_retry">Try again</string>
+    <string name="home_action_reconnect">Reconnect</string>
+    <string name="home_details_ip">Exit IP</string>
+    <string name="home_details_test_ping">Test ping again</string>
+    <string name="home_quick_servers">Servers</string>
+    <string name="home_quick_subscriptions">Subs</string>
+    <string name="home_quick_settings">Settings</string>
+    <string name="home_nav_home">Home</string>
+    <string name="home_details_ping">Ping</string>
+    <string name="home_details_duration">Duration</string>
+    <string name="home_details_download">Download</string>
+    <string name="home_details_upload">Upload</string>
+    <string name="home_details_title">Connection details</string>
+    <string name="home_change_server">Tap to change server</string>
+
+    <string name="title_pref_color_palette">Color palette</string>
+    <string name="palette_default">Default</string>
+    <string name="palette_mocha">Mocha</string>
+    <string name="palette_canyon">Canyon</string>
+    <string name="title_pref_card_style">Card style</string>
+    <string name="card_style_classic">Classic</string>
+    <string name="card_style_glass">Glass</string>
+    <string name="palette_wheat">Wheat</string>
+    <string name="palette_cobalt">Cobalt</string>
+    <string name="title_pref_home_style">Home screen style</string>
+    <string name="home_style_dashboard">Dashboard</string>
+    <string name="home_slide_to_connect">Slide to connect</string>
+    <string name="home_slide_to_disconnect">Slide to disconnect</string>
     <string name="action_exit">Exit</string>
     <string name="action_back">Back</string>
     <string name="action_more">More</string>

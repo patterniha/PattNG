@@ -346,6 +346,8 @@
     <string name="title_language">زووݩ</string>
     <string name="title_ui_settings">سامووا رابت منتوری</string>
     <string name="title_pref_ui_mode_night">سامووا هالت رابت منتوری</string>
+    <string name="title_pref_reduce_motion">کاهش انیمیشن‌ها</string>
+    <string name="summary_pref_reduce_motion">انیمیشن‌های کمتر و سبک‌تر؛ باتری کمتری مصرف می‌شود و روی گوشی‌های قدیمی روان‌تر است.</string>
     <string name="title_pref_dynamic_color">ره وندن رنگ پۊیا</string>
     <string name="summary_pref_dynamic_color">فقت ری ٱندروید 12+ کار اکونه</string>
     <string name="title_pref_use_hev_tunnel">و کار گرؽڌن ویژیی Hev TUN</string>
@@ -816,6 +818,40 @@
     <string name="sub_info_open_page">واز کردن صفحه اطلاعات اشتراک</string>
     <string name="sub_info_unlimited">بی‌حد</string>
 
+    <!-- Home connection card -->
+    <string name="home_status_connected">منپیز</string>
+    <string name="home_status_connecting">درحال منپیز بیئن…</string>
+    <string name="home_status_error">منپیز بیئن نشد</string>
+    <string name="home_status_unexpected">منپیز قطع بی</string>
+    <string name="home_empty_title">سرور انتخاو نیئه</string>
+    <string name="home_action_choose_server">سرور انتخاو بکه</string>
+    <string name="home_action_retry">دوباره تلاش بکه</string>
+    <string name="home_action_reconnect">دوباره منپیز بو</string>
+    <string name="home_nav_home">خانه</string>
+    <string name="home_details_ip">آی‌پی خروجی</string>
+    <string name="home_details_test_ping">دوباره آزمایش پینگ</string>
+    <string name="home_quick_servers">سرورها</string>
+    <string name="home_quick_subscriptions">اشتراک‌ها</string>
+    <string name="home_details_ping">پینگ</string>
+    <string name="home_details_duration">مدت</string>
+    <string name="home_details_download">دانلود</string>
+    <string name="home_details_upload">آپلود</string>
+    <string name="home_details_title">جزئیات منپیز</string>
+    <string name="home_change_server">واسه عوض کردن سرور بزن</string>
+
+    <string name="title_pref_color_palette">پالت رنگ</string>
+    <string name="palette_default">پیش‌فرض</string>
+    <string name="palette_mocha">Mocha</string>
+    <string name="palette_canyon">Canyon</string>
+    <string name="title_pref_card_style">سبک کارت‌ها</string>
+    <string name="card_style_classic">کلاسیک</string>
+    <string name="card_style_glass">شیشه‌ای</string>
+    <string name="palette_wheat">Wheat</string>
+    <string name="palette_cobalt">Cobalt</string>
+    <string name="title_pref_home_style">سبک صفحه‌ی اصلی</string>
+    <string name="home_style_dashboard">داشبورد</string>
+    <string name="home_slide_to_connect">برای اتصال بکشید</string>
+    <string name="home_slide_to_disconnect">برای قطع اتصال بکشید</string>
     <string name="action_exit">خروج</string>
     <string name="action_back">بازگشت</string>
     <string name="action_more">بیشتر</string>

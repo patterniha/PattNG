@@ -346,6 +346,8 @@
     <string name="title_language">Ngôn ngữ</string>
     <string name="title_ui_settings">Cài đặt UI</string>
     <string name="title_pref_ui_mode_night">Cài đặt chế độ UI</string>
+    <string name="title_pref_reduce_motion">Giảm hoạt ảnh</string>
+    <string name="summary_pref_reduce_motion">Ít hoạt ảnh, nhẹ hơn; tiết kiệm pin, hợp máy cũ.</string>
     <string name="title_pref_dynamic_color">Bật màu động</string>
     <string name="summary_pref_dynamic_color">Chỉ hoạt động trên Android 12+</string>
     <string name="title_pref_use_hev_tunnel">Dùng Hev TUN</string>
@@ -814,6 +816,40 @@
     <string name="sub_info_open_page">Mở trang thông tin đăng ký</string>
     <string name="sub_info_unlimited">Không giới hạn</string>
 
+    <!-- Home connection card -->
+    <string name="home_status_connected">Đã kết nối</string>
+    <string name="home_status_connecting">Đang kết nối…</string>
+    <string name="home_status_error">Kết nối thất bại</string>
+    <string name="home_status_unexpected">Mất kết nối</string>
+    <string name="home_empty_title">Chưa chọn máy chủ</string>
+    <string name="home_action_choose_server">Chọn máy chủ</string>
+    <string name="home_action_retry">Thử lại</string>
+    <string name="home_action_reconnect">Kết nối lại</string>
+    <string name="home_nav_home">Trang chủ</string>
+    <string name="home_details_ip">IP đầu ra</string>
+    <string name="home_details_test_ping">Kiểm tra ping lại</string>
+    <string name="home_quick_servers">Máy chủ</string>
+    <string name="home_quick_subscriptions">Gói đăng ký</string>
+    <string name="home_details_ping">Ping</string>
+    <string name="home_details_duration">Thời lượng</string>
+    <string name="home_details_download">Tải xuống</string>
+    <string name="home_details_upload">Tải lên</string>
+    <string name="home_details_title">Chi tiết kết nối</string>
+    <string name="home_change_server">Chạm để đổi máy chủ</string>
+
+    <string name="title_pref_color_palette">Bảng màu</string>
+    <string name="palette_default">Mặc định</string>
+    <string name="palette_mocha">Mocha</string>
+    <string name="palette_canyon">Canyon</string>
+    <string name="title_pref_card_style">Kiểu thẻ</string>
+    <string name="card_style_classic">Cổ điển</string>
+    <string name="card_style_glass">Kính</string>
+    <string name="palette_wheat">Wheat</string>
+    <string name="palette_cobalt">Cobalt</string>
+    <string name="title_pref_home_style">Kiểu màn hình chính</string>
+    <string name="home_style_dashboard">Bảng điều khiển</string>
+    <string name="home_slide_to_connect">Trượt để kết nối</string>
+    <string name="home_slide_to_disconnect">Trượt để ngắt kết nối</string>
     <string name="action_exit">Thoát</string>
     <string name="action_back">Quay lại</string>
     <string name="action_more">Thêm</string>

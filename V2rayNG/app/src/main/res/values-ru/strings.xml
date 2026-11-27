@@ -346,6 +346,8 @@
     <string name="title_language">Язык</string>
     <string name="title_ui_settings">Настройки интерфейса</string>
     <string name="title_pref_ui_mode_night">Тема интерфейса</string>
+    <string name="title_pref_reduce_motion">Меньше анимаций</string>
+    <string name="summary_pref_reduce_motion">Меньше и легче анимации: экономит заряд и помогает старым телефонам.</string>
     <string name="title_pref_dynamic_color">Динамические цвета</string>
     <string name="summary_pref_dynamic_color">Работает только на Android 12+</string>
     <string name="title_pref_use_hev_tunnel">Использовать Hev TUN</string>
@@ -820,6 +822,40 @@
     <string name="sub_info_open_page">Открыть страницу подписки</string>
     <string name="sub_info_unlimited">Без ограничений</string>
 
+    <!-- Home connection card -->
+    <string name="home_status_connected">Подключено</string>
+    <string name="home_status_connecting">Подключение…</string>
+    <string name="home_status_error">Не удалось подключиться</string>
+    <string name="home_status_unexpected">Соединение потеряно</string>
+    <string name="home_empty_title">Сервер не выбран</string>
+    <string name="home_action_choose_server">Выбрать сервер</string>
+    <string name="home_action_retry">Повторить</string>
+    <string name="home_action_reconnect">Переподключить</string>
+    <string name="home_nav_home">Главная</string>
+    <string name="home_details_ip">Выходной IP</string>
+    <string name="home_details_test_ping">Проверить пинг снова</string>
+    <string name="home_quick_servers">Серверы</string>
+    <string name="home_quick_subscriptions">Подписки</string>
+    <string name="home_details_ping">Пинг</string>
+    <string name="home_details_duration">Длительность</string>
+    <string name="home_details_download">Загрузка</string>
+    <string name="home_details_upload">Отдача</string>
+    <string name="home_details_title">Сведения о подключении</string>
+    <string name="home_change_server">Нажмите, чтобы сменить сервер</string>
+
+    <string name="title_pref_color_palette">Цветовая палитра</string>
+    <string name="palette_default">По умолчанию</string>
+    <string name="palette_mocha">Mocha</string>
+    <string name="palette_canyon">Canyon</string>
+    <string name="title_pref_card_style">Стиль карточек</string>
+    <string name="card_style_classic">Классический</string>
+    <string name="card_style_glass">Стекло</string>
+    <string name="palette_wheat">Wheat</string>
+    <string name="palette_cobalt">Cobalt</string>
+    <string name="title_pref_home_style">Стиль главного экрана</string>
+    <string name="home_style_dashboard">Панель</string>
+    <string name="home_slide_to_connect">Сдвиньте, чтобы подключиться</string>
+    <string name="home_slide_to_disconnect">Сдвиньте, чтобы отключиться</string>
     <string name="action_exit">Выход</string>
     <string name="action_back">Назад</string>
     <string name="action_more">Ещё</string>

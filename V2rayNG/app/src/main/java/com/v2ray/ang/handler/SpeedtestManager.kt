@@ -53,14 +53,17 @@ object SpeedtestManager {
         return -1
     }
 
-    fun getRemoteIPInfo(): RemoteEndpointInfo? {
+    /** The place this device is seen from, asked without any tunnel; only meant for a moment when none is up. */
+    fun getDirectIPInfo(): RemoteEndpointInfo? = getRemoteIPInfo(direct = true)
+
+    fun getRemoteIPInfo(direct: Boolean = false): RemoteEndpointInfo? {
         val url = MmkvManager.decodeSettingsString(AppConfig.PREF_IP_API_URL)
             .takeIf { !it.isNullOrBlank() } ?: AppConfig.IP_API_URL
 
         val proxyUsername = SettingsManager.getSocksUsername()
         val proxyPassword = SettingsManager.getSocksPassword()
-        val httpPort = SettingsManager.getHttpPort()
-        if (httpPort == 0) return null
+        val httpPort = if (direct) 0 else SettingsManager.getHttpPort()
+        if (httpPort == 0 && !direct) return null
         val content = HttpUtil.getUrlContent(
             UrlContentRequest(
                 url = url,

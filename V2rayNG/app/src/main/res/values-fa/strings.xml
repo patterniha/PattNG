@@ -233,8 +233,8 @@
         <item>پریدن</item>
     </string-array>
 
-    <string name="title_pref_speed_enabled">فعال کردن نمایش سرعت</string>
-    <string name="summary_pref_speed_enabled">نمایش سرعت‌های فعلی در اعلان.\nنماد نشان می‌دهد ترافیک پروکسی بیشتر است یا ترافیک مستقیم.</string>
+    <string name="title_pref_speed_enabled">نمایش سرعت در اعلان</string>
+    <string name="summary_pref_speed_enabled">سرعت فعلی را در اعلان نشان می‌دهد.</string>
 
     <string name="title_pref_sniffing_enabled">فعال‌سازی تشخیص دامنهٔ مقصد در ترافیک (Sniffing)</string>
     <string name="summary_pref_sniffing_enabled">شناسایی دامنه‌های مقصد از ترافیک (به‌طور پیش‌فرض فعال است).</string>
@@ -306,18 +306,18 @@
     <string name="title_pref_local_dns_port">پورت DNS محلی</string>
     <string name="summary_pref_local_dns_port">پورت DNS محلی</string>
 
-    <string name="title_pref_confirm_remove">تایید حذف کانفیگ</string>
-    <string name="summary_pref_confirm_remove">آیا برای حذف کانفیگ نیاز به تایید دوم توسط کاربر است</string>
+    <string name="title_pref_confirm_remove">پرسش پیش از حذف</string>
+    <string name="summary_pref_confirm_remove">پیش از حذف کانفیگ تأیید می‌گیرد.</string>
 
 
     <string name="title_pref_append_http_proxy">پروکسی HTTP را به VPN اضافه کنید</string>
     <string name="summary_pref_append_http_proxy">مرورگر و برنامه‌های پشتیبانی‌شده می‌توانند بدون عبور از رابط شبکهٔ مجازی، مستقیماً از پروکسی HTTP استفاده کنند (Android 10+).</string>
 
-    <string name="title_pref_double_column_display">فعال کردن نمایش دو ستون</string>
-    <string name="summary_pref_double_column_display">فهرست پروفایل‌ها در دو ستون نمایش داده می‌شود تا محتوای بیشتری در صفحه دیده شود.</string>
+    <string name="title_pref_double_column_display">لیست دو ستونه</string>
+    <string name="summary_pref_double_column_display">سرورها را در دو ستون نشان می‌دهد.</string>
 
-    <string name="title_pref_group_all_display">نمایش زبانهٔ «همه»</string>
-    <string name="summary_pref_group_all_display">نمایش پروفایل‌های همهٔ گروه‌های اشتراک در یک زبانه.</string>
+    <string name="title_pref_group_all_display">زبانهٔ «همه»</string>
+    <string name="summary_pref_group_all_display">زبانه‌ای اضافه می‌کند که همهٔ سرورها را با هم نشان می‌دهد.</string>
 
     <!-- AboutActivity -->
     <string name="title_pref_feedback">بازخورد</string>
@@ -345,9 +345,11 @@
     <string name="title_mode_help">برای اطلاعات و راهنمایی بیشتر، روی این متن کلیک کنید</string>
     <string name="title_language">زبان</string>
     <string name="title_ui_settings">تنظیمات رابط کاربری</string>
-    <string name="title_pref_ui_mode_night">تنظیمات حالت رابط کاربری</string>
-    <string name="title_pref_dynamic_color">فعال‌سازی رنگ پویا</string>
-    <string name="summary_pref_dynamic_color">فقط روی اندروید ۱۲+ کار می‌کند</string>
+    <string name="title_pref_ui_mode_night">پوسته (روشن / تاریک)</string>
+    <string name="title_pref_reduce_motion">کاهش انیمیشن‌ها</string>
+    <string name="summary_pref_reduce_motion">انیمیشن‌های کمتر و سبک‌تر؛ باتری کمتری مصرف می‌شود و روی گوشی‌های قدیمی روان‌تر است.</string>
+    <string name="title_pref_dynamic_color">رنگ از تصویر زمینه</string>
+    <string name="summary_pref_dynamic_color">از رنگ‌های تصویر زمینه استفاده می‌کند (اندروید ۱۲ به بالا).</string>
     <string name="title_pref_use_hev_tunnel">استفاده از Hev TUN</string>
     <string name="summary_pref_use_hev_tunnel">اگر فعال باشد، تونل VPN از hev-socks5-tunnel استفاده می‌کند؛ در غیر این صورت از xray-core استفاده خواهد شد.</string>
     <string name="title_pref_hev_tunnel_loglevel">سطح گزارش‌های Hev TUN</string>
@@ -816,6 +818,41 @@
     <string name="sub_info_open_page">باز کردن صفحه اطلاعات اشتراک</string>
     <string name="sub_info_unlimited">نامحدود</string>
 
+    <!-- Home connection card -->
+    <string name="home_status_connected">متصل شد</string>
+    <string name="home_status_connecting">در حال اتصال…</string>
+    <string name="home_status_error">اتصال ناموفق بود</string>
+    <string name="home_status_unexpected">اتصال قطع شد</string>
+    <string name="home_empty_title">سروری انتخاب نشده</string>
+    <string name="home_action_choose_server">انتخاب سرور</string>
+    <string name="home_action_retry">تلاش مجدد</string>
+    <string name="home_action_reconnect">اتصال مجدد</string>
+    <string name="home_details_ip">آی‌پی خروجی</string>
+    <string name="home_details_test_ping">آزمایش دوبارهٔ پینگ</string>
+    <string name="home_quick_servers">سرورها</string>
+    <string name="home_quick_subscriptions">اشتراک‌ها</string>
+    <string name="home_quick_settings">تنظیمات</string>
+    <string name="home_nav_home">خانه</string>
+    <string name="home_details_ping">پینگ</string>
+    <string name="home_details_duration">مدت اتصال</string>
+    <string name="home_details_download">دانلود</string>
+    <string name="home_details_upload">آپلود</string>
+    <string name="home_details_title">جزئیات اتصال</string>
+    <string name="home_change_server">برای تغییر سرور بزنید</string>
+
+    <string name="title_pref_color_palette">پالت رنگ</string>
+    <string name="palette_default">پیش‌فرض</string>
+    <string name="palette_mocha">Mocha</string>
+    <string name="palette_canyon">Canyon</string>
+    <string name="title_pref_card_style">سبک کارت‌ها</string>
+    <string name="card_style_classic">کلاسیک</string>
+    <string name="card_style_glass">شیشه‌ای</string>
+    <string name="palette_wheat">Wheat</string>
+    <string name="palette_cobalt">Cobalt</string>
+    <string name="title_pref_home_style">سبک صفحه‌ی اصلی</string>
+    <string name="home_style_dashboard">داشبورد</string>
+    <string name="home_slide_to_connect">برای اتصال بکشید</string>
+    <string name="home_slide_to_disconnect">برای قطع اتصال بکشید</string>
     <string name="action_exit">خروج</string>
     <string name="action_back">بازگشت</string>
     <string name="action_more">بیشتر</string>
