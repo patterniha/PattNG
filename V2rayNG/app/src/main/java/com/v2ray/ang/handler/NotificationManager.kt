@@ -17,6 +17,7 @@ import com.v2ray.ang.extension.toSpeedString
 import com.v2ray.ang.helper.NotificationHelper
 import com.v2ray.ang.ui.main.MainActivity
 import com.v2ray.ang.util.LogUtil
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -70,7 +71,14 @@ object NotificationManager {
 
         speedNotificationJob = CoroutineScope(Dispatchers.IO).launch {
             while (isActive) {
-                lastZeroSpeed = updateSpeedNotificationOnce(lastZeroSpeed)
+                try {
+                    lastZeroSpeed = updateSpeedNotificationOnce(lastZeroSpeed)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Throwable) {
+                    // The statistics come from the native core, which may be stopping: one missed tick is no reason to end the process.
+                    LogUtil.e(AppConfig.TAG, "Speed notification: update failed, phase=run", e)
+                }
                 delay(QUERY_INTERVAL_MS)
             }
         }

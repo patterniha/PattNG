@@ -65,6 +65,9 @@ internal enum class ReloadOutcome {
          */
         fun goesOn(askedBy: Any, current: Any?): Boolean = current === askedBy
 
+        /** PattNG: a handover is needed only when the current network differs from the one the core settled on. */
+        fun networkChanged(settled: Any?, current: Any?): Boolean = current != null && current != settled
+
         /**
          * Whether a network handover seen by [askedBy] reloads the service: only while [askedBy] is still [current], the
          * service's network monitor now, Xray runs, and no other reload is under way. A handover a monitor began before a

@@ -75,10 +75,29 @@ class CoreVpnService : VpnService(), ServiceControl {
         }
 
         unlockStart()
-        NotificationManager.cancelNotification()
+        // A late onDestroy of an instance that has been replaced must not take the live one out of the foreground:
+        // the notification belongs to whichever service CoreServiceManager points to now.
+        if (CoreServiceManager.serviceControl?.get() === this) NotificationManager.cancelNotification()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // An exception that escaped from here would end the process, and a process that ends twice within a minute is
+        // marked bad by Android, so that nothing can start it for minutes ("process is bad").
+        return try {
+            handleStartCommand(intent)
+        } catch (e: Throwable) {
+            LogUtil.e(AppConfig.TAG, "StartCore-VPN: onStartCommand failed, phase=start", e)
+            unlockStart()
+            try {
+                stopAllService()
+            } catch (e2: Throwable) {
+                LogUtil.e(AppConfig.TAG, "StartCore-VPN: cleanup after a failed start failed, phase=start", e2)
+            }
+            START_NOT_STICKY
+        }
+    }
+
+    private fun handleStartCommand(intent: Intent?): Int {
         NotificationManager.ensureForeground()
         // Always-on VPN restarts from OS deliver intent.action == SERVICE_INTERFACE or null intent.
         // Reset any stuck start lock left by a killed process to allow setupVpnService() to run.

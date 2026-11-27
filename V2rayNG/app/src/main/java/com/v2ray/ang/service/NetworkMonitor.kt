@@ -5,6 +5,7 @@ import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
 import com.v2ray.ang.AppConfig
+import com.v2ray.ang.core.ReloadOutcome
 import com.v2ray.ang.extension.delay
 import com.v2ray.ang.util.LogUtil
 import kotlinx.coroutines.CancellationException
@@ -44,6 +45,8 @@ class NetworkMonitor(
     // thread, so the state below is read and written under this lock.
     private val lock = Any()
     private var upstream: Network? = null
+    // PattNG: the network the core was last settled on; a flap back to it needs no core reload.
+    private var settled: Network? = null
     private var handoverJob: Job? = null
     private var registered = false
 
@@ -72,7 +75,7 @@ class NetworkMonitor(
 
     private val callback = object : ConnectivityManager.NetworkCallback() {
         override fun onAvailable(network: Network) {
-            val previous = synchronized(lock) { upstream.also { upstream = network } }
+            val previous = synchronized(lock) { upstream.also { upstream = network; if (settled == null) settled = network } }
             onUnderlyingNetworksChanged(arrayOf(network))
             if (previous != null && previous != network) {
                 scheduleHandover(network)
@@ -85,7 +88,12 @@ class NetworkMonitor(
         }
 
         override fun onLost(network: Network) {
-            onUnderlyingNetworksChanged(null)
+            // PattNG: during a make-before-break switch onLost(old) arrives after onAvailable(new); only the
+            // tracked network may clear the underlying networks, or the VPN looks like it has no network.
+            val wasCurrent = synchronized(lock) {
+                if (upstream == network) { upstream = null; true } else false
+            }
+            if (wasCurrent) onUnderlyingNetworksChanged(null)
         }
     }
 
@@ -117,6 +125,7 @@ class NetworkMonitor(
             handoverJob = null
             handoverScope.coroutineContext.cancelChildren()
             upstream = null
+            settled = null
             if (!registered) return
             registered = false
         }
@@ -136,6 +145,13 @@ class NetworkMonitor(
             handoverJob = handoverScope.launch {
                 try {
                     delay(HANDOVER_DEBOUNCE_MS)
+                    val changed = synchronized(lock) {
+                        if (ReloadOutcome.networkChanged(settled, upstream)) { settled = upstream; true } else false
+                    }
+                    if (!changed) {
+                        LogUtil.i(AppConfig.TAG, "NetworkMonitor: Upstream is back on the settled network, no core reload")
+                        return@launch
+                    }
                     // PattNG: cancelling ends the wait above, not a handover that has just come out of it. The handover
                     // goes on only once claimed under the gate, which unregister() closes first: an unregistered monitor
                     // claims nothing and calls nothing.
